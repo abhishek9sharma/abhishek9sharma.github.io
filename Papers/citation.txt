@@ -1,0 +1,10 @@
+@inproceedings
+{sharma2018recexperts,
+	author={Sharma, Abhishek and Tian, Yuan and Sulistya, Agus and Wijedasa, Dinusha and Lo, David},
+	year = {2018},
+	title = {Recommending Who to Follow in the Software Engineering Twitter Space },
+	booktitle = {ACM Transactions on Software Engineering and Methodology(TOSEM)},
+	organization={ACM},
+	doi={https://doi.org/10.1145/3266426},
+	
+}
