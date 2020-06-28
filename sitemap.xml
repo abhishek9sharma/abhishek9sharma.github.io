@@ -4,6 +4,14 @@
     
     <url>
     
+      <loc>/publication/vulncur/</loc>
+      <lastmod>2020-06-26T00:00:00+08:00</lastmod>
+    </url>
+    
+  
+    
+    <url>
+    
       <loc>/publication/sieve/</loc>
       <lastmod>2019-09-27T00:00:00+08:00</lastmod>
     </url>
@@ -156,7 +164,7 @@
     <url>
     
       <loc>/publication_types/1/</loc>
-      <lastmod>2017-11-11T00:00:00+08:00</lastmod>
+      <lastmod>2020-06-26T00:00:00+08:00</lastmod>
       <priority>0</priority>
     </url>
     
@@ -218,6 +226,15 @@
     
     <url>
     
+      <loc>/tags/2020/</loc>
+      <lastmod>2020-06-26T00:00:00+08:00</lastmod>
+      <priority>0</priority>
+    </url>
+    
+  
+    
+    <url>
+    
       <loc>/tags/ase/</loc>
       <lastmod>2017-11-11T00:00:00+08:00</lastmod>
       <priority>0</priority>
@@ -229,6 +246,15 @@
     
       <loc>/</loc>
       <lastmod>2018-09-27T00:00:00+08:00</lastmod>
+      <priority>0</priority>
+    </url>
+    
+  
+    
+    <url>
+    
+      <loc>/tags/awards/</loc>
+      <lastmod>2020-06-26T00:00:00+08:00</lastmod>
       <priority>0</priority>
     </url>
     
@@ -271,6 +297,15 @@
     
     <url>
     
+      <loc>/tags/msr/</loc>
+      <lastmod>2020-06-26T00:00:00+08:00</lastmod>
+      <priority>0</priority>
+    </url>
+    
+  
+    
+    <url>
+    
       <loc>/opensource/</loc>
       <lastmod>2019-02-10T00:00:00+08:00</lastmod>
       <priority>0</priority>
@@ -289,7 +324,7 @@
     <url>
     
       <loc>/publication_types/</loc>
-      <lastmod>2017-11-11T00:00:00+08:00</lastmod>
+      <lastmod>2020-06-26T00:00:00+08:00</lastmod>
       <priority>0</priority>
     </url>
     

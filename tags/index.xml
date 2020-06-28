@@ -58,11 +58,29 @@
     </item>
     
     <item>
+      <title>2020</title>
+      <link>/tags/2020/</link>
+      <pubDate>Fri, 26 Jun 2020 00:00:00 +0800</pubDate>
+      
+      <guid>/tags/2020/</guid>
+      <description></description>
+    </item>
+    
+    <item>
       <title>ASE</title>
       <link>/tags/ase/</link>
       <pubDate>Sat, 11 Nov 2017 00:00:00 +0800</pubDate>
       
       <guid>/tags/ase/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Awards</title>
+      <link>/tags/awards/</link>
+      <pubDate>Fri, 26 Jun 2020 00:00:00 +0800</pubDate>
+      
+      <guid>/tags/awards/</guid>
       <description></description>
     </item>
     
@@ -90,6 +108,15 @@
       <pubDate>Sun, 17 Sep 2017 00:00:00 +0800</pubDate>
       
       <guid>/tags/icsme/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>MSR</title>
+      <link>/tags/msr/</link>
+      <pubDate>Fri, 26 Jun 2020 00:00:00 +0800</pubDate>
+      
+      <guid>/tags/msr/</guid>
       <description></description>
     </item>
     
