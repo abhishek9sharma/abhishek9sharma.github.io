@@ -1,0 +1,4 @@
+This is a Brave Rewards publisher verification file.
+
+Domain: abhishek9sharma.github.io
+Token: 817d0eeddc92d69e0ee2ba7103aab3f196c4401bb8c61fdfe72a03823ab57ad7
