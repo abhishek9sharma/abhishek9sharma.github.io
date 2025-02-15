@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>2021 on Abhishek Sharma</title>
+    <link>/tags/2021/</link>
+    <description>Recent content in 2021 on Abhishek Sharma</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <copyright>&amp;copy; 2018</copyright>
+    <lastBuildDate>Tue, 06 Jul 2021 00:00:00 +0800</lastBuildDate>
+    
+	<atom:link href="/tags/2021/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Post2Vec: Learning Distributed Representations of Stack Overflow Posts</title>
+      <link>/publication/post2vec/</link>
+      <pubDate>Tue, 06 Jul 2021 00:00:00 +0800</pubDate>
+      
+      <guid>/publication/post2vec/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Out of sight, out of mind? How vulnerable dependencies affect open-source projects</title>
+      <link>/publication/outofsight/</link>
+      <pubDate>Wed, 21 Apr 2021 00:00:00 +0800</pubDate>
+      
+      <guid>/publication/outofsight/</guid>
+      <description></description>
+    </item>
+    
+  </channel>
+</rss>
