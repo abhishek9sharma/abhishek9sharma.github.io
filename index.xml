@@ -777,15 +777,6 @@ curl -X &#39;POST&#39; \
     </item>
     
     <item>
-      <title>Part 3: Adding a Custom Validator to Guardrails-AI</title>
-      <link>/tutorial/guardrails-ai/guardrail_validator/</link>
-      <pubDate>Sun, 09 Sep 2018 00:00:00 +0800</pubDate>
-      
-      <guid>/tutorial/guardrails-ai/guardrail_validator/</guid>
-      <description></description>
-    </item>
-    
-    <item>
       <title>APIBot: Question Answering Bot for API documentation</title>
       <link>/publication/apibot/</link>
       <pubDate>Sat, 11 Nov 2017 00:00:00 +0800</pubDate>
@@ -800,6 +791,15 @@ curl -X &#39;POST&#39; \
       <pubDate>Sun, 17 Sep 2017 00:00:00 +0800</pubDate>
       
       <guid>/publication/personality/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Cataloging github repositories</title>
+      <link>/publication/cataloging/</link>
+      <pubDate>Thu, 15 Jun 2017 00:00:00 +0800</pubDate>
+      
+      <guid>/publication/cataloging/</guid>
       <description></description>
     </item>
     

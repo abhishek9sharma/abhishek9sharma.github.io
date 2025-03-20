@@ -100,14 +100,6 @@
     
     <url>
     
-      <loc>/tutorial/guardrails-ai/guardrail_validator/</loc>
-      <lastmod>2018-09-09T00:00:00+08:00</lastmod>
-    </url>
-    
-  
-    
-    <url>
-    
       <loc>/tutorial/guardrails-ai/</loc>
       <lastmod>2018-09-09T00:00:00+08:00</lastmod>
     </url>
@@ -220,6 +212,13 @@
     <url>
     
       <loc>/tutorial/</loc>
+    </url>
+    
+  
+    
+    <url>
+    
+      <loc>/tutorial/guardrails-ai/guardrail_validator/</loc>
     </url>
     
   

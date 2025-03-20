@@ -31,12 +31,16 @@
     </item>
     
     <item>
-      <title>Part 3: Adding a Custom Validator to Guardrails-AI</title>
+      <title></title>
       <link>/tutorial/guardrails-ai/guardrail_validator/</link>
-      <pubDate>Sun, 09 Sep 2018 00:00:00 +0800</pubDate>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>/tutorial/guardrails-ai/guardrail_validator/</guid>
-      <description></description>
+      <description>title = &amp;ldquo;Part 3: Adding a Custom Validator to Guardrails-AI&amp;rdquo;
+date = 2018-09-09T00:00:00
+lastmod = 2018-09-09T00:00:00 draft = false # Is this a draft? true/false toc = true # Show table of contents? true/false type = &amp;ldquo;docs&amp;rdquo; # Do not modify.
+Add menu entry to sidebar. linktitle = &amp;ldquo;03_custom_validator&amp;rdquo; [menu.guardrails-ai] parent = &amp;ldquo;Guardrails-AI&amp;rdquo; weight = 2
+Featured image. Uncomment below lines to use. [header] image = &amp;ldquo;headers/getting-started.png&amp;rdquo; caption = &amp;ldquo;Image credit: Academic&amp;ldquo; +++ &amp;ndash;&amp;gt;</description>
     </item>
     
   </channel>
