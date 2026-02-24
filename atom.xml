@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet href="https://abhishek9sharma.github.io/feed_style.xsl" type="text/xsl"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en">
+    <tabi:metadata xmlns:tabi="https://github.com/welpo/tabi">
+        <tabi:base_url>https:&#x2F;&#x2F;abhishek9sharma.github.io&#x2F;</tabi:base_url>
+        <tabi:separator>
+            •
+        </tabi:separator>
+        <tabi:about_feeds>This is a web feed, also known as an Atom feed. Subscribe by copying the URL from the address bar into your newsreader. Visit About Feeds to learn more and get started. It&#x27;s free.</tabi:about_feeds>
+        <tabi:visit_the_site>Visit website</tabi:visit_the_site>
+        <tabi:recent_posts>Recent posts</tabi:recent_posts>
+        <tabi:last_updated_on>Updated on $DATE</tabi:last_updated_on>
+        <tabi:default_theme>light</tabi:default_theme>
+        <tabi:post_listing_date>date</tabi:post_listing_date>
+        <tabi:current_section>Abhishek Sharma</tabi:current_section>
+    </tabi:metadata><title>Abhishek Sharma</title>
+        <subtitle>Machine Learning Engineer | Ph.D. in Information Systems</subtitle>
+    <link href="https://abhishek9sharma.github.io/atom.xml" rel="self" type="application/atom+xml"/>
+    <link href="https://abhishek9sharma.github.io" rel="alternate" type="text/html"/>
+    <generator uri="https://www.getzola.org/">Zola</generator><updated>2025-02-23T00:00:00+00:00</updated><id>https://abhishek9sharma.github.io/atom.xml</id><entry xml:lang="en">
+        <title>Part 1: Introduction to Guardrails-AI Python Library</title>
+        <published>2025-02-23T00:00:00+00:00</published>
+        <updated>2025-02-23T00:00:00+00:00</updated>
+        <author>
+            <name>Unknown</name>
+        </author>
+        <link rel="alternate" href="https://abhishek9sharma.github.io/tutorials/guardrails-ai/01-intro/" type="text/html"/>
+        <id>https://abhishek9sharma.github.io/tutorials/guardrails-ai/01-intro/</id>
+        </entry><entry xml:lang="en">
+        <title>Part 3: Deploying a Guarded Endpoint Using FastAPI</title>
+        <published>2025-02-23T00:00:00+00:00</published>
+        <updated>2025-02-23T00:00:00+00:00</updated>
+        <author>
+            <name>Unknown</name>
+        </author>
+        <link rel="alternate" href="https://abhishek9sharma.github.io/tutorials/guardrails-ai/03-serve/" type="text/html"/>
+        <id>https://abhishek9sharma.github.io/tutorials/guardrails-ai/03-serve/</id>
+        </entry><entry xml:lang="en">
+        <title>sarathi</title>
+        <published>2024-05-07T00:00:00+00:00</published>
+        <updated>2024-05-07T00:00:00+00:00</updated>
+        <author>
+            <name>Unknown</name>
+        </author>
+        <link rel="alternate" href="https://abhishek9sharma.github.io/projects/sarathi/" type="text/html"/>
+        <id>https://abhishek9sharma.github.io/projects/sarathi/</id>
+        </entry><entry xml:lang="en">
+        <title>Automated Identification of Libraries from Vulnerability Data:Can We Do Better?</title>
+        <published>2022-03-19T00:00:00+00:00</published>
+        <updated>2022-03-19T00:00:00+00:00</updated>
+        <author>
+            <name>Unknown</name>
+        </author>
+        <link rel="alternate" href="https://abhishek9sharma.github.io/publications/xmtc/" type="text/html"/>
+        <id>https://abhishek9sharma.github.io/publications/xmtc/</id>
+        </entry><entry xml:lang="en">
+        <title>Analyzing Offline Social Engagements: AnEmpirical Study of Meetup Events Related to Software Development</title>
+        <published>2022-01-14T00:00:00+00:00</published>
+        <updated>2022-01-14T00:00:00+00:00</updated>
+        <author>
+            <name>Unknown</name>
+        </author>
+        <link rel="alternate" href="https://abhishek9sharma.github.io/publications/meetup/" type="text/html"/>
+        <id>https://abhishek9sharma.github.io/publications/meetup/</id>
+        </entry><entry xml:lang="en">
+        <title>HERMES: Using Commit-Issue Linking to Detect Vulnerability-Fixing Commits</title>
+        <published>2022-01-14T00:00:00+00:00</published>
+        <updated>2022-01-14T00:00:00+00:00</updated>
+        <author>
+            <name>Unknown</name>
+        </author>
+        <link rel="alternate" href="https://abhishek9sharma.github.io/publications/vcur2/" type="text/html"/>
+        <id>https://abhishek9sharma.github.io/publications/vcur2/</id>
+        </entry><entry xml:lang="en">
+        <title>mlopsdemo</title>
+        <published>2021-12-07T00:00:00+00:00</published>
+        <updated>2021-12-07T00:00:00+00:00</updated>
+        <author>
+            <name>Unknown</name>
+        </author>
+        <link rel="alternate" href="https://abhishek9sharma.github.io/projects/mlops/" type="text/html"/>
+        <id>https://abhishek9sharma.github.io/projects/mlops/</id>
+        </entry><entry xml:lang="en">
+        <title>Post2Vec: Learning Distributed Representations of Stack Overflow Posts</title>
+        <published>2021-07-06T00:00:00+00:00</published>
+        <updated>2021-07-06T00:00:00+00:00</updated>
+        <author>
+            <name>Unknown</name>
+        </author>
+        <link rel="alternate" href="https://abhishek9sharma.github.io/publications/post2vec/" type="text/html"/>
+        <id>https://abhishek9sharma.github.io/publications/post2vec/</id>
+        </entry><entry xml:lang="en">
+        <title>Out of sight, out of mind? How vulnerable dependencies affect open-source projects</title>
+        <published>2021-04-21T00:00:00+00:00</published>
+        <updated>2021-04-21T00:00:00+00:00</updated>
+        <author>
+            <name>Unknown</name>
+        </author>
+        <link rel="alternate" href="https://abhishek9sharma.github.io/publications/outofsight/" type="text/html"/>
+        <id>https://abhishek9sharma.github.io/publications/outofsight/</id>
+        </entry><entry xml:lang="en">
+        <title>A Machine Learning Approach for Vulnerability Curation</title>
+        <published>2020-06-26T00:00:00+00:00</published>
+        <updated>2020-06-26T00:00:00+00:00</updated>
+        <author>
+            <name>Unknown</name>
+        </author>
+        <link rel="alternate" href="https://abhishek9sharma.github.io/publications/vulncur/" type="text/html"/>
+        <id>https://abhishek9sharma.github.io/publications/vulncur/</id>
+        </entry><entry xml:lang="en">
+        <title>SIEVE: Helping Developers Sift Wheat from Chaff via Cross-Platform Analysis</title>
+        <published>2019-09-27T00:00:00+00:00</published>
+        <updated>2019-09-27T00:00:00+00:00</updated>
+        <author>
+            <name>Unknown</name>
+        </author>
+        <link rel="alternate" href="https://abhishek9sharma.github.io/publications/sieve/" type="text/html"/>
+        <id>https://abhishek9sharma.github.io/publications/sieve/</id>
+        </entry><entry xml:lang="en">
+        <title>Recommending Who to Follow in the Software Engineering Twitter Space</title>
+        <published>2018-09-27T00:00:00+00:00</published>
+        <updated>2018-09-27T00:00:00+00:00</updated>
+        <author>
+            <name>Unknown</name>
+        </author>
+        <link rel="alternate" href="https://abhishek9sharma.github.io/publications/software-experts/" type="text/html"/>
+        <id>https://abhishek9sharma.github.io/publications/software-experts/</id>
+        </entry><entry xml:lang="en">
+        <title>Part 2: Adding a Custom Validator to Guardrails-AI</title>
+        <published>2018-09-09T00:00:00+00:00</published>
+        <updated>2018-09-09T00:00:00+00:00</updated>
+        <author>
+            <name>Unknown</name>
+        </author>
+        <link rel="alternate" href="https://abhishek9sharma.github.io/tutorials/guardrails-ai/02-validator/" type="text/html"/>
+        <id>https://abhishek9sharma.github.io/tutorials/guardrails-ai/02-validator/</id>
+        </entry><entry xml:lang="en">
+        <title>APIBot: Question Answering Bot for API documentation</title>
+        <published>2017-11-11T00:00:00+00:00</published>
+        <updated>2017-11-11T00:00:00+00:00</updated>
+        <author>
+            <name>Unknown</name>
+        </author>
+        <link rel="alternate" href="https://abhishek9sharma.github.io/publications/apibot/" type="text/html"/>
+        <id>https://abhishek9sharma.github.io/publications/apibot/</id>
+        </entry><entry xml:lang="en">
+        <title>Personality and Project Success: Insights from a Large-Scale Study with Professionals</title>
+        <published>2017-09-17T00:00:00+00:00</published>
+        <updated>2017-09-17T00:00:00+00:00</updated>
+        <author>
+            <name>Unknown</name>
+        </author>
+        <link rel="alternate" href="https://abhishek9sharma.github.io/publications/personality/" type="text/html"/>
+        <id>https://abhishek9sharma.github.io/publications/personality/</id>
+        </entry><entry xml:lang="en">
+        <title>Cataloging github repositories</title>
+        <published>2017-06-15T00:00:00+00:00</published>
+        <updated>2017-06-15T00:00:00+00:00</updated>
+        <author>
+            <name>Unknown</name>
+        </author>
+        <link rel="alternate" href="https://abhishek9sharma.github.io/publications/cataloging/" type="text/html"/>
+        <id>https://abhishek9sharma.github.io/publications/cataloging/</id>
+        </entry><entry xml:lang="en">
+        <title>Harnessing Twitter to support serendipitous learning of developers</title>
+        <published>2017-02-22T00:00:00+00:00</published>
+        <updated>2017-02-22T00:00:00+00:00</updated>
+        <author>
+            <name>Unknown</name>
+        </author>
+        <link rel="alternate" href="https://abhishek9sharma.github.io/publications/harnessingurl/" type="text/html"/>
+        <id>https://abhishek9sharma.github.io/publications/harnessingurl/</id>
+        </entry><entry xml:lang="en">
+        <title>Spiteful, One-Off, and Kind: Predicting Customer Feedback Behavior on Twitter</title>
+        <published>2016-10-19T00:00:00+00:00</published>
+        <updated>2016-10-19T00:00:00+00:00</updated>
+        <author>
+            <name>Unknown</name>
+        </author>
+        <link rel="alternate" href="https://abhishek9sharma.github.io/publications/spiteful/" type="text/html"/>
+        <id>https://abhishek9sharma.github.io/publications/spiteful/</id>
+        </entry><entry xml:lang="en">
+        <title>Latest News</title>
+        <published>2016-10-01T00:00:00+00:00</published>
+        <updated>2016-10-01T00:00:00+00:00</updated>
+        <author>
+            <name>Unknown</name>
+        </author>
+        <link rel="alternate" href="https://abhishek9sharma.github.io/blog/news/" type="text/html"/>
+        <id>https://abhishek9sharma.github.io/blog/news/</id>
+        </entry><entry xml:lang="en">
+        <title>Temporal kernel descriptors for learning with time-sensitive patterns?</title>
+        <published>2016-05-05T00:00:00+00:00</published>
+        <updated>2016-05-05T00:00:00+00:00</updated>
+        <author>
+            <name>Unknown</name>
+        </author>
+        <link rel="alternate" href="https://abhishek9sharma.github.io/publications/temporalkernel/" type="text/html"/>
+        <id>https://abhishek9sharma.github.io/publications/temporalkernel/</id>
+        </entry><entry xml:lang="en">
+        <title>What&#x27;s Hot in Software Engineering Twitter Space?</title>
+        <published>2015-10-01T00:00:00+00:00</published>
+        <updated>2015-10-01T00:00:00+00:00</updated>
+        <author>
+            <name>Unknown</name>
+        </author>
+        <link rel="alternate" href="https://abhishek9sharma.github.io/publications/twitterevents/" type="text/html"/>
+        <id>https://abhishek9sharma.github.io/publications/twitterevents/</id>
+        </entry><entry xml:lang="en">
+        <title>Nirmal: Automatic identification of software relevant tweets leveraging language model</title>
+        <published>2015-03-15T00:00:00+00:00</published>
+        <updated>2015-03-15T00:00:00+00:00</updated>
+        <author>
+            <name>Unknown</name>
+        </author>
+        <link rel="alternate" href="https://abhishek9sharma.github.io/publications/nirmal/" type="text/html"/>
+        <id>https://abhishek9sharma.github.io/publications/nirmal/</id>
+        </entry>
+</feed>

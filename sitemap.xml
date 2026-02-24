@@ -1,544 +1,206 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
-  
-    
-    <url>
-    
-      <loc>/tutorial/guardrails-ai/guardrail_intro/</loc>
-      <lastmod>2025-02-23T00:00:00+08:00</lastmod>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/tutorial/guardrails-ai/guardrail_serve/</loc>
-      <lastmod>2025-02-23T00:00:00+08:00</lastmod>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/opensource/sarathi/</loc>
-      <lastmod>2024-05-07T00:00:00+08:00</lastmod>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/publication/xmtc/</loc>
-      <lastmod>2022-03-19T00:00:00+08:00</lastmod>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/publication/meetup/</loc>
-      <lastmod>2022-01-14T01:00:00+08:00</lastmod>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/publication/vcur2/</loc>
-      <lastmod>2022-01-14T00:00:00+08:00</lastmod>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/opensource/mlops/</loc>
-      <lastmod>2021-12-07T00:00:00+08:00</lastmod>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/publication/post2vec/</loc>
-      <lastmod>2021-07-06T00:00:00+08:00</lastmod>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/publication/outofsight/</loc>
-      <lastmod>2021-04-21T00:00:00+08:00</lastmod>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/publication/vulncur/</loc>
-      <lastmod>2020-06-26T00:00:00+08:00</lastmod>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/publication/sieve/</loc>
-      <lastmod>2019-09-27T00:00:00+08:00</lastmod>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/publication/software-experts/</loc>
-      <lastmod>2018-09-27T00:00:00+08:00</lastmod>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/tutorial/guardrails-ai/</loc>
-      <lastmod>2018-09-09T00:00:00+08:00</lastmod>
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet href="https://abhishek9sharma.github.io/sitemap_style.xsl" type="text/xsl"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <url>
+        <loc>https://abhishek9sharma.github.io/</loc>
+    </url>
+    <url>
+        <loc>https://abhishek9sharma.github.io/about/</loc>
+    </url>
+    <url>
+        <loc>https://abhishek9sharma.github.io/blog/</loc>
+    </url>
+    <url>
+        <loc>https://abhishek9sharma.github.io/blog/news/</loc>
+        <lastmod>2016-10-01T00:00:00</lastmod>
+    </url>
+    <url>
+        <loc>https://abhishek9sharma.github.io/experience/</loc>
+    </url>
+    <url>
+        <loc>https://abhishek9sharma.github.io/projects/</loc>
+    </url>
+    <url>
+        <loc>https://abhishek9sharma.github.io/projects/mlops/</loc>
+        <lastmod>2021-12-07T00:00:00</lastmod>
+    </url>
+    <url>
+        <loc>https://abhishek9sharma.github.io/projects/page/1/</loc>
+    </url>
+    <url>
+        <loc>https://abhishek9sharma.github.io/projects/sarathi/</loc>
+        <lastmod>2024-05-07T00:00:00</lastmod>
+    </url>
+    <url>
+        <loc>https://abhishek9sharma.github.io/publications/</loc>
+    </url>
+    <url>
+        <loc>https://abhishek9sharma.github.io/publications/apibot/</loc>
+        <lastmod>2017-11-11</lastmod>
+    </url>
+    <url>
+        <loc>https://abhishek9sharma.github.io/publications/cataloging/</loc>
+        <lastmod>2017-06-15</lastmod>
+    </url>
+    <url>
+        <loc>https://abhishek9sharma.github.io/publications/harnessingurl/</loc>
+        <lastmod>2017-02-22</lastmod>
+    </url>
+    <url>
+        <loc>https://abhishek9sharma.github.io/publications/meetup/</loc>
+        <lastmod>2022-01-14</lastmod>
+    </url>
+    <url>
+        <loc>https://abhishek9sharma.github.io/publications/nirmal/</loc>
+        <lastmod>2015-03-15</lastmod>
+    </url>
+    <url>
+        <loc>https://abhishek9sharma.github.io/publications/outofsight/</loc>
+        <lastmod>2021-04-21</lastmod>
+    </url>
+    <url>
+        <loc>https://abhishek9sharma.github.io/publications/page/1/</loc>
+    </url>
+    <url>
+        <loc>https://abhishek9sharma.github.io/publications/personality/</loc>
+        <lastmod>2017-09-17</lastmod>
+    </url>
+    <url>
+        <loc>https://abhishek9sharma.github.io/publications/post2vec/</loc>
+        <lastmod>2021-07-06</lastmod>
+    </url>
+    <url>
+        <loc>https://abhishek9sharma.github.io/publications/sieve/</loc>
+        <lastmod>2019-09-27</lastmod>
+    </url>
+    <url>
+        <loc>https://abhishek9sharma.github.io/publications/software-experts/</loc>
+        <lastmod>2018-09-27</lastmod>
+    </url>
+    <url>
+        <loc>https://abhishek9sharma.github.io/publications/spiteful/</loc>
+        <lastmod>2016-10-19</lastmod>
+    </url>
+    <url>
+        <loc>https://abhishek9sharma.github.io/publications/temporalkernel/</loc>
+        <lastmod>2016-05-05</lastmod>
+    </url>
+    <url>
+        <loc>https://abhishek9sharma.github.io/publications/twitterevents/</loc>
+        <lastmod>2015-10-01</lastmod>
+    </url>
+    <url>
+        <loc>https://abhishek9sharma.github.io/publications/vcur2/</loc>
+        <lastmod>2022-01-14</lastmod>
+    </url>
+    <url>
+        <loc>https://abhishek9sharma.github.io/publications/vulncur/</loc>
+        <lastmod>2020-06-26</lastmod>
+    </url>
+    <url>
+        <loc>https://abhishek9sharma.github.io/publications/xmtc/</loc>
+        <lastmod>2022-03-19</lastmod>
+    </url>
+    <url>
+        <loc>https://abhishek9sharma.github.io/tags/</loc>
+    </url>
+    <url>
+        <loc>https://abhishek9sharma.github.io/tags/2015/</loc>
+    </url>
+    <url>
+        <loc>https://abhishek9sharma.github.io/tags/2016/</loc>
+    </url>
+    <url>
+        <loc>https://abhishek9sharma.github.io/tags/2017/</loc>
+    </url>
+    <url>
+        <loc>https://abhishek9sharma.github.io/tags/2018/</loc>
+    </url>
+    <url>
+        <loc>https://abhishek9sharma.github.io/tags/2020/</loc>
+    </url>
+    <url>
+        <loc>https://abhishek9sharma.github.io/tags/2021/</loc>
+    </url>
+    <url>
+        <loc>https://abhishek9sharma.github.io/tags/2022/</loc>
+    </url>
+    <url>
+        <loc>https://abhishek9sharma.github.io/tags/ase/</loc>
+    </url>
+    <url>
+        <loc>https://abhishek9sharma.github.io/tags/awards/</loc>
+    </url>
+    <url>
+        <loc>https://abhishek9sharma.github.io/tags/docker/</loc>
     </url>
-    
-  
-    
     <url>
-    
-      <loc>/publication/apibot/</loc>
-      <lastmod>2017-11-11T00:00:00+08:00</lastmod>
+        <loc>https://abhishek9sharma.github.io/tags/ease/</loc>
     </url>
-    
-  
-    
     <url>
-    
-      <loc>/publication/personality/</loc>
-      <lastmod>2017-09-17T00:00:00+08:00</lastmod>
+        <loc>https://abhishek9sharma.github.io/tags/emse/</loc>
     </url>
-    
-  
-    
     <url>
-    
-      <loc>/publication/cataloging/</loc>
-      <lastmod>2017-06-15T00:00:00+08:00</lastmod>
+        <loc>https://abhishek9sharma.github.io/tags/git/</loc>
     </url>
-    
-  
-    
     <url>
-    
-      <loc>/publication/harnessingurl/</loc>
-      <lastmod>2017-02-22T00:00:00+08:00</lastmod>
+        <loc>https://abhishek9sharma.github.io/tags/icpc/</loc>
     </url>
-    
-  
-    
     <url>
-    
-      <loc>/post/</loc>
-      <lastmod>2017-01-01T00:00:00+08:00</lastmod>
+        <loc>https://abhishek9sharma.github.io/tags/icsme/</loc>
     </url>
-    
-  
-    
     <url>
-    
-      <loc>/publication/</loc>
-      <lastmod>2017-01-01T00:00:00+08:00</lastmod>
+        <loc>https://abhishek9sharma.github.io/tags/llm/</loc>
     </url>
-    
-  
-    
     <url>
-    
-      <loc>/talk/</loc>
-      <lastmod>2017-01-01T00:00:00+08:00</lastmod>
+        <loc>https://abhishek9sharma.github.io/tags/machine-learning/</loc>
     </url>
-    
-  
-    
     <url>
-    
-      <loc>/publication/spiteful/</loc>
-      <lastmod>2016-10-19T00:00:00+08:00</lastmod>
+        <loc>https://abhishek9sharma.github.io/tags/ml-ops/</loc>
     </url>
-    
-  
-    
     <url>
-    
-      <loc>/post/news/</loc>
-      <lastmod>2018-10-30T00:00:00+08:00</lastmod>
+        <loc>https://abhishek9sharma.github.io/tags/msr/</loc>
     </url>
-    
-  
-    
     <url>
-    
-      <loc>/publication/temporalkernel/</loc>
-      <lastmod>2016-05-05T00:00:00+08:00</lastmod>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/publication/twitterevents/</loc>
-      <lastmod>2015-10-01T00:00:00+08:00</lastmod>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/publication/nirmal/</loc>
-      <lastmod>2015-03-15T00:00:00+08:00</lastmod>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/project/ease/</loc>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/tutorial/</loc>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/tutorial/guardrails-ai/guardrail_validator/</loc>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/publication_types/1/</loc>
-      <lastmod>2022-03-19T00:00:00+08:00</lastmod>
-      <priority>0</priority>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/publication_types/2/</loc>
-      <lastmod>2021-07-06T00:00:00+08:00</lastmod>
-      <priority>0</priority>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/tags/2015/</loc>
-      <lastmod>2015-10-01T00:00:00+08:00</lastmod>
-      <priority>0</priority>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/tags/2016/</loc>
-      <lastmod>2016-10-19T00:00:00+08:00</lastmod>
-      <priority>0</priority>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/tags/2017/</loc>
-      <lastmod>2017-11-11T00:00:00+08:00</lastmod>
-      <priority>0</priority>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/tags/2018/</loc>
-      <lastmod>2018-09-27T00:00:00+08:00</lastmod>
-      <priority>0</priority>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/tags/2020/</loc>
-      <lastmod>2020-06-26T00:00:00+08:00</lastmod>
-      <priority>0</priority>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/tags/2021/</loc>
-      <lastmod>2021-07-06T00:00:00+08:00</lastmod>
-      <priority>0</priority>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/tags/2022/</loc>
-      <lastmod>2022-03-19T00:00:00+08:00</lastmod>
-      <priority>0</priority>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/tags/ase/</loc>
-      <lastmod>2017-11-11T00:00:00+08:00</lastmod>
-      <priority>0</priority>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/</loc>
-      <lastmod>2018-09-27T00:00:00+08:00</lastmod>
-      <priority>0</priority>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/tags/awards/</loc>
-      <lastmod>2020-06-26T00:00:00+08:00</lastmod>
-      <priority>0</priority>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/categories/</loc>
-      <priority>0</priority>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/tags/ease/</loc>
-      <lastmod>2017-06-15T00:00:00+08:00</lastmod>
-      <priority>0</priority>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/tags/emse/</loc>
-      <lastmod>2021-04-21T00:00:00+08:00</lastmod>
-      <priority>0</priority>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/tags/icpc/</loc>
-      <lastmod>2022-03-19T00:00:00+08:00</lastmod>
-      <priority>0</priority>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/tags/icsme/</loc>
-      <lastmod>2017-09-17T00:00:00+08:00</lastmod>
-      <priority>0</priority>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/tags/msr/</loc>
-      <lastmod>2020-06-26T00:00:00+08:00</lastmod>
-      <priority>0</priority>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/opensource/</loc>
-      <lastmod>2024-05-07T00:00:00+08:00</lastmod>
-      <priority>0</priority>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/project/</loc>
-      <priority>0</priority>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/publication_types/</loc>
-      <lastmod>2022-03-19T00:00:00+08:00</lastmod>
-      <priority>0</priority>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/tags/saner/</loc>
-      <lastmod>2022-01-14T01:00:00+08:00</lastmod>
-      <priority>0</priority>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/tags/sdm/</loc>
-      <lastmod>2016-05-05T00:00:00+08:00</lastmod>
-      <priority>0</priority>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/slides/</loc>
-      <priority>0</priority>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/slides/example-slides/</loc>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/tags/socinfo/</loc>
-      <lastmod>2016-10-19T00:00:00+08:00</lastmod>
-      <priority>0</priority>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/tags/tosem/</loc>
-      <lastmod>2018-09-27T00:00:00+08:00</lastmod>
-      <priority>0</priority>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/tags/tse/</loc>
-      <lastmod>2021-07-06T00:00:00+08:00</lastmod>
-      <priority>0</priority>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/tags/</loc>
-      <lastmod>2015-10-01T00:00:00+08:00</lastmod>
-      <priority>0</priority>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/tags/docker/</loc>
-      <lastmod>2021-12-07T00:00:00+08:00</lastmod>
-      <priority>0</priority>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/tags/git/</loc>
-      <lastmod>2024-05-07T00:00:00+08:00</lastmod>
-      <priority>0</priority>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/tags/llm/</loc>
-      <lastmod>2024-05-07T00:00:00+08:00</lastmod>
-      <priority>0</priority>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/tags/machine-learning/</loc>
-      <lastmod>2024-05-07T00:00:00+08:00</lastmod>
-      <priority>0</priority>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/tags/ml-ops/</loc>
-      <lastmod>2021-12-07T00:00:00+08:00</lastmod>
-      <priority>0</priority>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/tags/news/</loc>
-      <lastmod>2018-10-30T00:00:00+08:00</lastmod>
-      <priority>0</priority>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/tags/tensorflow/</loc>
-      <lastmod>2021-12-07T00:00:00+08:00</lastmod>
-      <priority>0</priority>
-    </url>
-    
-  
+        <loc>https://abhishek9sharma.github.io/tags/news/</loc>
+    </url>
+    <url>
+        <loc>https://abhishek9sharma.github.io/tags/saner/</loc>
+    </url>
+    <url>
+        <loc>https://abhishek9sharma.github.io/tags/sdm/</loc>
+    </url>
+    <url>
+        <loc>https://abhishek9sharma.github.io/tags/socinfo/</loc>
+    </url>
+    <url>
+        <loc>https://abhishek9sharma.github.io/tags/tensorflow/</loc>
+    </url>
+    <url>
+        <loc>https://abhishek9sharma.github.io/tags/tosem/</loc>
+    </url>
+    <url>
+        <loc>https://abhishek9sharma.github.io/tags/tse/</loc>
+    </url>
+    <url>
+        <loc>https://abhishek9sharma.github.io/tutorials/</loc>
+    </url>
+    <url>
+        <loc>https://abhishek9sharma.github.io/tutorials/guardrails-ai/</loc>
+    </url>
+    <url>
+        <loc>https://abhishek9sharma.github.io/tutorials/guardrails-ai/01-intro/</loc>
+        <lastmod>2025-02-23</lastmod>
+    </url>
+    <url>
+        <loc>https://abhishek9sharma.github.io/tutorials/guardrails-ai/02-validator/</loc>
+        <lastmod>2018-09-09</lastmod>
+    </url>
+    <url>
+        <loc>https://abhishek9sharma.github.io/tutorials/guardrails-ai/03-serve/</loc>
+        <lastmod>2025-02-23</lastmod>
+    </url>
+    <url>
+        <loc>https://abhishek9sharma.github.io/tutorials/guardrails-ai/page/1/</loc>
+    </url>
 </urlset>

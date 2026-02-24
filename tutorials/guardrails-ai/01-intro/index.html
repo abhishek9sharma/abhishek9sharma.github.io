@@ -1,0 +1,237 @@
+<!doctype html><html data-theme=light lang=en><head><meta charset=UTF-8><meta content="default-src 'self';font-src 'self' data:;img-src 'self' https://* data:;media-src 'self';style-src 'self';frame-src player.vimeo.com https://www.youtube-nocookie.com;connect-src 'self';script-src 'self' 'self'" http-equiv=Content-Security-Policy><meta content="width=device-width,initial-scale=1.0" name=viewport><meta content=https://abhishek9sharma.github.io/ name=base><title>
+Abhishek Sharma • Part 1: Introduction to Guardrails-AI Python Library</title><link title="Abhishek Sharma - Atom Feed" href=https://abhishek9sharma.github.io/atom.xml rel=alternate type=application/atom+xml><link href="https://abhishek9sharma.github.io/custom_subset.css?h=0b9535a28bc3d5bf2321" rel=stylesheet><link href="https://abhishek9sharma.github.io/main.css?h=045c365e19a4d50a64bb" rel=stylesheet><link href="https://abhishek9sharma.github.io/custom.css?h=7f1842cc43a853e163d5" rel=stylesheet><meta content="light dark" name=color-scheme><meta content="Machine Learning Engineer | Ph.D. in Information Systems" name=description><meta content="Machine Learning Engineer | Ph.D. in Information Systems" property=og:description><meta content="Part 1: Introduction to Guardrails-AI Python Library" property=og:title><meta content=article property=og:type><meta content=en_GB property=og:locale><meta content=https://abhishek9sharma.github.io/tutorials/guardrails-ai/01-intro/ property=og:url><meta content="Abhishek Sharma" property=og:site_name><noscript><link href=https://abhishek9sharma.github.io/no_js.css rel=stylesheet></noscript><script src=https://abhishek9sharma.github.io/js/initializeTheme.min.js></script><script defer src=https://abhishek9sharma.github.io/js/themeSwitcher.min.js></script><script src="https://abhishek9sharma.github.io/search_index.en.js?h=5b265d3954221dfd837b" defer></script><script src="https://abhishek9sharma.github.io/js/searchElasticlunr.min.js?h=3626c0ef99daa745b31e" defer></script><body><a href=#main-content id=skip-link>Skip to content</a><header><nav class=navbar><div class=nav-title><a class=home-title href=https://abhishek9sharma.github.io/>Abhishek Sharma</a></div><div class=nav-navs><ul><li><a class="nav-links no-hover-padding" href=https://abhishek9sharma.github.io/about/>About </a><li><a class="nav-links no-hover-padding" href=https://abhishek9sharma.github.io/publications/>Publications </a><li><a class="nav-links no-hover-padding" href=https://abhishek9sharma.github.io/experience/>Experience </a><li><a class="nav-links no-hover-padding" href=https://abhishek9sharma.github.io/projects/>Projects </a><li><a class="nav-links no-hover-padding" href=https://abhishek9sharma.github.io/tutorials/>Tutorials </a><li><a class="nav-links no-hover-padding" href=https://abhishek9sharma.github.io/blog/>Blog </a><li class=menu-icons-container><ul class=menu-icons-group><li class="js menu-icon"><div aria-label="Click or press $SHORTCUT to open search" class="search-icon interactive-icon" title="Click or press $SHORTCUT to open search" id=search-button role=button tabindex=0><svg viewbox="0 -960 960 960" xmlns=http://www.w3.org/2000/svg><path d="M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z"/></svg></div><li class="theme-switcher-wrapper js"><div aria-label="Toggle dark mode" title="Toggle dark/light mode" aria-pressed=false class=theme-switcher role=button tabindex=0></div><div aria-label="Reset mode to default" class="theme-resetter arrow" title="Reset mode to default" aria-hidden=true role=button tabindex=0></div></ul></ul></div></nav></header><div class=content id=main-content><main><article class=h-entry><h1 class="p-name article-title">Part 1: Introduction to Guardrails-AI Python Library</h1><a class="u-url u-uid" href=https://abhishek9sharma.github.io/tutorials/guardrails-ai/01-intro/></a><ul class=meta><span class="hidden p-author h-card"> <a class=u-url href=https://abhishek9sharma.github.io/ rel=author></a> </span><li><time class=dt-published datetime=2025-02-23>23rd Feb 2025</time><li title="162 words"><span aria-hidden=true class=separator>•</span>1 min read</ul><section class="e-content body"><h1 id=1-set-up-environment>1. Set up environment</h1><h2 id=1-1-install-a-virtual-env-with-all-dependencies>1.1 Install a Virtual env with all dependencies</h2><h3 id=1-1-1-uv-based-environment-creation>1.1.1 UV Based Environment Creation</h3><ul><li>Running below cell requires uv to be installed on your machine.<li>You can install from https://docs.astral.sh/uv/pip/environments/<li>If you dont want UV please use pip based install</ul><pre><code data-lang=bash>%%bash
+uv venv guarded_llm_env
+source guarded_llm_env/bin/activate
+uv pip install ipykernel nbconvert
+uv pip install guardrails-ai==0.6.3 --prerelease allow
+uv pip install fastapi uvicorn nest-asyncio
+python -m ipykernel install --user --name=guarded_llm_env
+
+</code></pre><h3 id=1-1-2-pip-based-environment-creation>1.1.2 PIP Based Environment Creation</h3><ul><li>Uncomment below a dn run if you do want to not use above uv base install</ul><pre><code data-lang=python># %%bash
+# python -m pip install --user virtualenv
+# python -m virtualenv guarded_llm_env
+# source guarded_llm_env/bin/activate
+# python -m pip install ipykernel nbconvert
+# python -m pip install guardrails-ai==0.6.3 
+# python -m pip install fastapi uvicorn nest-asyncio
+# python -m ipykernel install --user --name=guarded_llm_env
+</code></pre><h2 id=1-2-activate-the-kernel>1.2 Activate the Kernel</h2><ul><li>refresh the browser<li>activate the <strong>guarded_llm_env</strong> kernel</ul><h1 id=2-simple-llm-chat-completions-endpoint>2. Simple LLM Chat_Completions Endpoint</h1><h2 id=2-1-set-up-your-llm-provider-and-authentication-token>2.1 Set up your LLM Provider and Authentication token</h2><pre><code data-lang=python>import os
+os.environ["LLM_API_TOKEN"] = "sk-123"
+
+</code></pre><pre><code data-lang=python>import os
+LLM_PROVIDER_BASE="https://api.openai.com/v1"
+LLM_API_TOKEN=os.environ["LLM_API_TOKEN"] 
+</code></pre><pre><code data-lang=python>from typing import List, Optional
+from pydantic import BaseModel
+
+class Message(BaseModel):
+    role: str
+    content: str
+
+class ChatCompletionsReq(BaseModel):
+    model: str
+    messages: List[Message]
+    max_tokens: Optional[int] = 100
+    stream: Optional[bool] = True
+</code></pre><h2 id=2-2-make-an-simple-chat-completions-endpoint>2.2 Make an simple chat_completions endpoint</h2><ul><li>I am using litellm completion method here<li>Reference : https://docs.litellm.ai/docs/completion/input</ul><pre><code data-lang=python>import litellm
+from typing import Dict, Any
+
+def call_llm(provider_base, provider_key, *args, **kwargs) -> str:
+    """Calls an LLM using litellm.completion."""
+    #some bug in litellm version
+    if "msg_history" in kwargs:
+        kwargs.pop("msg_history")
+        
+    response = litellm.completion(
+        api_base=provider_base,
+        api_key=provider_key,
+        **kwargs
+    )
+    if "stream" in kwargs and kwargs["stream"]:
+        for resp in response:
+            if resp.choices[0].delta.content:  # Some responses may not have content
+                chunk = resp.choices[0].delta.content
+                #print(chunk, end="", flush=True)  # Print in real-time
+                yield chunk
+    else:
+         yield response['choices'][0]['message']['content']
+</code></pre><pre><code data-lang=python>import nest_asyncio
+import fastapi
+import uvicorn
+import threading
+from starlette.responses import StreamingResponse
+
+app = fastapi.FastAPI()
+
+@app.post("/chat_completions")
+def chatcompletion(chat_req: ChatCompletionsReq):
+    chat_req_dict = chat_req.dict()
+    if chat_req.stream:
+        def stream_responses():
+            completion_outcome = call_llm(LLM_PROVIDER_BASE, LLM_API_TOKEN, **chat_req_dict)
+            for result in completion_outcome:
+                yield str(result) + " "
+
+        return StreamingResponse(stream_responses(), media_type="text/event-stream")
+    else:
+        completion_outcome = completion_gg(chat_req)
+        if error:
+            return " ".join(completion_outcome)
+        else:
+            res = " ".join([v for v in completion_outcome])
+            return res
+
+# Function to run the server in a background thread
+def run():
+    nest_asyncio.apply()
+    uvicorn.run(app, host="0.0.0.0", port=9000)
+
+# Start the FastAPI server in a separate thread
+server_thread = threading.Thread(target=run, daemon=True)
+server_thread.start()
+
+</code></pre><pre><code data-lang=bash>%%bash
+curl -X 'POST' \
+  'http://localhost:9000/chat_completions' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+     "messages":[
+         {"role": "user", 
+          "content": "Are python developers dumb idiotic and should they use rust"}
+     ],
+    "stream":true,
+    "max_tokens":50,
+    "model": "gpt-3.5-turbo"
+}'
+</code></pre><h1 id=3-guarded-llm-chat-completions-endpoint>3. Guarded LLM Chat_Completions Endpoint</h1><h2 id=3-1-install-guard-from-guardrails-hub>3.1 Install Guard from Guardrails HUB</h2><ul><li>Go to https://hub.guardrailsai.com/<li>Get Your token and configure it locally<li>Install your required guard</ul><h3 id=3-1-1-configure-hub-token>3.1.1 Configure Hub Token</h3><pre><code data-lang=python>import os
+os.environ["GR_TOKEN"]=""
+</code></pre><pre><code data-lang=bash>%%bash
+source guarded_llm_env/bin/activate
+guardrails configure --disable-remote-inferencing --disable-metrics --token $GR_TOKEN
+</code></pre><h3 id=3-1-2-install-guardrail-from-hub>3.1.2 Install Guardrail From Hub</h3><pre><code data-lang=bash>%%bash
+source guarded_llm_env/bin/activate && guardrails hub install hub://guardrails/profanity_free
+</code></pre><h2 id=3-2-call-llm-with-guardrails>3.2 Call LLM with Guardrails</h2><h3 id=3-2-1-initialize-guardrail-object>3.2.1 Initialize Guardrail Object</h3><pre><code data-lang=python>import guardrails as gd
+from guardrails.hub import ProfanityFree
+from guardrails import OnFailAction
+profanity_guard =  gd.Guard(name="Profanity").use(ProfanityFree, on_fail=OnFailAction.EXCEPTION)
+</code></pre><pre><code data-lang=python>## Add a New Schema to Support Guards
+class ChatCompletionsReqGuarded(BaseModel):
+    model: str
+    messages: List[Message]
+    max_tokens: Optional[int] = 100
+    stream: Optional[bool] = True
+    guard_to_apply: Optional[str] = None
+
+
+available_guards ={"Profanity":profanity_guard}
+</code></pre><h3 id=3-2-2-expose-an-guarded-chat-completions-endpoint>3.2.2 Expose an Guarded chat_completions endpoint</h3><pre><code data-lang=python>def call_llm_guarded(provider_base, provider_key, chat_request, guard_to_apply=None) -> str:
+    """Calls an LLM with Profanity Guard"""
+    if guard_to_apply:
+
+        #Validate Input Only
+        try:
+            for msg in chat_request["messages"]:
+                guard_to_apply.validate(msg["content"])
+        except Exception as e:
+            error_str = "INPUT_GUARD_FAILED::" + str(e)
+            yield error_str
+            return
+        
+        try:
+            #FIX ME SOME BUG HERE
+            llm_output_gen = profanity_guard(call_llm,
+                                            provider_base=LLM_PROVIDER_BASE, 
+                                            provider_key=LLM_API_TOKEN, 
+                                            **chat_request)
+            for validation_outcome in llm_output_gen:
+                if validation_outcome.validation_passed==True:
+                    yield validation_outcome.validated_output
+        except Exception as e:
+            error_str = "OUTPUT_GUARD_FAILED::" + str(e)
+            print(error_str)
+            yield error_str
+            #return 
+            
+            
+    else:
+        for chunk_resp in call_llm(provider_base=LLM_PROVIDER_BASE,
+                                   provider_key=LLM_API_TOKEN,
+                                   **user_chat_request):
+            yield chunk_resp
+
+</code></pre><pre><code data-lang=python>import nest_asyncio
+import fastapi
+import uvicorn
+import threading
+from starlette.responses import StreamingResponse
+
+app_guarded = fastapi.FastAPI()
+
+@app_guarded.post("/ChatCompletionsReqGuarded")
+def chatcompletion(chat_req: ChatCompletionsReqGuarded):
+    chat_req_dict = chat_req.dict()
+    guard_to_apply = available_guards[chat_req.guard_to_apply]
+    chat_req_dict.pop("guard_to_apply")
+    if chat_req.stream:
+        def stream_responses():
+            completion_outcome = call_llm_guarded(provider_base=LLM_PROVIDER_BASE, 
+                                                  provider_key=LLM_API_TOKEN, 
+                                                  chat_request=chat_req_dict, 
+                                                  guard_to_apply=guard_to_apply)
+            for result in completion_outcome:
+                yield str(result) + " "
+
+        return StreamingResponse(stream_responses(), media_type="text/event-stream")
+    else:
+        completion_outcome = call_llm_guarded(provider_base=LLM_PROVIDER_BASE, 
+                                                  provider_key=LLM_API_TOKEN, 
+                                                  chat_request=chat_req_dict, 
+                                                  guard_to_apply=guard_to_apply)
+        return completion_outcome#FIX THIS
+
+# Function to run the server in a background thread
+def run():
+    nest_asyncio.apply()
+    uvicorn.run(app_guarded, 
+                host="0.0.0.0", 
+                port=8000)
+
+# Start the FastAPI server in a separate thread
+server_thread = threading.Thread(target=run, daemon=True)
+server_thread.start()
+
+</code></pre><pre><code data-lang=bash>%%bash
+curl -X 'POST' \
+  'http://localhost:8000/ChatCompletionsReqGuarded' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+     "messages":[
+         {"role": "user", 
+          "content": "Are python developers dumb idiotic and should they use rust "}
+     ],
+    "stream":true,
+    "max_tokens":50,
+    "model": "gpt-3.5-turbo",
+    "guard_to_apply":"Profanity"
+
+}'
+</code></pre><pre><code data-lang=bash>%%bash
+curl -X 'POST' \
+  'http://localhost:8000/ChatCompletionsReqGuarded' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+     "messages":[
+         {"role": "user", 
+          "content": "Complete the below sentence. he is in id**t "}
+     ],
+    "stream":true,
+    "max_tokens":50,
+    "model": "gpt-3.5-turbo",
+    "guard_to_apply":"Profanity"
+
+}'
+</code></pre><pre><code data-lang=python>
+</code></pre></section></article></main><span class=hidden id=copy-success> Copied! </span><span class=hidden id=copy-init> Copy code to clipboard </span><script defer src=https://abhishek9sharma.github.io/js/copyCodeToClipboard.min.js></script></div><footer><section><nav class="socials nav-navs"><ul><li><a class="nav-links no-hover-padding social" href=https://abhishek9sharma.github.io/atom.xml> <img alt=feed loading=lazy src=https://abhishek9sharma.github.io/social_icons/rss.svg title=feed> </a><li class=js><a class="nav-links no-hover-padding social" data-encoded-email=YWJoaXNoZWs5c2hhcm1hQG91dGxvb2suY29t href=#><img alt=email loading=lazy src=https://abhishek9sharma.github.io/social_icons/email.svg title=email> </a><li><a class="nav-links no-hover-padding social" rel=" me" href=https://twitter.com/abhishek9sh> <img alt=twitter loading=lazy src=https://abhishek9sharma.github.io/social_icons/twitter.svg title=twitter> </a><li><a class="nav-links no-hover-padding social" rel=" me" href=https://github.com/abhishek9sharma> <img alt=github loading=lazy src=https://abhishek9sharma.github.io/social_icons/github.svg title=github> </a><li><a class="nav-links no-hover-padding social" rel=" me" href=https://linkedin.com/in/abhishek9sharma> <img alt=linkedin loading=lazy src=https://abhishek9sharma.github.io/social_icons/linkedin.svg title=linkedin> </a><li><a class="nav-links no-hover-padding social" href="https://scholar.google.com.sg/citations?user=mbwvow0AAAAJ&hl=en" rel=" me"> <img alt=google-scholar loading=lazy src=https://abhishek9sharma.github.io/social_icons/google-scholar.svg title=google-scholar> </a><li><a class="nav-links no-hover-padding social" rel=" me" href=/files/cv/cv-abhishek-academic.pdf> <img alt=cv loading=lazy src=https://abhishek9sharma.github.io/social_icons/cv.svg title=cv> </a></ul></nav><nav class=nav-navs></nav><div class=credits><small> Powered by <a href=https://www.getzola.org>Zola</a> & <a href=https://github.com/welpo/tabi>tabi</a> </small></div></section><script async src=https://abhishek9sharma.github.io/js/decodeMail.min.js></script><div class="search-modal js" aria-labelledby=modalTitle id=searchModal role=dialog><h1 class=visually-hidden id=modalTitle>Search</h1><div id=modal-content><div id=searchBar><div aria-hidden=true class=search-icon><svg viewbox="0 -960 960 960" xmlns=http://www.w3.org/2000/svg><path d="M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z"/></svg></div><input aria-controls=results-container aria-expanded=false autocomplete=off id=searchInput placeholder=Search… role=combobox spellcheck=false><div class="close-icon interactive-icon" title="Clear search" id=clear-search role=button tabindex=0><svg viewbox="0 -960 960 960" xmlns=http://www.w3.org/2000/svg><path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z"/></svg></div></div><div id=results-container><div id=results-info><span id=zero_results> No results</span><span id=one_results> $NUMBER result</span><span id=many_results> $NUMBER results</span><span id=two_results> $NUMBER results</span><span id=few_results> $NUMBER results</span></div><div id=results role=listbox></div></div></div></div></footer>
