@@ -27,14 +27,14 @@
         <link rel="alternate" href="https://abhishek9sharma.github.io/tutorials/guardrails-ai/01-intro/" type="text/html"/>
         <id>https://abhishek9sharma.github.io/tutorials/guardrails-ai/01-intro/</id>
         </entry><entry xml:lang="en">
-        <title>Part 3: Deploying a Guarded Endpoint Using FastAPI</title>
+        <title>Part 2: Deploying a Guarded Endpoint Using FastAPI</title>
         <published>2025-02-23T00:00:00+00:00</published>
         <updated>2025-02-23T00:00:00+00:00</updated>
         <author>
             <name>Unknown</name>
         </author>
-        <link rel="alternate" href="https://abhishek9sharma.github.io/tutorials/guardrails-ai/03-serve/" type="text/html"/>
-        <id>https://abhishek9sharma.github.io/tutorials/guardrails-ai/03-serve/</id>
+        <link rel="alternate" href="https://abhishek9sharma.github.io/tutorials/guardrails-ai/02-serve/" type="text/html"/>
+        <id>https://abhishek9sharma.github.io/tutorials/guardrails-ai/02-serve/</id>
         </entry><entry xml:lang="en">
         <title>sarathi</title>
         <published>2024-05-07T00:00:00+00:00</published>
@@ -125,15 +125,6 @@
         </author>
         <link rel="alternate" href="https://abhishek9sharma.github.io/publications/software-experts/" type="text/html"/>
         <id>https://abhishek9sharma.github.io/publications/software-experts/</id>
-        </entry><entry xml:lang="en">
-        <title>Part 2: Adding a Custom Validator to Guardrails-AI</title>
-        <published>2018-09-09T00:00:00+00:00</published>
-        <updated>2018-09-09T00:00:00+00:00</updated>
-        <author>
-            <name>Unknown</name>
-        </author>
-        <link rel="alternate" href="https://abhishek9sharma.github.io/tutorials/guardrails-ai/02-validator/" type="text/html"/>
-        <id>https://abhishek9sharma.github.io/tutorials/guardrails-ai/02-validator/</id>
         </entry><entry xml:lang="en">
         <title>APIBot: Question Answering Bot for API documentation</title>
         <published>2017-11-11T00:00:00+00:00</published>
