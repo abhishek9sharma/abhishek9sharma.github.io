@@ -10,31 +10,61 @@
         <tabi:visit_the_site>Visit website</tabi:visit_the_site>
         <tabi:recent_posts>Recent posts</tabi:recent_posts>
         <tabi:last_updated_on>Updated on $DATE</tabi:last_updated_on>
-        <tabi:default_theme>light</tabi:default_theme>
+        <tabi:default_theme></tabi:default_theme>
         <tabi:post_listing_date>date</tabi:post_listing_date>
         <tabi:current_section>Abhishek Sharma</tabi:current_section>
     </tabi:metadata><title>Abhishek Sharma</title>
         <subtitle>Machine Learning Engineer | Ph.D. in Information Systems</subtitle>
     <link href="https://abhishek9sharma.github.io/atom.xml" rel="self" type="application/atom+xml"/>
     <link href="https://abhishek9sharma.github.io" rel="alternate" type="text/html"/>
-    <generator uri="https://www.getzola.org/">Zola</generator><updated>2025-02-23T00:00:00+00:00</updated><id>https://abhishek9sharma.github.io/atom.xml</id><entry xml:lang="en">
-        <title>Part 1: Introduction to Guardrails-AI Python Library</title>
-        <published>2025-02-23T00:00:00+00:00</published>
-        <updated>2025-02-23T00:00:00+00:00</updated>
+    <generator uri="https://www.getzola.org/">Zola</generator><updated>2026-02-16T00:00:00+00:00</updated><id>https://abhishek9sharma.github.io/atom.xml</id><entry xml:lang="en">
+        <title>AI Safety and Guardrails for LLM Applications</title>
+        <published>2026-02-16T00:00:00+00:00</published>
+        <updated>2026-02-16T00:00:00+00:00</updated>
         <author>
             <name>Unknown</name>
         </author>
-        <link rel="alternate" href="https://abhishek9sharma.github.io/tutorials/guardrails-ai/01-intro/" type="text/html"/>
-        <id>https://abhishek9sharma.github.io/tutorials/guardrails-ai/01-intro/</id>
+        <link rel="alternate" href="https://abhishek9sharma.github.io/blog/guardrails/" type="text/html"/>
+        <id>https://abhishek9sharma.github.io/blog/guardrails/</id>
+        <summary type="html">Realtime LLM Guardrails High Level Overview</summary>
         </entry><entry xml:lang="en">
         <title>Part 2: Deploying a Guarded Endpoint Using FastAPI</title>
-        <published>2025-02-23T00:00:00+00:00</published>
-        <updated>2025-02-23T00:00:00+00:00</updated>
+        <published>2025-09-24T00:00:00+00:00</published>
+        <updated>2025-09-24T00:00:00+00:00</updated>
         <author>
             <name>Unknown</name>
         </author>
-        <link rel="alternate" href="https://abhishek9sharma.github.io/tutorials/guardrails-ai/02-serve/" type="text/html"/>
-        <id>https://abhishek9sharma.github.io/tutorials/guardrails-ai/02-serve/</id>
+        <link rel="alternate" href="https://abhishek9sharma.github.io/blog/guardrails-ai/02-serve/" type="text/html"/>
+        <id>https://abhishek9sharma.github.io/blog/guardrails-ai/02-serve/</id>
+        </entry><entry xml:lang="en">
+        <title>Part 1: Introduction to Guardrails-AI Python Library</title>
+        <published>2025-09-23T00:00:00+00:00</published>
+        <updated>2025-09-23T00:00:00+00:00</updated>
+        <author>
+            <name>Unknown</name>
+        </author>
+        <link rel="alternate" href="https://abhishek9sharma.github.io/blog/guardrails-ai/01-intro/" type="text/html"/>
+        <id>https://abhishek9sharma.github.io/blog/guardrails-ai/01-intro/</id>
+        </entry><entry xml:lang="en">
+        <title>Serving a Fast API App on Ray Serve and Advance Concepts </title>
+        <published>2025-04-10T00:00:00+00:00</published>
+        <updated>2025-04-10T00:00:00+00:00</updated>
+        <author>
+            <name>Unknown</name>
+        </author>
+        <link rel="alternate" href="https://abhishek9sharma.github.io/blog/fastapi-ray/" type="text/html"/>
+        <id>https://abhishek9sharma.github.io/blog/fastapi-ray/</id>
+        <summary type="html">Serving FastAPI apps using Ray</summary>
+        </entry><entry xml:lang="en">
+        <title>DevOps--&gt;MLOPs--&gt;LLMOps</title>
+        <published>2025-01-14T00:00:00+00:00</published>
+        <updated>2025-01-14T00:00:00+00:00</updated>
+        <author>
+            <name>Unknown</name>
+        </author>
+        <link rel="alternate" href="https://abhishek9sharma.github.io/blog/llmops/" type="text/html"/>
+        <id>https://abhishek9sharma.github.io/blog/llmops/</id>
+        <summary type="html">Slides from a online session for on deploying and scaling machine learning systems in production environments.</summary>
         </entry><entry xml:lang="en">
         <title>sarathi</title>
         <published>2024-05-07T00:00:00+00:00</published>
@@ -177,8 +207,8 @@
         <author>
             <name>Unknown</name>
         </author>
-        <link rel="alternate" href="https://abhishek9sharma.github.io/blog/news/" type="text/html"/>
-        <id>https://abhishek9sharma.github.io/blog/news/</id>
+        <link rel="alternate" href="https://abhishek9sharma.github.io/blog_old/news/" type="text/html"/>
+        <id>https://abhishek9sharma.github.io/blog_old/news/</id>
         </entry><entry xml:lang="en">
         <title>Temporal kernel descriptors for learning with time-sensitive patterns?</title>
         <published>2016-05-05T00:00:00+00:00</published>
