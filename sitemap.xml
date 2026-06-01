@@ -53,6 +53,18 @@
         <loc>https://abhishek9sharma.github.io/projects/</loc>
     </url>
     <url>
+        <loc>https://abhishek9sharma.github.io/projects/asangati/</loc>
+        <lastmod>2026-04-29T00:00:00</lastmod>
+    </url>
+    <url>
+        <loc>https://abhishek9sharma.github.io/projects/kafka-flink-demo/</loc>
+        <lastmod>2022-05-07T00:00:00</lastmod>
+    </url>
+    <url>
+        <loc>https://abhishek9sharma.github.io/projects/llmops/</loc>
+        <lastmod>2024-08-09T00:00:00</lastmod>
+    </url>
+    <url>
         <loc>https://abhishek9sharma.github.io/projects/mlops/</loc>
         <lastmod>2021-12-07T00:00:00</lastmod>
     </url>
@@ -158,10 +170,19 @@
         <loc>https://abhishek9sharma.github.io/tags/2022/</loc>
     </url>
     <url>
+        <loc>https://abhishek9sharma.github.io/tags/agents/</loc>
+    </url>
+    <url>
+        <loc>https://abhishek9sharma.github.io/tags/anomaly-detection/</loc>
+    </url>
+    <url>
         <loc>https://abhishek9sharma.github.io/tags/ase/</loc>
     </url>
     <url>
         <loc>https://abhishek9sharma.github.io/tags/awards/</loc>
+    </url>
+    <url>
+        <loc>https://abhishek9sharma.github.io/tags/data-processing/</loc>
     </url>
     <url>
         <loc>https://abhishek9sharma.github.io/tags/docker/</loc>
@@ -173,6 +194,9 @@
         <loc>https://abhishek9sharma.github.io/tags/emse/</loc>
     </url>
     <url>
+        <loc>https://abhishek9sharma.github.io/tags/flink/</loc>
+    </url>
+    <url>
         <loc>https://abhishek9sharma.github.io/tags/git/</loc>
     </url>
     <url>
@@ -180,6 +204,9 @@
     </url>
     <url>
         <loc>https://abhishek9sharma.github.io/tags/icsme/</loc>
+    </url>
+    <url>
+        <loc>https://abhishek9sharma.github.io/tags/kafka/</loc>
     </url>
     <url>
         <loc>https://abhishek9sharma.github.io/tags/llm/</loc>
@@ -191,10 +218,19 @@
         <loc>https://abhishek9sharma.github.io/tags/ml-ops/</loc>
     </url>
     <url>
+        <loc>https://abhishek9sharma.github.io/tags/mlops/</loc>
+    </url>
+    <url>
+        <loc>https://abhishek9sharma.github.io/tags/monitoring/</loc>
+    </url>
+    <url>
         <loc>https://abhishek9sharma.github.io/tags/msr/</loc>
     </url>
     <url>
         <loc>https://abhishek9sharma.github.io/tags/news/</loc>
+    </url>
+    <url>
+        <loc>https://abhishek9sharma.github.io/tags/python/</loc>
     </url>
     <url>
         <loc>https://abhishek9sharma.github.io/tags/saner/</loc>
@@ -204,6 +240,9 @@
     </url>
     <url>
         <loc>https://abhishek9sharma.github.io/tags/socinfo/</loc>
+    </url>
+    <url>
+        <loc>https://abhishek9sharma.github.io/tags/streaming/</loc>
     </url>
     <url>
         <loc>https://abhishek9sharma.github.io/tags/tensorflow/</loc>
