@@ -13,7 +13,8 @@
     --ink:#1B2433;--muted:#5C6675;--faint:#8B94A3;
     --tok:#0E7C86;--tok-soft:#E3F4F5;--tok-line:#9AD7DC;
     --kv:#7C3AED;--kv-soft:#F3EEFF;--kv-line:#D9C8F5;   /* cache = violet */
-    --k:#7C3AED;--v:#C026D3;--waste:#E03131;--good:#0CA678;
+    --q:#7048E8;--k:#EA580C;--v:#0CA678;  /* Q/K/V match Step 3 */
+    --waste:#E03131;--good:#0CA678;
     --mono:'JetBrains Mono',ui-monospace,monospace;
     --disp:'Space Grotesk',system-ui,sans-serif;--body:'Inter',system-ui,sans-serif;
   }
@@ -75,7 +76,7 @@
   .kvcell.cached{background:var(--kv);opacity:.4}
   .kvcell.fresh{background:var(--kv);box-shadow:0 0 0 2px var(--kv-line)}
   .kvcell.recompute{background:var(--waste)}
-  .kvcell.q{background:var(--v)}
+  .kvcell.q{background:var(--q)}
   .kvcell.empty{background:var(--bg);border:1px dashed var(--line-strong)}
 
   /* compute comparison chart */
@@ -257,9 +258,9 @@
 <section>
   <div class="eyebrow"><span class="idx">01</span><span class="lbl">The Redundancy</span></div>
   <h2>Without a cache, you redo everything every step</h2>
-  <p>Recall from Step 3: to process a token, the model computes its <b style="color:var(--v)">Query</b> and
+  <p>Recall from Step 3: to process a token, the model computes its <b style="color:var(--q)">Query</b> and
     dots it against the <b style="color:var(--k)">Key</b> of every earlier token, then blends their
-    <b>Values</b>. Here's the catch during generation — the Keys and Values of past tokens
+    <b style="color:var(--v)">Values</b>. Here's the catch during generation — the Keys and Values of past tokens
     <b>never change</b>. Yet a naive loop recomputes all of them at every step:</p>
 
   <div class="card">

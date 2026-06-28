@@ -103,6 +103,9 @@
   border-radius: 50%;
   object-fit: cover;
   display: block;
+  /* photo is tilted; rotate counter-clockwise to level the horizon.
+     slight scale keeps the circular crop fully covered. */
+  transform: rotate(-2deg) scale(1.03);
 }
 
 /* Experience page job company styling */

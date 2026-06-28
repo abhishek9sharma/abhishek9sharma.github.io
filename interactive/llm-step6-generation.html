@@ -12,7 +12,7 @@
     --bg:#F7F8FA;--surface:#FFFFFF;--line:#E3E7EE;--line-strong:#CBD3DF;
     --ink:#1B2433;--muted:#5C6675;--faint:#8B94A3;
     --tok:#0E7C86;--tok-soft:#E3F4F5;--tok-line:#9AD7DC;
-    --vec:#4F46E5;--att:#C2255C;--blk:#3B82C4;--trn:#D9480F;
+    --vec:#4F46E5;--att:#EA580C;--blk:#3B82C4;--trn:#D9480F;
     --gen:#0CA678;--gen-soft:#D1FAE5;--gen-line:#6EE7B7;  /* generation = emerald */
     --mono:'JetBrains Mono',ui-monospace,monospace;
     --disp:'Space Grotesk',system-ui,sans-serif;--body:'Inter',system-ui,sans-serif;
@@ -39,6 +39,8 @@
   .kicker{font-family:var(--mono);font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--gen);font-weight:600}
   h1{font-family:var(--disp);font-weight:700;font-size:clamp(26px,5vw,42px);line-height:1.08;margin:.35em 0 .25em;letter-spacing:-.015em}
   .lede{color:var(--muted);max-width:62ch;font-size:17px}
+  .recap{font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:16px;background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:9px 13px;line-height:1.6}
+  .recap b{color:var(--gen);font-weight:600}
   section{margin-top:48px}
   .eyebrow{display:flex;align-items:baseline;gap:12px;margin-bottom:8px}
   .eyebrow .idx{font-family:var(--mono);font-size:13px;font-weight:600;color:#fff;background:var(--gen);border-radius:6px;padding:2px 8px}
@@ -131,11 +133,12 @@
 </nav>
 
 <header>
-  <div class="kicker">Build an LLM · Step 6 of 6 — the finale</div>
+  <div class="kicker">Build an LLM · Step 6 of a series</div>
   <h1>Generation: putting it all together</h1>
   <p class="lede">A trained model doesn't write a sentence in one shot. It predicts <b>one token</b>,
     appends it, and feeds the whole thing back in to predict the next — over and over. That loop is all
     "generation" is. Here's a small model that actually <b>runs it live</b>, so you can watch words appear.</p>
+  <div class="recap"><b>Story so far ▸</b> a fully trained model, Steps 1–5. <b>This step ▸</b> using it to generate text, one token at a time — the build is complete here; Steps 7–8 cover serving it efficiently.</div>
 </header>
 
 <!-- THE LOOP -->
@@ -368,7 +371,7 @@ const STAGES=[
   {n:'1',nm:'Tokenize',ds:'text → tokens via BPE',c:'#0E7C86',bg:'#E3F4F5'},
   {n:'1',nm:'Embed',ds:'each token ID → a learned vector',c:'#4F46E5',bg:'#ECEBFD'},
   {n:'2',nm:'Add position',ds:'inject where each token sits in the sequence',c:'#D9480F',bg:'#FFF0E6'},
-  {n:'3-4',nm:'Transformer blocks ×N',ds:'attention + feed-forward, stacked deep',c:'#C2255C',bg:'#FCE7F0'},
+  {n:'3-4',nm:'Transformer blocks ×N',ds:'attention + feed-forward, stacked deep',c:'#EA580C',bg:'#FFF7ED'},
   {n:'2',nm:'Prediction head',ds:'final vector → logits → softmax over vocab',c:'#3B82C4',bg:'#E0F0FB'},
   {n:'6',nm:'Sample a token',ds:'temperature + top-k/top-p pick the next word',c:'#0CA678',bg:'#D1FAE5'},
   {n:'6',nm:'Append & repeat',ds:'feed it back in — the autoregressive loop',c:'#0CA678',bg:'#D1FAE5'},

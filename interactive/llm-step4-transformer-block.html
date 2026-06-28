@@ -12,7 +12,7 @@
     --bg:#F7F8FA;--surface:#FFFFFF;--line:#E3E7EE;--line-strong:#CBD3DF;
     --ink:#1B2433;--muted:#5C6675;--faint:#8B94A3;
     --tok:#0E7C86;--tok-soft:#E3F4F5;--tok-line:#9AD7DC;
-    --att:#C2255C;--att-soft:#FCE7F0;--att-line:#F4A8C8;
+    --att:#EA580C;--att-soft:#FFF7ED;--att-line:#FDBA74;  /* attention = orange (matches Step 3) */
     --blk:#3B82C4;--blk-soft:#E0F0FB;--blk-line:#A8D3F0;  /* block = blue */
     --ffn:#7048E8;--res:#0CA678;
     --mono:'JetBrains Mono',ui-monospace,monospace;
@@ -40,6 +40,8 @@
   .kicker{font-family:var(--mono);font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--blk);font-weight:600}
   h1{font-family:var(--disp);font-weight:700;font-size:clamp(26px,5vw,42px);line-height:1.08;margin:.35em 0 .25em;letter-spacing:-.015em}
   .lede{color:var(--muted);max-width:62ch;font-size:17px}
+  .recap{font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:16px;background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:9px 13px;line-height:1.6}
+  .recap b{color:var(--blk);font-weight:600}
   section{margin-top:48px}
   .eyebrow{display:flex;align-items:baseline;gap:12px;margin-bottom:8px}
   .eyebrow .idx{font-family:var(--mono);font-size:13px;font-weight:600;color:#fff;background:var(--blk);border-radius:6px;padding:2px 8px}
@@ -135,6 +137,7 @@
   <p class="lede">One attention pattern sees one kind of relationship. Real models run several in
     parallel — different <b>heads</b> specialise — then wrap attention in feed-forward layers, residual
     "shortcuts," and normalization. Stack that block N times and you have the engine of an LLM.</p>
+  <div class="recap"><b>Story so far ▸</b> a single attention pattern resolving one relationship (Step 3). <b>This step ▸</b> running many heads at once and wrapping them into the full block you stack N times.</div>
 </header>
 
 <!-- MULTI-HEAD -->

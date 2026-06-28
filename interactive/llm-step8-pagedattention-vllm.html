@@ -158,6 +158,22 @@
     for the <i>maximum</i> sequence length it might reach — say 2048 tokens — even though it might only
     generate 30. This creates two kinds of waste:</p>
 
+  <div class="card" style="margin-bottom:14px">
+    <h3>First — what is a "request"?</h3>
+    <p class="small" style="margin-top:0">A <b>request</b> is one user's call to the model: their prompt
+      plus the tokens being generated back to them. A busy GPU serves <b>many at once</b>, and each one needs
+      its own slice of KV-cache memory (the keys &amp; values from Step 7). Throughout this page,
+      <b>R1–R4</b> are four such concurrent requests — each a different user, prompt, and length:</p>
+    <div style="display:flex;flex-direction:column;gap:7px;margin-top:12px">
+      <div style="display:flex;align-items:center;gap:10px"><span style="display:inline-flex;width:34px;height:24px;flex:0 0 34px;align-items:center;justify-content:center;border-radius:6px;color:#fff;font-family:var(--mono);font-size:11px;font-weight:600;background:var(--r1)">R1</span><span class="small"><code>"Translate this email into French…"</code> &middot; short</span></div>
+      <div style="display:flex;align-items:center;gap:10px"><span style="display:inline-flex;width:34px;height:24px;flex:0 0 34px;align-items:center;justify-content:center;border-radius:6px;color:#fff;font-family:var(--mono);font-size:11px;font-weight:600;background:var(--r2)">R2</span><span class="small"><code>"Write a haiku about the ocean…"</code> &middot; tiny</span></div>
+      <div style="display:flex;align-items:center;gap:10px"><span style="display:inline-flex;width:34px;height:24px;flex:0 0 34px;align-items:center;justify-content:center;border-radius:6px;color:#fff;font-family:var(--mono);font-size:11px;font-weight:600;background:var(--r3)">R3</span><span class="small"><code>"Summarize this 5-page report…"</code> &middot; long</span></div>
+      <div style="display:flex;align-items:center;gap:10px"><span style="display:inline-flex;width:34px;height:24px;flex:0 0 34px;align-items:center;justify-content:center;border-radius:6px;color:#fff;font-family:var(--mono);font-size:11px;font-weight:600;background:var(--r4)">R4</span><span class="small"><code>"def quicksort(arr): …"</code> &middot; medium</span></div>
+    </div>
+    <p class="small" style="margin-top:12px;border-top:1px solid var(--line);padding-top:10px">Each finishes
+      at a different, <b>unpredictable</b> time — which is exactly what makes packing them into GPU memory hard.</p>
+  </div>
+
   <div class="card">
     <h3>Naive contiguous KV allocation — 4 requests on a GPU</h3>
     <div class="memwrap"><div class="memrow" id="naive-mem"></div></div>
@@ -196,12 +212,20 @@
       <span class="lbl" id="paged-util-lbl"></span>
     </div>
     <div class="controls">
-      <button class="btn primary" id="paged-add">+ Add request</button>
+      <button class="btn primary" id="paged-gen">▸ R1 generates a token</button>
+      <button class="btn" id="paged-add">+ Add request</button>
       <button class="btn" id="paged-finish">− Finish a request</button>
       <button class="btn" id="paged-reset3">Reset</button>
     </div>
     <p class="small" id="paged-read" style="margin-top:8px"></p>
+    <p class="small" id="paged-gen-read" style="margin-top:4px;min-height:18px"></p>
   </div>
+
+  <div class="note"><b>New tokens are the whole reason paging wins.</b> During generation the model appends
+    <b>one token at a time</b> to a request's KV cache (Step 7). With paging, a request holds only the blocks
+    it has filled so far; when its last block fills up (every 16th token) it grabs <b>one</b> fresh block from
+    the free pool — <i>on demand</i>. The naive scheme, by contrast, reserves all 2048 tokens up front on token 1.
+    Hit <b>“R1 generates a token”</b> above and watch a new block appear exactly when R1 crosses a 16-token boundary.</div>
 
   <div class="card">
     <h3>The block table — logical tokens → physical blocks</h3>
@@ -389,9 +413,25 @@ document.querySelectorAll('#paged-toggle button').forEach(b=>b.addEventListener(
   document.querySelectorAll('#paged-toggle button').forEach(x=>x.classList.toggle('active',x===b));
   renderPaged();
 }));
-$('#paged-add').onclick=()=>{ if(reqs.length<4) reqs.push({tokens:10+Math.floor(Math.random()*45)}); renderPaged(); };
-$('#paged-finish').onclick=()=>{ reqs.pop(); renderPaged(); };
-$('#paged-reset3').onclick=()=>{ reqs=[{tokens:40},{tokens:18},{tokens:55}]; renderPaged(); };
+$('#paged-add').onclick=()=>{ if(reqs.length<4) reqs.push({tokens:10+Math.floor(Math.random()*45)}); renderPaged(); $('#paged-gen-read').textContent=''; };
+$('#paged-finish').onclick=()=>{ reqs.pop(); renderPaged(); $('#paged-gen-read').textContent=''; };
+$('#paged-reset3').onclick=()=>{ reqs=[{tokens:40},{tokens:18},{tokens:55}]; renderPaged(); $('#paged-gen-read').textContent=''; };
+$('#paged-gen').onclick=()=>{
+  if(pagedMode!=='paged'){ document.querySelector('#paged-toggle button[data-mode="paged"]').click(); }
+  if(!reqs.length){ reqs=[{tokens:0}]; }
+  const before=Math.ceil(reqs[0].tokens/BLOCK);
+  reqs[0].tokens+=1;
+  const after=Math.ceil(reqs[0].tokens/BLOCK);
+  renderPaged();
+  const t=reqs[0].tokens, used=t%BLOCK||BLOCK;
+  if(after>before){
+    $('#paged-gen-read').innerHTML=`<b style="color:var(--r1)">R1</b> reached token ${t} → last block was full, so a <b style="color:var(--good)">new block was allocated on demand</b>. R1 now uses ${after} block(s).`;
+  } else if(used===BLOCK){
+    $('#paged-gen-read').innerHTML=`<b style="color:var(--r1)">R1</b> now has ${t} tokens — its last block is <b>exactly full (${BLOCK}/${BLOCK})</b>. The next token will trigger a fresh block.`;
+  } else {
+    $('#paged-gen-read').innerHTML=`<b style="color:var(--r1)">R1</b> now has ${t} tokens — its last block holds ${used}/${BLOCK}, room to spare, so <b>no new block needed</b> yet.`;
+  }
+};
 renderPaged();
 
 /* ========== 3. PREFIX SHARING ========== */
