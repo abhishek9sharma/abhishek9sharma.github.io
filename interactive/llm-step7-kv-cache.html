@@ -213,7 +213,7 @@
       Walk through all 4 sub-steps. Notice the shapes grow — and that most of the work is wasted.</p>
     <div class="step-tabs" id="we-tabs">
       <button class="active" data-step="0">1 token: "The"</button>
-      <button data-step="1">2 tokens: "The cat"</button>
+      <button data-step="1">2 tokens: "The dog"</button>
       <button data-step="2">3 tokens: "The dog sat"</button>
     </div>
     <div id="we-nocache"></div>
@@ -300,6 +300,46 @@
     "asked its question" on the step it was generated. But it remains an <i>answer source</i> for all future
     tokens, so its Key (how it's matched) and Value (what it contributes) must stick around. Hence
     <b>KV</b> cache, not QKV cache.</div>
+
+  <div class="card">
+    <h3>The full picture — two passes, spelled out</h3>
+    <p class="small" style="margin-top:0">Take the same example from Step 6: the prompt is <code>"The dog"</code>
+      and the model generates <code>"sat"</code> then <code>"on"</code>. Here is <b>exactly</b> what each pass
+      computes fresh versus reads from the cache:</p>
+    <div style="overflow-x:auto;margin-top:12px">
+      <table style="border-collapse:collapse;width:100%;font-size:12.5px;min-width:520px">
+        <thead>
+          <tr style="text-align:left">
+            <th style="padding:7px 9px;border-bottom:2px solid var(--line-strong);font-family:var(--mono);font-size:10.5px;letter-spacing:.05em;color:var(--faint);text-transform:uppercase">Pass</th>
+            <th style="padding:7px 9px;border-bottom:2px solid var(--line-strong);font-family:var(--mono);font-size:10.5px;letter-spacing:.05em;color:var(--faint);text-transform:uppercase">Fed in</th>
+            <th style="padding:7px 9px;border-bottom:2px solid var(--line-strong);font-family:var(--mono);font-size:10.5px;letter-spacing:.05em;color:var(--faint);text-transform:uppercase">K/V computed now</th>
+            <th style="padding:7px 9px;border-bottom:2px solid var(--line-strong);font-family:var(--mono);font-size:10.5px;letter-spacing:.05em;color:var(--faint);text-transform:uppercase">K/V reused from cache</th>
+            <th style="padding:7px 9px;border-bottom:2px solid var(--line-strong);font-family:var(--mono);font-size:10.5px;letter-spacing:.05em;color:var(--faint);text-transform:uppercase">Predicts</th>
+          </tr>
+        </thead>
+        <tbody style="font-family:var(--mono)">
+          <tr>
+            <td style="padding:9px;border-bottom:1px solid var(--line);vertical-align:top"><b>1</b><br><span style="color:var(--faint);font-size:11px">prefill</span></td>
+            <td style="padding:9px;border-bottom:1px solid var(--line);vertical-align:top">The · dog</td>
+            <td style="padding:9px;border-bottom:1px solid var(--line);vertical-align:top;color:var(--kv)"><b>The, dog</b><br><span style="font-size:11px">(2 fresh)</span></td>
+            <td style="padding:9px;border-bottom:1px solid var(--line);vertical-align:top;color:var(--faint)">— nothing yet</td>
+            <td style="padding:9px;border-bottom:1px solid var(--line);vertical-align:top;color:var(--good)"><b>sat</b></td>
+          </tr>
+          <tr>
+            <td style="padding:9px;vertical-align:top"><b>2</b><br><span style="color:var(--faint);font-size:11px">decode</span></td>
+            <td style="padding:9px;vertical-align:top">sat <span style="color:var(--faint)">(only the new token)</span></td>
+            <td style="padding:9px;vertical-align:top;color:var(--kv)"><b>sat</b><br><span style="font-size:11px">(1 fresh)</span></td>
+            <td style="padding:9px;vertical-align:top;color:var(--good)"><b>The, dog</b><br><span style="font-size:11px">(2 from cache)</span></td>
+            <td style="padding:9px;vertical-align:top;color:var(--good)"><b>on</b></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="small" style="margin-top:12px">The cache now holds <code>K/V</code> for <b>The · dog · sat</b>.
+      Pass 2 fed in <b>one</b> token instead of three, yet attention still saw the full history — because the
+      earlier Keys and Values were waiting in the cache. That is the entire trick: <b>each decode step does
+      O(1) new K/V work regardless of how long the context already is.</b></p>
+  </div>
 </section>
 
 <!-- COMPUTE COMPARISON -->

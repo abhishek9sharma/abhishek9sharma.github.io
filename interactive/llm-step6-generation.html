@@ -101,6 +101,51 @@
   .next h3{font-family:var(--disp);font-size:16px;margin:0 0 6px;color:#065f46}.next p{color:#047857;font-size:14px;margin:0}
   .pill{display:inline-block;font-family:var(--mono);font-size:11px;color:var(--gen);background:var(--gen-soft);border:1px solid var(--gen-line);border-radius:20px;padding:2px 10px;margin-top:10px;text-decoration:none;cursor:pointer;}
 
+  /* ---- forward-pass animation ---- */
+  .fp-cyclebar{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:12px;color:var(--muted);margin-bottom:14px}
+  .fp-cyclebar .dot{width:10px;height:10px;border-radius:50%;background:var(--line-strong);transition:background .3s}
+  .fp-cyclebar .dot.on{background:var(--gen)}
+  .fp-ctxlabel{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);margin-bottom:6px}
+  .fp-context{display:flex;flex-wrap:wrap;gap:6px;align-items:center;min-height:32px;margin-bottom:16px}
+  .fp-tok{font-family:var(--mono);font-size:13px;padding:5px 10px;border-radius:7px;background:var(--tok-soft);color:var(--tok);border:1px solid var(--tok-line);transition:box-shadow .25s,transform .25s}
+  .fp-tok.attend{box-shadow:0 0 0 2px var(--att);position:relative}
+  .fp-tok.querytok{box-shadow:0 0 0 2px var(--vec)}
+  .fp-tok.new{background:var(--gen-soft);color:#065f46;border-color:var(--gen-line);animation:fp-pop .45s ease}
+  @keyframes fp-pop{0%{transform:scale(.3);opacity:0}60%{transform:scale(1.18)}100%{transform:scale(1)}}
+  .fp-flow{display:flex;align-items:stretch;flex-wrap:wrap;gap:0}
+  .fp-stage{flex:1 1 0;min-width:84px;text-align:center;border:1px solid var(--line);border-radius:10px;padding:11px 6px;background:var(--bg);transition:opacity .25s,box-shadow .25s,transform .25s;opacity:.45}
+  .fp-stage.active{opacity:1;border-color:var(--c);box-shadow:0 0 0 2px var(--c);transform:translateY(-3px)}
+  .fp-stage.done{opacity:.92}
+  .fp-stage .st-nm{font-family:var(--disp);font-weight:600;font-size:12.5px;color:var(--c)}
+  .fp-stage .st-sub{font-size:10px;color:var(--muted);margin-top:3px;line-height:1.3}
+  .fp-arrow{align-self:center;color:var(--faint);padding:0 3px;font-size:13px}
+  .fp-narrate{margin-top:16px;font-size:14px;min-height:46px;background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:11px 14px;line-height:1.5}
+  .fp-narrate b{color:var(--gen);font-weight:600}
+  .fp-scores{display:flex;gap:6px;margin-top:9px;font-family:var(--mono);font-size:11px;flex-wrap:wrap}
+  .fp-score{padding:2px 8px;border-radius:5px;background:#FFF7ED;color:var(--att);border:1px solid var(--att-line,#FDBA74)}
+  [data-theme="dark"] .fp-score{background:#431407}
+  /* numeric detail panel (vectors → QKV matrices → scores) */
+  .fp-detail{margin-top:14px;display:flex;flex-wrap:wrap;gap:14px 18px;align-items:flex-start}
+  .fp-detail:empty{display:none}
+  .fp-mat{font-family:var(--mono);font-size:11px}
+  .fp-mat .cap{display:block;font-size:9.5px;color:var(--faint);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px}
+  .fp-mat .cap b{color:var(--ink)}
+  .fp-grid{display:inline-grid;gap:3px}
+  .fp-cell{min-width:36px;text-align:center;padding:3px 5px;border-radius:4px;background:var(--bg);border:1px solid var(--line);color:var(--muted)}
+  .fp-rowlab{display:flex;align-items:center;justify-content:flex-end;padding-right:5px;font-size:10px;color:var(--faint)}
+  .fp-cell.q{border-color:var(--vec);color:var(--vec);background:#ECEBFD}
+  .fp-cell.k{border-color:var(--att);color:var(--att);background:#FFF7ED}
+  .fp-cell.v{border-color:var(--gen);color:var(--gen);background:var(--gen-soft)}
+  .fp-cell.hot{background:var(--att);color:#fff;border-color:var(--att)}
+  [data-theme="dark"] .fp-cell.q{background:#1a1847}[data-theme="dark"] .fp-cell.k{background:#431407}[data-theme="dark"] .fp-cell.v{background:#06281e}
+  .fp-op{align-self:center;color:var(--faint);font-size:15px;padding-top:14px}
+  .fp-headrow{display:grid;grid-template-columns:62px 1fr 44px;gap:8px;align-items:center;font-family:var(--mono);font-size:11px;margin:2px 0}
+  .fp-headtrack{position:relative;height:12px;background:var(--bg);border:1px solid var(--line);border-radius:4px;overflow:hidden}
+  .fp-headbar{position:absolute;inset:1px auto 1px 1px;background:var(--blk);border-radius:3px;transition:width .4s}
+  .fp-headrow.win .fp-headbar{background:var(--gen)}
+  .fp-headrow.win{font-weight:600;color:var(--gen)}
+  @media(max-width:560px){.fp-stage{min-width:70px;padding:8px 4px}.fp-stage .st-sub{display:none}.fp-arrow{padding:0 1px}}
+
   /* ---- injected series navigator (consistent across all 8 steps) ---- */
   .series-nav{display:flex;flex-direction:column;align-items:center;gap:7px;padding:10px 0 14px;margin-bottom:4px}
   .sn-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center}
@@ -167,9 +212,57 @@
     the loop itself is exactly what you see above.</div>
 </section>
 
+<!-- ANIMATED FORWARD PASS -->
+<section>
+  <div class="eyebrow"><span class="idx">02</span><span class="lbl">Watch the Data Flow</span></div>
+  <h2>Two full cycles, animated end to end</h2>
+  <p>Here is the journey of Steps 1–4 made concrete, played twice — now with the <b>actual numbers</b>.
+    Watch each token become a vector, get projected into the <b style="color:var(--vec)">Q</b>,
+    <b style="color:var(--att)">K</b>, <b style="color:var(--gen)">V</b> matrices, mix through attention,
+    reach the final head, and produce a prediction that is <b>appended and fed back in</b>. The numbers use a
+    tiny 3-dimensional model so they fit on screen; for the same idea on a real GPT-2, see the
+    <a href="https://poloclub.github.io/transformer-explainer/" target="_blank" rel="noopener" style="color:var(--gen);font-weight:600">Transformer Explainer ↗</a>.</p>
+
+  <div class="card">
+    <div class="fp-cyclebar">
+      <span>Generation cycle:</span>
+      <span class="dot" id="fp-d1"></span><span class="dot" id="fp-d2"></span>
+      <span id="fp-cyclelbl" style="margin-left:4px"></span>
+    </div>
+
+    <div class="fp-ctxlabel">Context so far</div>
+    <div class="fp-context" id="fp-context"></div>
+
+    <div class="fp-flow" id="fp-flow">
+      <div class="fp-stage" data-stage="0" style="--c:var(--vec)"><div class="st-nm">Embed</div><div class="st-sub">token → vector</div></div>
+      <span class="fp-arrow">▸</span>
+      <div class="fp-stage" data-stage="1" style="--c:var(--trn)"><div class="st-nm">+ Position</div><div class="st-sub">add order</div></div>
+      <span class="fp-arrow">▸</span>
+      <div class="fp-stage" data-stage="2" style="--c:var(--att)"><div class="st-nm">Attention</div><div class="st-sub">tokens mix; scores</div></div>
+      <span class="fp-arrow">▸</span>
+      <div class="fp-stage" data-stage="3" style="--c:var(--blk)"><div class="st-nm">Final head</div><div class="st-sub">logits → softmax</div></div>
+      <span class="fp-arrow">▸</span>
+      <div class="fp-stage" data-stage="4" style="--c:var(--gen)"><div class="st-nm">Predict</div><div class="st-sub">pick next token</div></div>
+    </div>
+
+    <div class="fp-narrate" id="fp-narrate">Press <b>▶ Play</b> to watch two prediction cycles run through the whole architecture.</div>
+    <div class="fp-detail" id="fp-detail"></div>
+
+    <div class="controls" style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap">
+      <button class="btn primary" id="fp-play">▶ Play</button>
+      <button class="btn" id="fp-step">Step ›</button>
+      <button class="btn" id="fp-replay" disabled>↺ Replay</button>
+    </div>
+  </div>
+
+  <div class="note"><b>Notice the second cycle is longer.</b> Once "sat" is appended, the attention step
+    now scores <i>three</i> tokens instead of two — every new token makes the next pass do slightly more
+    work. That growing cost is exactly the problem the <b>KV cache</b> solves in Step 7.</div>
+</section>
+
 <!-- LIVE GENERATION -->
 <section>
-  <div class="eyebrow"><span class="idx">02</span><span class="lbl">Watch It Generate</span></div>
+  <div class="eyebrow"><span class="idx">03</span><span class="lbl">Watch It Generate</span></div>
   <h2>A working model, generating live</h2>
   <p>This model was trained on a small set of simple sentences. Give it a starting word, set the
     temperature and sampling controls from Step 2, and press generate. Watch each token get chosen from
@@ -226,7 +319,7 @@
 
 <!-- FULL RECAP -->
 <section>
-  <div class="eyebrow"><span class="idx">03</span><span class="lbl">The Whole Picture</span></div>
+  <div class="eyebrow"><span class="idx">04</span><span class="lbl">The Whole Picture</span></div>
   <h2>Everything you built, in one pass</h2>
   <p>Here's the complete journey of a single token prediction, tying all six steps together:</p>
   <div class="card">
@@ -381,6 +474,185 @@ $('#pipeline').innerHTML=STAGES.map((s,i)=>`
     <span class="num" style="color:${s.c}">${s.n}</span>
     <span><span class="nm" style="color:${s.c}">${s.nm}</span> <span class="ds">— ${s.ds}</span></span>
   </div>${i<STAGES.length-1?'<div class="pl-arr">↓</div>':''}`).join('');
+
+/* ============================================================
+   Animated forward pass — two autoregressive cycles.
+   Self-contained (IIFE) so it can't collide with the demo above.
+   ============================================================ */
+(function(){
+  const q=s=>document.querySelector(s);
+  const flow=q('#fp-flow'), ctxEl=q('#fp-context'), narr=q('#fp-narrate');
+  const stages=[...document.querySelectorAll('.fp-stage')];
+  if(!flow) return;
+
+  // ---- a tiny 3-dimensional model, so every matrix fits on screen ----
+  const D=3;
+  const EMB={ The:[0.20,0.10,0.00], dog:[0.90,0.20,0.10], sat:[0.30,0.80,0.20], on:[0.10,0.30,0.70] };
+  const POS=[ [0.00,0.10,0.00],[0.10,0.00,0.10],[0.00,0.20,0.00],[0.10,0.10,0.10] ];
+  const WQ=[[0.6,0.1,0.0],[0.0,0.7,0.1],[0.1,0.0,0.5]];
+  const WK=[[0.5,0.0,0.2],[0.1,0.6,0.0],[0.0,0.1,0.4]];
+  const WV=[[0.3,0.2,0.0],[0.0,0.5,0.1],[0.2,0.0,0.6]];
+  const PRED=['sat','on'];
+  // illustrative candidate logits per cycle (argmax matches PRED)
+  const HEAD=[
+    [['sat',2.1],['ran',1.0],['barked',0.6],['the',0.2]],
+    [['on',1.9],['down',1.1],['away',0.7],['the',0.3]],
+  ];
+  // math
+  const vadd=(a,b)=>a.map((x,i)=>x+b[i]);
+  const vmul=(v,M)=>M[0].map((_,j)=>v.reduce((s,_,k)=>s+v[k]*M[k][j],0)); // (1×D)·(D×D)
+  const dot=(a,b)=>a.reduce((s,x,i)=>s+x*b[i],0);
+  const softmax=a=>{const m=Math.max(...a),e=a.map(x=>Math.exp(x-m)),s=e.reduce((x,y)=>x+y,0);return e.map(x=>x/s);};
+  function computeAttn(ctx){
+    const X=ctx.map((t,i)=>vadd(EMB[t],POS[i]));
+    const Q=X.map(x=>vmul(x,WQ)), K=X.map(x=>vmul(x,WK)), V=X.map(x=>vmul(x,WV));
+    const last=ctx.length-1;
+    const raw=K.map(k=>dot(Q[last],k)/Math.sqrt(D));
+    const w=softmax(raw);
+    const out=V[0].map((_,j)=>w.reduce((s,_,i)=>s+w[i]*V[i][j],0));
+    return {X,Q,K,V,raw,w,out,last};
+  }
+  // render a labelled number grid
+  function matHTML(cap,rowLabs,data,cls){
+    const cols=data[0].length;
+    const body=data.map((r,ri)=>(rowLabs?`<div class="fp-rowlab">${rowLabs[ri]}</div>`:'')
+      +r.map(v=>`<div class="fp-cell ${cls||''}">${v.toFixed(1)}</div>`).join('')).join('');
+    return `<div class="fp-mat"><span class="cap">${cap}</span><div class="fp-grid" style="grid-template-columns:${rowLabs?'auto ':''}repeat(${cols},auto)">${body}</div></div>`;
+  }
+
+  const NARR=[
+    c=>`<b>Embed:</b> each of the ${c.length} token(s) becomes a learned vector (Step 1).`,
+    c=>`<b>+ Position:</b> a positional vector is added so order is preserved (Step 2).`,
+    c=>`<b>Attention:</b> X is projected into <b style="color:var(--vec)">Q</b>, <b style="color:var(--att)">K</b>, <b style="color:var(--gen)">V</b>; the last token's Q is scored against every K, softmaxed, then used to blend the V's (Step 3).`,
+    c=>`<b>Final head:</b> the last position's output vector → logits → softmax over candidate next-words (Step 4).`,
+    c=>``,
+  ];
+
+  const STEP_MS=1900;            // per-frame pacing during auto-play (slowed down)
+  let context=[], timer=null, idx=0, plan=[];
+
+  function renderCtx(newIdx){
+    ctxEl.innerHTML=context.map((t,i)=>
+      `<span class="fp-tok${i===newIdx?' new':''}">${t}</span>`).join('');
+  }
+  function resetStages(){ stages.forEach(s=>s.classList.remove('active','done')); }
+  function setCycle(n){
+    q('#fp-d1').classList.toggle('on',n>=1);
+    q('#fp-d2').classList.toggle('on',n>=2);
+    q('#fp-cyclelbl').textContent=`${n} of 2`;
+  }
+
+  function renderDetail(si,cyc){
+    const det=q('#fp-detail');
+    if(si===0){
+      det.innerHTML=matHTML('Embedding E — token → 3-d vector', context, context.map(t=>EMB[t]));
+    } else if(si===1){
+      const X=context.map((t,i)=>vadd(EMB[t],POS[i]));
+      det.innerHTML=matHTML('E (embeddings)',context,context.map(t=>EMB[t]))
+        +`<div class="fp-op">+</div>`+matHTML('P (positions)',context.map((_,i)=>'pos'+i),context.map((_,i)=>POS[i]))
+        +`<div class="fp-op">=</div>`+matHTML('X (positioned)',context,X);
+    } else if(si===2){
+      const a=computeAttn(context);
+      det.innerHTML=matHTML('X (input)',context,a.X)
+        +`<div class="fp-op">→</div>`
+        +matHTML('Q = X·Wq',context,a.Q,'q')
+        +matHTML('K = X·Wk',context,a.K,'k')
+        +matHTML('V = X·Wv',context,a.V,'v')
+        +matHTML('scores: Q·Kᵀ/√d',['"'+context[a.last]+'" vs all'],[a.raw])
+        +matHTML('softmax → weights',['attention'],[a.w],'k')
+        +`<div class="fp-op">→</div>`+matHTML('output = Σ w·V',['context'],[a.out],'v');
+    } else if(si===3){
+      const a=computeAttn(context), cands=HEAD[cyc], probs=softmax(cands.map(c=>c[1]));
+      const bars=cands.map((c,i)=>`<div class="fp-headrow ${i===0?'win':''}"><span>${c[0]}</span><div class="fp-headtrack"><div class="fp-headbar" style="width:${Math.round(probs[i]*100)}%"></div></div><span>${Math.round(probs[i]*100)}%</span></div>`).join('');
+      det.innerHTML=matHTML('output vector',['context'],[a.out],'v')
+        +`<div class="fp-op">→</div>`
+        +`<div class="fp-mat" style="min-width:240px"><span class="cap">logits → softmax over candidate next-words</span>${bars}</div>`;
+    } else if(si===4){
+      det.innerHTML=`<div class="fp-mat"><span class="cap">prediction</span><div style="font-family:var(--disp);font-size:22px;color:var(--gen);font-weight:700">"${context[context.length-1]}"</div><div class="small" style="margin-top:2px">appended → fed back as input</div></div>`;
+    }
+  }
+
+  function activate(si,cyc){
+    stages.forEach((s,i)=>{ s.classList.toggle('active',i===si); s.classList.toggle('done',i<si); });
+    ctxEl.querySelectorAll('.fp-tok').forEach(t=>t.classList.remove('attend','querytok'));
+
+    if(si===2){ // attention
+      const toks=[...ctxEl.querySelectorAll('.fp-tok')];
+      toks.forEach(t=>t.classList.add('attend'));
+      if(toks.length) toks[toks.length-1].classList.add('querytok');
+      narr.innerHTML=NARR[2](context);
+    } else if(si===4){ // predict + append
+      const p=PRED[cyc];
+      context.push(p);
+      renderCtx(context.length-1);
+      narr.innerHTML=`<b>Predict:</b> the model picks <b style="color:var(--gen)">"${p}"</b> — appended to the context. The loop now repeats with a longer input.`;
+    } else {
+      narr.innerHTML=NARR[si](context);
+    }
+    renderDetail(si,cyc);
+  }
+
+  // Build a flat ordered list of frames. Both Step and Play just walk this list,
+  // so manual and auto playback always stay in sync.
+  function buildPlan(){
+    const p=[];
+    PRED.forEach((_,ci)=>{
+      if(ci>0) p.push(()=>{ setCycle(ci+1); resetStages(); renderCtx(-1); q('#fp-detail').innerHTML=''; narr.innerHTML=`<b>Cycle ${ci+1}.</b> The predicted token is now part of the input — the whole pass runs again on the longer context.`; });
+      for(let si=0;si<stages.length;si++){ const s=si; p.push(()=>activate(s,ci)); }
+    });
+    p.push(()=>{
+      stages.forEach(s=>{s.classList.remove('active');s.classList.add('done');});
+      narr.innerHTML=`Two tokens generated: <b>"The dog"</b> → <b>"sat"</b> → <b>"on"</b>. Every cycle is one full forward pass — that's all generation is.`;
+    });
+    return p;
+  }
+
+  function stopAuto(){ if(timer){ clearTimeout(timer); timer=null; } }
+  function setButtons(){
+    const atEnd=idx>=plan.length;
+    q('#fp-step').textContent = atEnd ? '↺ from start' : 'Step ›';
+    q('#fp-replay').disabled = idx===0 && !timer;
+  }
+
+  function reset(){
+    stopAuto();
+    context=['The','dog']; renderCtx(-1); resetStages(); setCycle(1);
+    q('#fp-detail').innerHTML='';
+    narr.innerHTML=`Ready. Press <b>▶ Play</b> to watch, or <b>Step ›</b> to advance one stage at a time.`;
+    plan=buildPlan(); idx=0; setButtons();
+  }
+
+  function stepOnce(){
+    if(idx>=plan.length){ reset(); return; }   // wrap: restart from the beginning
+    stopAuto();
+    plan[idx](); idx++;
+    setButtons();
+  }
+
+  function play(){
+    reset();
+    q('#fp-play').disabled=true; q('#fp-step').disabled=true;
+    const tick=()=>{
+      if(idx>=plan.length){ timer=null; q('#fp-play').disabled=false; q('#fp-step').disabled=false; setButtons(); return; }
+      plan[idx](); idx++; setButtons();
+      timer=setTimeout(tick, STEP_MS);
+    };
+    timer=setTimeout(tick, 600);
+  }
+
+  q('#fp-play').addEventListener('click',play);
+  q('#fp-replay').addEventListener('click',play);
+  q('#fp-step').addEventListener('click',stepOnce);
+
+  reset();
+
+  // auto-play once when scrolled into view
+  let played=false;
+  const io=new IntersectionObserver((es)=>{
+    es.forEach(e=>{ if(e.isIntersecting && !played){ played=true; play(); io.disconnect(); } });
+  },{threshold:.4});
+  io.observe(flow);
+})();
 </script>
 </body>
 </html>
