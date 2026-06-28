@@ -113,7 +113,8 @@
   .fp-tok.new{background:var(--gen-soft);color:#065f46;border-color:var(--gen-line);animation:fp-pop .45s ease}
   @keyframes fp-pop{0%{transform:scale(.3);opacity:0}60%{transform:scale(1.18)}100%{transform:scale(1)}}
   .fp-flow{display:flex;align-items:stretch;flex-wrap:wrap;gap:0}
-  .fp-stage{flex:1 1 0;min-width:84px;text-align:center;border:1px solid var(--line);border-radius:10px;padding:11px 6px;background:var(--bg);transition:opacity .25s,box-shadow .25s,transform .25s;opacity:.45}
+  .fp-stage{flex:1 1 0;min-width:84px;text-align:center;border:1px solid var(--line);border-radius:10px;padding:11px 6px;background:var(--bg);transition:opacity .5s ease,box-shadow .5s ease,transform .5s ease;opacity:.45}
+  .fp-detail{transition:opacity .4s ease}
   .fp-stage.active{opacity:1;border-color:var(--c);box-shadow:0 0 0 2px var(--c);transform:translateY(-3px)}
   .fp-stage.done{opacity:.92}
   .fp-stage .st-nm{font-family:var(--disp);font-weight:600;font-size:12.5px;color:var(--c)}
@@ -125,8 +126,10 @@
   .fp-score{padding:2px 8px;border-radius:5px;background:#FFF7ED;color:var(--att);border:1px solid var(--att-line,#FDBA74)}
   [data-theme="dark"] .fp-score{background:#431407}
   /* numeric detail panel (vectors → QKV matrices → scores) */
-  .fp-detail{margin-top:14px;display:flex;flex-wrap:wrap;gap:14px 18px;align-items:flex-start}
+  .fp-detail{margin-top:14px;display:flex;flex-direction:column;gap:14px}
   .fp-detail:empty{display:none}
+  .fp-row{display:flex;flex-wrap:wrap;gap:12px 16px;align-items:flex-start}
+  .fp-row.line{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px}
   .fp-mat{font-family:var(--mono);font-size:11px}
   .fp-mat .cap{display:block;font-size:9.5px;color:var(--faint);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px}
   .fp-mat .cap b{color:var(--ink)}
@@ -137,6 +140,10 @@
   .fp-cell.k{border-color:var(--att);color:var(--att);background:#FFF7ED}
   .fp-cell.v{border-color:var(--gen);color:var(--gen);background:var(--gen-soft)}
   .fp-cell.hot{background:var(--att);color:#fff;border-color:var(--att)}
+  .fp-cell.hlrow{border-color:var(--att);background:#FFF7ED;color:var(--att);font-weight:600}
+  .fp-rowlab.hlrow{color:var(--att);font-weight:600}
+  [data-theme="dark"] .fp-cell.hlrow{background:#431407}
+  .fp-mat .cap em{font-style:normal;color:var(--att);font-weight:600}
   [data-theme="dark"] .fp-cell.q{background:#1a1847}[data-theme="dark"] .fp-cell.k{background:#431407}[data-theme="dark"] .fp-cell.v{background:#06281e}
   .fp-op{align-self:center;color:var(--faint);font-size:15px;padding-top:14px}
   .fp-headrow{display:grid;grid-template-columns:62px 1fr 44px;gap:8px;align-items:center;font-family:var(--mono);font-size:11px;margin:2px 0}
@@ -250,6 +257,7 @@
 
     <div class="controls" style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap">
       <button class="btn primary" id="fp-play">▶ Play</button>
+      <button class="btn" id="fp-stop" disabled>⏸ Stop</button>
       <button class="btn" id="fp-step">Step ›</button>
       <button class="btn" id="fp-replay" disabled>↺ Replay</button>
     </div>
@@ -507,16 +515,20 @@ $('#pipeline').innerHTML=STAGES.map((s,i)=>`
     const X=ctx.map((t,i)=>vadd(EMB[t],POS[i]));
     const Q=X.map(x=>vmul(x,WQ)), K=X.map(x=>vmul(x,WK)), V=X.map(x=>vmul(x,WV));
     const last=ctx.length-1;
-    const raw=K.map(k=>dot(Q[last],k)/Math.sqrt(D));
-    const w=softmax(raw);
+    const scoreM=Q.map(qi=>K.map(k=>dot(qi,k)/Math.sqrt(D)));  // full query×key grid
+    const weightM=scoreM.map(r=>softmax(r));                   // softmax per row
+    const w=weightM[last];                                     // the row that drives the prediction
     const out=V[0].map((_,j)=>w.reduce((s,_,i)=>s+w[i]*V[i][j],0));
-    return {X,Q,K,V,raw,w,out,last};
+    return {X,Q,K,V,scoreM,weightM,w,out,last};
   }
-  // render a labelled number grid
-  function matHTML(cap,rowLabs,data,cls){
+  // render a labelled number grid; hlRow (optional) highlights one row
+  function matHTML(cap,rowLabs,data,cls,hlRow){
     const cols=data[0].length;
-    const body=data.map((r,ri)=>(rowLabs?`<div class="fp-rowlab">${rowLabs[ri]}</div>`:'')
-      +r.map(v=>`<div class="fp-cell ${cls||''}">${v.toFixed(1)}</div>`).join('')).join('');
+    const body=data.map((r,ri)=>{
+      const hl=(hlRow!=null && ri===hlRow)?' hlrow':'';
+      return (rowLabs?`<div class="fp-rowlab${hl}">${rowLabs[ri]}</div>`:'')
+        +r.map(v=>`<div class="fp-cell ${cls||''}${hl}">${v.toFixed(1)}</div>`).join('');
+    }).join('');
     return `<div class="fp-mat"><span class="cap">${cap}</span><div class="fp-grid" style="grid-template-columns:${rowLabs?'auto ':''}repeat(${cols},auto)">${body}</div></div>`;
   }
 
@@ -528,7 +540,7 @@ $('#pipeline').innerHTML=STAGES.map((s,i)=>`
     c=>``,
   ];
 
-  const STEP_MS=1900;            // per-frame pacing during auto-play (slowed down)
+  const STEP_MS=2700;            // per-frame pacing during auto-play (slowed down)
   let context=[], timer=null, idx=0, plan=[];
 
   function renderCtx(newIdx){
@@ -545,28 +557,29 @@ $('#pipeline').innerHTML=STAGES.map((s,i)=>`
   function renderDetail(si,cyc){
     const det=q('#fp-detail');
     if(si===0){
-      det.innerHTML=matHTML('Embedding E — token → 3-d vector', context, context.map(t=>EMB[t]));
+      det.innerHTML=`<div class="fp-row">`+matHTML('Embedding E — token → 3-d vector', context, context.map(t=>EMB[t]))+`</div>`;
     } else if(si===1){
       const X=context.map((t,i)=>vadd(EMB[t],POS[i]));
-      det.innerHTML=matHTML('E (embeddings)',context,context.map(t=>EMB[t]))
+      det.innerHTML=`<div class="fp-row">`+matHTML('E (embeddings)',context,context.map(t=>EMB[t]))
         +`<div class="fp-op">+</div>`+matHTML('P (positions)',context.map((_,i)=>'pos'+i),context.map((_,i)=>POS[i]))
-        +`<div class="fp-op">=</div>`+matHTML('X (positioned)',context,X);
+        +`<div class="fp-op">=</div>`+matHTML('X (positioned)',context,X)+`</div>`;
     } else if(si===2){
       const a=computeAttn(context);
-      det.innerHTML=matHTML('X (input)',context,a.X)
+      det.innerHTML=`<div class="fp-row">`+matHTML('X (input)',context,a.X)
         +`<div class="fp-op">→</div>`
         +matHTML('Q = X·Wq',context,a.Q,'q')
         +matHTML('K = X·Wk',context,a.K,'k')
-        +matHTML('V = X·Wv',context,a.V,'v')
-        +matHTML('scores: Q·Kᵀ/√d',['"'+context[a.last]+'" vs all'],[a.raw])
-        +matHTML('softmax → weights',['attention'],[a.w],'k')
-        +`<div class="fp-op">→</div>`+matHTML('output = Σ w·V',['context'],[a.out],'v');
+        +matHTML('V = X·Wv',context,a.V,'v')+`</div>`
+        +`<div class="fp-row line">`
+        +matHTML('scores Q·Kᵀ/√d — rows=query, cols=key (<em>last row used</em>)',context,a.scoreM,'',a.last)
+        +`<div class="fp-op">→</div>`+matHTML('softmax → weights (each row sums to 1)',context,a.weightM,'',a.last)
+        +`<div class="fp-op">→</div>`+matHTML('output = Σ (last-row weights)·V',['context'],[a.out],'v')+`</div>`;
     } else if(si===3){
       const a=computeAttn(context), cands=HEAD[cyc], probs=softmax(cands.map(c=>c[1]));
       const bars=cands.map((c,i)=>`<div class="fp-headrow ${i===0?'win':''}"><span>${c[0]}</span><div class="fp-headtrack"><div class="fp-headbar" style="width:${Math.round(probs[i]*100)}%"></div></div><span>${Math.round(probs[i]*100)}%</span></div>`).join('');
-      det.innerHTML=matHTML('output vector',['context'],[a.out],'v')
+      det.innerHTML=`<div class="fp-row">`+matHTML('output vector',['context'],[a.out],'v')
         +`<div class="fp-op">→</div>`
-        +`<div class="fp-mat" style="min-width:240px"><span class="cap">logits → softmax over candidate next-words</span>${bars}</div>`;
+        +`<div class="fp-mat" style="min-width:240px"><span class="cap">logits → softmax over candidate next-words</span>${bars}</div>`+`</div>`;
     } else if(si===4){
       det.innerHTML=`<div class="fp-mat"><span class="cap">prediction</span><div style="font-family:var(--disp);font-size:22px;color:var(--gen);font-weight:700">"${context[context.length-1]}"</div><div class="small" style="margin-top:2px">appended → fed back as input</div></div>`;
     }
@@ -607,51 +620,55 @@ $('#pipeline').innerHTML=STAGES.map((s,i)=>`
     return p;
   }
 
+  const isRunning=()=>!!timer;
   function stopAuto(){ if(timer){ clearTimeout(timer); timer=null; } }
   function setButtons(){
-    const atEnd=idx>=plan.length;
+    const atEnd=idx>=plan.length, run=isRunning();
+    q('#fp-play').disabled  = run;
+    q('#fp-stop').disabled  = !run;
+    q('#fp-step').disabled  = run;                       // stepping only while paused
     q('#fp-step').textContent = atEnd ? '↺ from start' : 'Step ›';
-    q('#fp-replay').disabled = idx===0 && !timer;
+    q('#fp-replay').disabled = idx===0 && !run;
   }
 
   function reset(){
     stopAuto();
     context=['The','dog']; renderCtx(-1); resetStages(); setCycle(1);
     q('#fp-detail').innerHTML='';
-    narr.innerHTML=`Ready. Press <b>▶ Play</b> to watch, or <b>Step ›</b> to advance one stage at a time.`;
+    narr.innerHTML=`Ready. Press <b>▶ Play</b> to run, or <b>Step ›</b> to advance one stage at a time.`;
     plan=buildPlan(); idx=0; setButtons();
   }
 
+  // advance exactly one frame (manual)
   function stepOnce(){
-    if(idx>=plan.length){ reset(); return; }   // wrap: restart from the beginning
     stopAuto();
-    plan[idx](); idx++;
+    if(idx>=plan.length){ reset(); }      // wrap: first click after the end restarts
+    else { plan[idx](); idx++; }
     setButtons();
   }
 
+  // auto-play; resumes from the current position (or restarts if finished)
   function play(){
-    reset();
-    q('#fp-play').disabled=true; q('#fp-step').disabled=true;
+    if(idx>=plan.length) reset();
     const tick=()=>{
-      if(idx>=plan.length){ timer=null; q('#fp-play').disabled=false; q('#fp-step').disabled=false; setButtons(); return; }
-      plan[idx](); idx++; setButtons();
+      if(idx>=plan.length){ stopAuto(); setButtons(); return; }
+      plan[idx](); idx++;
       timer=setTimeout(tick, STEP_MS);
+      setButtons();
     };
-    timer=setTimeout(tick, 600);
+    timer=setTimeout(tick, 500);
+    setButtons();
   }
 
+  function stop(){ stopAuto(); setButtons(); }            // pause, keep position
+  function replay(){ reset(); play(); }
+
   q('#fp-play').addEventListener('click',play);
-  q('#fp-replay').addEventListener('click',play);
+  q('#fp-stop').addEventListener('click',stop);
   q('#fp-step').addEventListener('click',stepOnce);
+  q('#fp-replay').addEventListener('click',replay);
 
-  reset();
-
-  // auto-play once when scrolled into view
-  let played=false;
-  const io=new IntersectionObserver((es)=>{
-    es.forEach(e=>{ if(e.isIntersecting && !played){ played=true; play(); io.disconnect(); } });
-  },{threshold:.4});
-  io.observe(flow);
+  reset();   // idle on load — nothing fires until Play or Step is pressed
 })();
 </script>
 </body>

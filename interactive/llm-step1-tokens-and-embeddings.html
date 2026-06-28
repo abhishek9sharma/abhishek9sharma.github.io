@@ -695,9 +695,11 @@ function render(){
     const headerCols = DIM_NAMES.map(d =>
       `<span style="color:var(--faint);font-size:10px;width:${COL_W}px;display:inline-block;text-align:center;vertical-align:middle">${d}</span>`
     ).join('');
-    const header = `<div class="arr-vec-row" style="margin-bottom:2px">`
-      + `<span style="display:inline-block;width:18px"></span>`  // indent for "["
-      + `<span style="color:var(--faint);font-size:10px;margin-right:4px;vertical-align:middle">dims→</span>`
+    // hidden "[" matches the data rows' bracket width, so the column headers
+    // line up exactly with the value columns. "dims↓" is a caption above them.
+    const header = `<div style="color:var(--faint);font-size:9.5px;letter-spacing:.04em;margin:0 0 2px 2px">dims ↓</div>`
+      + `<div class="arr-vec-row" style="margin-bottom:3px">`
+      + `<span class="arr-bracket" style="visibility:hidden">[</span>`
       + headerCols + `</div>`;
 
     // one data row per token

@@ -78,6 +78,20 @@
   .kvcell.recompute{background:var(--waste)}
   .kvcell.q{background:var(--q)}
   .kvcell.empty{background:var(--bg);border:1px dashed var(--line-strong)}
+  /* numeric K/V/Q matrices (actual values as tokens grow) */
+  .kvnums{margin-top:16px;display:flex;flex-wrap:wrap;gap:14px 20px;align-items:flex-start}
+  .kvm{font-family:var(--mono);font-size:11px}
+  .kvm .cap{display:block;font-size:9.5px;color:var(--faint);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px}
+  .kvm-grid{display:inline-grid;gap:3px}
+  .kvm-cell{min-width:38px;text-align:center;padding:3px 5px;border-radius:4px;border:1px solid var(--line);background:var(--bg);color:var(--muted)}
+  .kvm-rl{display:flex;align-items:center;justify-content:flex-end;padding-right:5px;font-size:10px;color:var(--faint)}
+  .kvm-cell.fresh{border-color:var(--good);background:#D1FAE5;color:#066;font-weight:600}
+  .kvm-cell.cached{border-color:var(--kv-line);background:var(--kv-soft);color:var(--kv)}
+  .kvm-cell.qcur{border-color:var(--q);background:#ECEBFD;color:var(--q);font-weight:600}
+  .kvm-rl.fresh{color:var(--good);font-weight:600}
+  [data-theme="dark"] .kvm-cell.fresh{background:#06281e}
+  [data-theme="dark"] .kvm-cell.cached{background:#1c1340}
+  [data-theme="dark"] .kvm-cell.qcur{background:#1a1847}
 
   /* compute comparison chart */
   svg{display:block;width:100%;height:auto}
@@ -268,7 +282,9 @@
     <div class="gen-strip" id="naive-strip"></div>
     <div class="kvgrid" id="naive-grid"></div>
     <div class="controls">
-      <button class="btn primary" id="naive-step">Generate next token ›</button>
+      <button class="btn primary" id="naive-play">▶ Play</button>
+      <button class="btn" id="naive-stop" disabled>⏸ Stop</button>
+      <button class="btn" id="naive-step">Step ›</button>
       <button class="btn" id="naive-reset">Reset</button>
     </div>
     <p class="small" id="naive-read" style="margin-top:10px"></p>
@@ -290,8 +306,11 @@
     <h3>Generating token by token — with KV cache</h3>
     <div class="gen-strip" id="cache-strip"></div>
     <div class="kvgrid" id="cache-grid"></div>
+    <div class="kvnums" id="cache-nums"></div>
     <div class="controls">
-      <button class="btn primary" id="cache-step">Generate next token ›</button>
+      <button class="btn primary" id="cache-play">▶ Play</button>
+      <button class="btn" id="cache-stop" disabled>⏸ Stop</button>
+      <button class="btn" id="cache-step">Step ›</button>
       <button class="btn" id="cache-reset">Reset</button>
     </div>
     <p class="small" id="cache-read" style="margin-top:10px"></p>
@@ -1035,7 +1054,55 @@ $('#naive-step').onclick=()=>{ naiveN=Math.min(TOKENS.length,naiveN+1); renderNa
 $('#naive-reset').onclick=()=>{ naiveN=1; renderNaive(); };
 renderNaive();
 
+/* Shared auto-play: turns a manual stepper into a slowed animation (Play/Stop). */
+const KVA_SPEED=1500;
+function attachPlayer(prefix, advance, atEnd, reset){
+  let t=null;
+  const play=$('#'+prefix+'-play'), stop=$('#'+prefix+'-stop'),
+        step=$('#'+prefix+'-step'), resetBtn=$('#'+prefix+'-reset');
+  const halt=()=>{ if(t){clearInterval(t);t=null;} play.disabled=false; stop.disabled=true; step.disabled=false; };
+  play.onclick=()=>{
+    if(atEnd()) reset();
+    play.disabled=true; stop.disabled=false; step.disabled=true;
+    advance();                                   // first move immediately
+    t=setInterval(()=>{ if(atEnd()){ halt(); return; } advance(); }, KVA_SPEED);
+  };
+  stop.onclick=halt;
+  resetBtn.onclick=()=>{ halt(); reset(); };     // reset also stops auto-play
+  return halt;
+}
+const naiveHalt=attachPlayer('naive',
+  ()=>{ naiveN=Math.min(TOKENS.length,naiveN+1); renderNaive(); },
+  ()=>naiveN>=TOKENS.length,
+  ()=>{ naiveN=1; renderNaive(); });
+
 /* ========== 2. WITH CACHE ========== */
+// tiny 3-d model (same idea as Step 6) so we can show real K/V/Q numbers
+const KVD=3;
+const KVEMB={ The:[.2,.1,0], dog:[.9,.2,.1], sat:[.3,.8,.2], on:[.1,.3,.7], the:[.2,.1,0], mat:[.4,.2,.6], and:[.1,.1,.1], slept:[.2,.7,.3] };
+const KVPOS=[[0,.1,0],[.1,0,.1],[0,.2,0],[.1,.1,.1],[0,.1,.1],[.1,0,0],[0,.1,.2],[.1,.1,0]];
+const KVWQ=[[.6,.1,0],[0,.7,.1],[.1,0,.5]], KVWK=[[.5,0,.2],[.1,.6,0],[0,.1,.4]], KVWV=[[.3,.2,0],[0,.5,.1],[.2,0,.6]];
+const kvVadd=(a,b)=>a.map((x,i)=>x+b[i]);
+const kvVmul=(v,M)=>M[0].map((_,j)=>v.reduce((s,_,k)=>s+v[k]*M[k][j],0));
+function kvmMat(cap,rowLabs,data,rowCls){
+  const cols=data[0].length;
+  const body=data.map((r,ri)=>{
+    const c=rowCls(ri);
+    return `<div class="kvm-rl ${c}">${rowLabs[ri]}</div>`+r.map(v=>`<div class="kvm-cell ${c}">${v.toFixed(1)}</div>`).join('');
+  }).join('');
+  return `<div class="kvm"><span class="cap">${cap}</span><div class="kvm-grid" style="grid-template-columns:auto repeat(${cols},auto)">${body}</div></div>`;
+}
+function renderCacheNums(n){
+  const toks=TOKENS.slice(0,n);
+  const X=toks.map((t,i)=>kvVadd(KVEMB[t]||[0,0,0], KVPOS[i]||[0,0,0]));
+  const K=X.map(x=>kvVmul(x,KVWK)), V=X.map(x=>kvVmul(x,KVWV));
+  const Qcur=kvVmul(X[n-1],KVWQ);
+  const fresh=ri=>ri===n-1?'fresh':'cached';
+  $('#cache-nums').innerHTML=
+      kvmMat('K cache — green = new, faded = reused',toks,K,fresh)
+    + kvmMat('V cache — green = new, faded = reused',toks,V,fresh)
+    + kvmMat('Q — only the current token',[toks[n-1]],[Qcur],()=> 'qcur');
+}
 let cacheN=1;
 function renderCache(){
   const n=cacheN;
@@ -1052,11 +1119,15 @@ function renderCache(){
   }
   for(let i=0;i<n;i++){ qRow+= i===n-1?cell('q','Q'+i):cell('empty',''); }
   $('#cache-grid').innerHTML=kRow+'</div>'+vRow+'</div>'+qRow+'</div>';
+  renderCacheNums(n);
   $('#cache-read').innerHTML=`Step ${n}: <b style="color:var(--kv)">1 new Key + 1 new Value</b> computed (bright), the other ${n-1} <b>reused from cache</b> (faded). Constant work per step, no matter how long the history.`;
 }
 $('#cache-step').onclick=()=>{ cacheN=Math.min(TOKENS.length,cacheN+1); renderCache(); };
-$('#cache-reset').onclick=()=>{ cacheN=1; renderCache(); };
 renderCache();
+const cacheHalt=attachPlayer('cache',
+  ()=>{ cacheN=Math.min(TOKENS.length,cacheN+1); renderCache(); },
+  ()=>cacheN>=TOKENS.length,
+  ()=>{ cacheN=1; renderCache(); });
 
 /* ========== 3. COMPUTE CHART ========== */
 function renderCompute(){
