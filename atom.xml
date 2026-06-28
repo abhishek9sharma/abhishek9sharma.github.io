@@ -18,7 +18,7 @@
     <link href="https://abhishek9sharma.github.io/atom.xml" rel="self" type="application/atom+xml"/>
     <link href="https://abhishek9sharma.github.io" rel="alternate" type="text/html"/>
     <generator uri="https://www.getzola.org/">Zola</generator><updated>2026-06-28T00:00:00+00:00</updated><id>https://abhishek9sharma.github.io/atom.xml</id><entry xml:lang="en">
-        <title>From Tokens to KV Cache — An Interactive Deep Dive</title>
+        <title>From Tokens to KV Cache — An Interactive, Intuition-First Walkthrough</title>
         <published>2026-06-28T00:00:00+00:00</published>
         <updated>2026-06-28T00:00:00+00:00</updated>
         <author>

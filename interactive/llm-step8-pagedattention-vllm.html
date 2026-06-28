@@ -142,7 +142,7 @@
 </nav>
 
 <header>
-  <div class="kicker">Build an LLM · Step 8 — Serving, part 2</div>
+  <div class="kicker">Intuition-first LLMs · Step 8 of 8 — Serving</div>
   <h1>PagedAttention &amp; vLLM: managing the cache</h1>
   <p class="lede">Step 7 showed the KV cache is essential but enormous — and its size per request grows and
     shrinks unpredictably. Store it naively and you waste <b>60–80%</b> of GPU memory. PagedAttention fixes
@@ -293,7 +293,7 @@
       caps batch size into a non-issue, so a single GPU can serve far more concurrent users. It's why vLLM
       became the default open-source serving engine, and the technique now appears in nearly every
       production inference stack.</p>
-    <div class="src">Source: Kwon et al., "Efficient Memory Management for LLM Serving with PagedAttention," SOSP 2023 (arXiv:2309.06180), and the vLLM project.</div>
+    <div class="src">Source: Kwon et al., "Efficient Memory Management for Large Language Model Serving with PagedAttention," SOSP 2023 (arXiv:2309.06180), and the vLLM project.</div>
   </div>
   <details>
     <summary>The trade-offs PagedAttention introduces ▾</summary>

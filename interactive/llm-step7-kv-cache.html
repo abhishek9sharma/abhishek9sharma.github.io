@@ -84,7 +84,7 @@
   .kvm .cap{display:block;font-size:9.5px;color:var(--faint);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px}
   .kvm-grid{display:inline-grid;gap:3px}
   .kvm-cell{min-width:38px;text-align:center;padding:3px 5px;border-radius:4px;border:1px solid var(--line);background:var(--bg);color:var(--muted)}
-  .kvm-rl{display:flex;align-items:center;justify-content:flex-end;padding-right:5px;font-size:10px;color:var(--faint)}
+  .kvm-rl{display:flex;align-items:center;justify-content:flex-end;padding-right:6px;font-size:10px;color:var(--faint);white-space:nowrap}
   .kvm-cell.fresh{border-color:var(--good);background:#D1FAE5;color:#066;font-weight:600}
   .kvm-cell.cached{border-color:var(--kv-line);background:var(--kv-soft);color:var(--kv)}
   .kvm-cell.qcur{border-color:var(--q);background:#ECEBFD;color:var(--q);font-weight:600}
@@ -205,7 +205,7 @@
 </nav>
 
 <header>
-  <div class="kicker">Build an LLM · Step 7 — Serving, part 1</div>
+  <div class="kicker">Intuition-first LLMs · Step 7 of 8 — Serving</div>
   <h1>The KV cache: why generation isn't quadratically slow</h1>
   <p class="lede">In Step 6 you saw generation is a loop — predict one token, append, repeat. Done naively,
     every step would recompute attention over the entire history from scratch. The <b>KV cache</b> is the
@@ -1098,10 +1098,12 @@ function renderCacheNums(n){
   const K=X.map(x=>kvVmul(x,KVWK)), V=X.map(x=>kvVmul(x,KVWV));
   const Qcur=kvVmul(X[n-1],KVWQ);
   const fresh=ri=>ri===n-1?'fresh':'cached';
+  // each row says explicitly whether it was just computed or reused from cache
+  const labs=toks.map((t,i)=> i===n-1 ? `${t} (new)` : `${t} (cached)`);
   $('#cache-nums').innerHTML=
-      kvmMat('K cache — green = new, faded = reused',toks,K,fresh)
-    + kvmMat('V cache — green = new, faded = reused',toks,V,fresh)
-    + kvmMat('Q — only the current token',[toks[n-1]],[Qcur],()=> 'qcur');
+      kvmMat('K cache',labs,K,fresh)
+    + kvmMat('V cache',labs,V,fresh)
+    + kvmMat('Q',[`${toks[n-1]} (current)`],[Qcur],()=> 'qcur');
 }
 let cacheN=1;
 function renderCache(){
