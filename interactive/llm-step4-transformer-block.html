@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>LLM from scratch · Step 4 — The Transformer Block</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F7F8FA;--surface:#FFFFFF;--line:#E3E7EE;--line-strong:#CBD3DF;
+    --ink:#1B2433;--muted:#5C6675;--faint:#8B94A3;
+    --tok:#0E7C86;--tok-soft:#E3F4F5;--tok-line:#9AD7DC;
+    --att:#C2255C;--att-soft:#FCE7F0;--att-line:#F4A8C8;
+    --blk:#3B82C4;--blk-soft:#E0F0FB;--blk-line:#A8D3F0;  /* block = blue */
+    --ffn:#7048E8;--res:#0CA678;
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+    --disp:'Space Grotesk',system-ui,sans-serif;--body:'Inter',system-ui,sans-serif;
+  }
+
+  /* ── dark mode ── */
+  [data-theme="dark"]{
+    --bg:#18191f;
+    --surface:#22262e;
+    --line:#2d3240;
+    --line-strong:#3d4455;
+    --ink:#dde3ee;
+    --muted:#8b94a8;
+    --faint:#5c6475;
+    --tok-soft:#0a2f32;
+    --tok-line:#1a5c62;
+    --vec-soft:#1a1847;
+    --vec-line:#3730a3;
+  }
+  *{box-sizing:border-box}html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:880px;margin:0 auto;padding:32px 22px 120px}
+  header{padding:18px 0 30px;border-bottom:1px solid var(--line)}
+  .kicker{font-family:var(--mono);font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--blk);font-weight:600}
+  h1{font-family:var(--disp);font-weight:700;font-size:clamp(26px,5vw,42px);line-height:1.08;margin:.35em 0 .25em;letter-spacing:-.015em}
+  .lede{color:var(--muted);max-width:62ch;font-size:17px}
+  section{margin-top:48px}
+  .eyebrow{display:flex;align-items:baseline;gap:12px;margin-bottom:8px}
+  .eyebrow .idx{font-family:var(--mono);font-size:13px;font-weight:600;color:#fff;background:var(--blk);border-radius:6px;padding:2px 8px}
+  .eyebrow .lbl{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+  h2{font-family:var(--disp);font-weight:600;font-size:24px;margin:.1em 0 .3em;letter-spacing:-.01em}
+  section>p{color:var(--muted);max-width:64ch}section>p b{color:var(--ink);font-weight:600}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px;margin-top:18px}
+  .card h3{font-family:var(--disp);font-size:14px;font-weight:600;margin:0 0 12px;color:var(--ink)}
+  label.fld{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin:0 0 6px}
+  select{font-family:var(--body);font-size:15px;color:var(--ink);background:var(--bg);border:1px solid var(--line-strong);border-radius:9px;padding:8px 12px;cursor:pointer}
+  :focus-visible{outline:2px solid var(--blk);outline-offset:2px}
+  code{font-family:var(--mono);font-size:.88em;background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+  .small{font-size:13px;color:var(--muted)}
+  .note{border-left:3px solid var(--blk-line);background:var(--blk-soft);border-radius:0 10px 10px 0;padding:12px 16px;margin-top:16px;font-size:14px;color:#0c4a6e}
+  .note b{font-weight:600}
+  details{margin-top:12px}summary{cursor:pointer;font-family:var(--mono);font-size:12px;color:var(--blk);font-weight:600}
+
+  /* heads */
+  .head-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+  .head-tabs button{font-family:var(--mono);font-size:12px;border:1px solid var(--line-strong);background:var(--bg);color:var(--muted);padding:7px 13px;border-radius:8px;cursor:pointer}
+  .head-tabs button.active{background:var(--att);color:#fff;border-color:var(--att)}
+  .head-desc{font-size:13px;color:var(--muted);margin-bottom:10px;min-height:20px}
+  .mini-matrix{display:inline-block;font-family:var(--mono);font-size:11px}
+  .mm-row{display:flex;align-items:center}
+  .mm-cell{width:54px;height:34px;display:flex;align-items:center;justify-content:center;border:1px solid #fff;border-radius:3px;color:#fff;font-weight:500}
+  .mm-hdr{width:54px;text-align:center;color:var(--att);font-size:10px;font-weight:600}
+  .mm-lbl{width:56px;text-align:right;padding-right:6px;color:var(--tok);font-size:10px;font-weight:600}
+  .mm-corner{width:56px}
+
+  /* block diagram */
+  .block-diagram{display:flex;flex-direction:column;align-items:center;gap:0;margin-top:10px;font-family:var(--mono)}
+  .bd-box{width:min(420px,100%);border:1.5px solid var(--line-strong);border-radius:10px;padding:12px 16px;text-align:center;background:var(--surface);position:relative;transition:all .2s}
+  .bd-box .t{font-weight:600;font-size:13px}
+  .bd-box .s{font-size:10.5px;color:var(--muted);margin-top:2px}
+  .bd-box.att{border-color:var(--att-line);background:var(--att-soft)}
+  .bd-box.ffn{border-color:#D0BFFF;background:#F3F0FF}
+  .bd-box.norm{border-color:var(--line-strong);background:var(--bg)}
+  .bd-box.active{box-shadow:0 0 0 3px var(--blk-line);transform:scale(1.02)}
+  .bd-arrow{height:22px;width:2px;background:var(--line-strong);position:relative}
+  .bd-arrow::after{content:'';position:absolute;bottom:0;left:-3px;border:4px solid transparent;border-top-color:var(--line-strong)}
+  .bd-res{position:absolute;right:-58px;top:50%;width:50px;height:2px;background:var(--res)}
+  .res-wrap{position:relative;width:min(420px,100%);display:flex;flex-direction:column;align-items:center}
+  .res-label{position:absolute;right:-160px;font-size:10px;color:var(--res);font-family:var(--mono);width:150px}
+  .step-controls{display:flex;gap:8px;margin-top:16px;justify-content:center;flex-wrap:wrap}
+  .step-controls button{font-family:var(--body);font-size:13px;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);padding:8px 16px;border-radius:8px;cursor:pointer}
+  .step-controls button:hover{border-color:var(--blk)}
+  .step-explain{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:14px;margin-top:14px;font-size:14px;min-height:60px}
+  .step-explain b{color:var(--blk)}
+
+  /* stack */
+  .stack{display:flex;flex-direction:column;align-items:center;gap:4px;margin-top:10px}
+  .stack-layer{width:min(380px,100%);border:1px solid var(--blk-line);background:var(--blk-soft);border-radius:8px;padding:8px 14px;text-align:center;font-family:var(--mono);font-size:12px;color:#0c4a6e}
+  .stack-arrow{color:var(--faint);font-size:12px}
+
+  .next{margin-top:56px;padding:22px;border:1px dashed var(--line-strong);border-radius:14px;background:var(--surface)}
+  .next h3{font-family:var(--disp);font-size:16px;margin:0 0 6px}.next p{color:var(--muted);font-size:14px;margin:0}
+  .pill{display:inline-block;font-family:var(--mono);font-size:11px;color:var(--blk);background:var(--blk-soft);border:1px solid var(--blk-line);border-radius:20px;padding:2px 10px;margin-top:10px;text-decoration:none;cursor:pointer;}
+
+  /* ---- injected series navigator (consistent across all 8 steps) ---- */
+  .series-nav{display:flex;flex-direction:column;align-items:center;gap:7px;padding:10px 0 14px;margin-bottom:4px}
+  .sn-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center}
+  .sn-chips{display:flex;gap:5px}
+  .sn-chip{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:13px;font-weight:600;text-decoration:none;color:var(--muted);background:var(--bg);border:1px solid var(--line-strong);transition:all .12s}
+  .sn-chip:hover{border-color:var(--ink);color:var(--ink)}
+  .sn-chip.current{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .sn-navbtn{font-family:var(--mono);font-size:12px;color:var(--muted);text-decoration:none;padding:6px 11px;border:1px solid var(--line-strong);border-radius:8px;white-space:nowrap;transition:all .12s}
+  .sn-navbtn:hover{border-color:var(--ink);color:var(--ink)}
+  .sn-navbtn.disabled{opacity:.28;pointer-events:none}
+  .sn-caption{font-family:var(--mono);font-size:11.5px;color:var(--faint);letter-spacing:.03em}
+  .sn-caption b{color:var(--ink);font-weight:600}
+  @media(max-width:560px){.sn-chip{width:26px;height:26px;font-size:11px}.sn-navbtn{padding:5px 8px;font-size:11px}}
+</style>
+<script>(function(){
+  var t=localStorage.getItem('theme')||(window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
+  document.documentElement.setAttribute('data-theme',t);
+  window.addEventListener('storage',function(e){
+    if(e.key==='theme') document.documentElement.setAttribute('data-theme',e.newValue||'light');
+  });
+})()</script>
+</head>
+<body>
+<div class="wrap">
+
+
+<nav class="series-nav" aria-label="Series navigation">
+  <div class="sn-bar"><a class="sn-navbtn" href="llm-step3-self-attention.html">‹ prev</a><div class="sn-chips"><a class="sn-chip" href="llm-step1-tokens-and-embeddings.html" title="Step 1: Tokens & Embeddings">1</a><a class="sn-chip" href="llm-step2-position-and-prediction.html" title="Step 2: Position & Prediction">2</a><a class="sn-chip" href="llm-step3-self-attention.html" title="Step 3: Self-Attention">3</a><span class="sn-chip current" title="Transformer Block">4</span><a class="sn-chip" href="llm-step5-training.html" title="Step 5: Training">5</a><a class="sn-chip" href="llm-step6-generation.html" title="Step 6: Generation">6</a><a class="sn-chip" href="llm-step7-kv-cache.html" title="Step 7: KV Cache">7</a><a class="sn-chip" href="llm-step8-pagedattention-vllm.html" title="Step 8: PagedAttention & vLLM">8</a></div><a class="sn-navbtn" href="llm-step5-training.html">next ›</a></div>
+  <div class="sn-caption">Step <b>4</b> of 8 &middot; <b>Transformer Block</b> &middot; LLM from scratch</div>
+</nav>
+
+<header>
+  <div class="kicker">Build an LLM · Step 4 of a series</div>
+  <h1>Many heads, then the full Transformer block</h1>
+  <p class="lede">One attention pattern sees one kind of relationship. Real models run several in
+    parallel — different <b>heads</b> specialise — then wrap attention in feed-forward layers, residual
+    "shortcuts," and normalization. Stack that block N times and you have the engine of an LLM.</p>
+</header>
+
+<!-- MULTI-HEAD -->
+<section>
+  <div class="eyebrow"><span class="idx">01</span><span class="lbl">Multi-Head Attention</span></div>
+  <h2>Different heads, different jobs</h2>
+  <p>Instead of one set of Q/K/V projections, the model learns <b>several</b>. Each "head" attends to
+    the sentence differently — and because nobody tells them what to specialise in, they divide the
+    labour on their own during training. Here are three heads on <code>"the dog chased it"</code>,
+    each with a hand-set pattern to show the idea:</p>
+
+  <div class="card">
+    <div class="head-tabs" id="head-tabs"></div>
+    <div class="head-desc" id="head-desc"></div>
+    <div class="mini-matrix" id="head-matrix"></div>
+    <p class="small" style="margin-top:10px">Each head produces its own context vector for every token.
+      The model <b>concatenates</b> all heads' outputs and passes them through one more linear layer
+      (<code>W_O</code>) to mix them back together.</p>
+  </div>
+
+  <div class="note"><b>Why this helps.</b> Head 1 can resolve pronouns while Head 2 tracks word order and
+    Head 3 watches sentence-level tone — all at once, in a single layer. GPT-2 small uses 12 heads per
+    layer; GPT-3 uses 96. More heads = more relationship types captured simultaneously.</div>
+</section>
+
+<!-- THE BLOCK -->
+<section>
+  <div class="eyebrow"><span class="idx">02</span><span class="lbl">The Transformer Block</span></div>
+  <h2>What wraps around attention</h2>
+  <p>Attention alone isn't enough. A full block adds a <b>feed-forward network</b> (per-token thinking),
+    <b>residual connections</b> (shortcuts that add the input back), and <b>layer normalization</b>
+    (keeps numbers stable). Step through it:</p>
+
+  <div class="card">
+    <div class="res-wrap" style="margin:0 auto">
+      <div class="block-diagram" id="block-diagram"></div>
+    </div>
+    <div class="step-controls">
+      <button id="bd-prev">‹ Back</button>
+      <button id="bd-next" style="background:var(--blk);color:#fff;border-color:var(--blk)">Next step ›</button>
+      <button id="bd-reset">Reset</button>
+    </div>
+    <div class="step-explain" id="bd-explain"></div>
+  </div>
+
+  <details>
+    <summary>Why residual connections matter ▾</summary>
+    <p class="small">A residual connection computes <code>output = layer(x) + x</code> instead of just
+      <code>layer(x)</code>. The <code>+ x</code> is a "highway": gradients can flow straight back through
+      it during training, so even very deep stacks (GPT-3 has 96 blocks) keep learning. Without residuals,
+      deep networks suffer vanishing gradients and barely train. It's arguably as important as attention itself.</p>
+  </details>
+  <details>
+    <summary>What the feed-forward network does ▾</summary>
+    <p class="small">After attention mixes information <i>between</i> tokens, the FFN processes each token
+      <i>independently</i> — two linear layers with a non-linearity (<code>Linear → GELU → Linear</code>,
+      where GELU is just a smooth activation function that lets the network learn non-straight-line patterns),
+      usually expanding to 4× the width and back. Intuition: attention gathers the relevant context, then
+      the FFN "thinks about" what it gathered. It holds most of the model's parameters.</p>
+  </details>
+</section>
+
+<!-- STACKING -->
+<section>
+  <div class="eyebrow"><span class="idx">03</span><span class="lbl">Depth</span></div>
+  <h2>Stack the block N times</h2>
+  <p>The output of one block is the input to the next — same shape, so they chain cleanly. Early layers
+    learn surface patterns (syntax, nearby words); deeper layers build abstract meaning. Slide to see
+    how model size scales with depth:</p>
+
+  <div class="card">
+    <div style="max-width:260px;margin-bottom:6px">
+      <label class="fld" for="depth-sel">Number of blocks (depth)</label>
+      <select id="depth-sel">
+        <option value="2">2 (toy)</option>
+        <option value="6">6 (GPT-1 era)</option>
+        <option value="12" selected>12 (GPT-2 small)</option>
+        <option value="48">48 (GPT-2 XL)</option>
+        <option value="96">96 (GPT-3)</option>
+      </select>
+    </div>
+    <div class="stack" id="stack"></div>
+    <p class="small" id="stack-note" style="margin-top:12px"></p>
+  </div>
+</section>
+
+<div class="next">
+  <h3>Where this is heading</h3>
+  <p>You now have the entire forward pass: tokens → embeddings + position → <b>N transformer blocks</b>
+    → prediction head → next-token probabilities. But every weight started as random noise. How does it
+    learn to produce <i>good</i> predictions? That's <b>training</b> — loss, gradients, and watching
+    embeddings organise themselves out of pure noise. Step 5.</p>
+  <p class="small" style="margin-top:10px;color:var(--faint)">
+    Want to see every layer of a real GPT-2 (124M params) running live in your browser?
+    <a href="https://poloclub.github.io/transformer-explainer/" target="_blank" rel="noopener"
+       style="color:var(--blk);font-weight:600">Transformer Explainer ↗</a>
+    by the Polo Club lets you type any text and watch attention heads, MLP layers, and output
+    probabilities update in real time — a great companion to what you've built up here.
+  </p>
+  <a class="pill" style="opacity:.65" href="llm-step3-self-attention.html">◂ Back · Step 3</a>
+  <a class="pill" href="llm-step5-training.html">Next ▸ Step 5 · Training: how it learns from noise</a>
+</div>
+
+</div>
+<script>
+const $=s=>document.querySelector(s);
+const TOKENS=['the','dog','chased','it'];
+
+/* ---- three hand-set attention heads (rows=query, cols=key, causal) ---- */
+const HEADS=[
+  { name:'Head 1 · coreference',
+    desc:'Resolves pronouns and links words to the nouns they depend on. "it" → "dog".',
+    W:[[1,0,0,0],[.2,.8,0,0],[.1,.8,.1,0],[.05,.7,.05,.2]] },
+  { name:'Head 2 · previous-token',
+    desc:'Tracks local word order — each token mostly attends to the one just before it.',
+    W:[[1,0,0,0],[.85,.15,0,0],[.1,.8,.1,0],[.05,.1,.8,.05]] },
+  { name:'Head 3 · broad context',
+    desc:'Spreads attention across the whole visible sentence — a sentence-level summary.',
+    W:[[1,0,0,0],[.5,.5,0,0],[.34,.33,.33,0],[.25,.25,.25,.25]] },
+];
+function heat(w){
+  const t=Math.max(0,Math.min(1,w));
+  const r=Math.round(252-(252-194)*t),g=Math.round(231-(231-37)*t),b=Math.round(240-(240-92)*t);
+  return `rgb(${r},${g},${b})`;
+}
+let activeHead=0;
+$('#head-tabs').innerHTML=HEADS.map((h,i)=>`<button class="${i===0?'active':''}" data-h="${i}">${h.name.split(' · ')[0]}</button>`).join('');
+function renderHead(){
+  const h=HEADS[activeHead];
+  $('#head-desc').innerHTML='<b style="color:var(--att)">'+h.name.split(' · ')[1]+':</b> '+h.desc;
+  let html='<div class="mm-row"><div class="mm-corner"></div>'+TOKENS.map(t=>`<div class="mm-hdr">${t}</div>`).join('')+'</div>';
+  TOKENS.forEach((qt,qi)=>{
+    html+='<div class="mm-row"><div class="mm-lbl">'+qt+'</div>';
+    h.W[qi].forEach((w,ki)=>{
+      if(ki>qi){ html+='<div class="mm-cell" style="background:var(--bg);border:1px dashed var(--line-strong);color:var(--faint)">·</div>'; }
+      else{ const pct=Math.round(w*100); html+=`<div class="mm-cell" style="background:${heat(w)};color:${w>.45?'#fff':'#86145a'}">${pct}</div>`; }
+    });
+    html+='</div>';
+  });
+  $('#head-matrix').innerHTML=html;
+  document.querySelectorAll('#head-tabs button').forEach((b,i)=>b.classList.toggle('active',i===activeHead));
+}
+document.querySelectorAll('#head-tabs button').forEach(b=>b.addEventListener('click',()=>{activeHead=+b.dataset.h;renderHead();}));
+renderHead();
+
+/* ---- block diagram step-through ---- */
+const STEPS=[
+  {boxes:['in'], explain:'<b>Input.</b> A sequence of token vectors enters the block — say the positioned embeddings from Steps 1–2 (or the output of the previous block).'},
+  {boxes:['in','norm1'], explain:'<b>LayerNorm.</b> First, normalize each vector to zero mean and unit variance. This keeps the numbers in a stable range so the layers below behave predictably.'},
+  {boxes:['in','norm1','att'], explain:'<b>Multi-head attention.</b> Tokens look at each other (Step 3), now across multiple heads in parallel. This mixes information <i>between</i> positions.'},
+  {boxes:['in','norm1','att','add1'], explain:'<b>Residual add.</b> Add the original input back: <code>x + attention(norm(x))</code>. The shortcut lets gradients flow freely and preserves the original signal.'},
+  {boxes:['in','norm1','att','add1','norm2'], explain:'<b>LayerNorm again.</b> Normalize before the feed-forward network, same reason as before.'},
+  {boxes:['in','norm1','att','add1','norm2','ffn'], explain:'<b>Feed-forward network.</b> Each token is processed independently through <code>Linear → GELU → Linear</code>. Attention <i>gathered</i> context; the FFN <i>thinks</i> about it.'},
+  {boxes:['in','norm1','att','add1','norm2','ffn','add2'], explain:'<b>Residual add.</b> Add again: <code>x + ffn(norm(x))</code>. The block output has the <i>same shape</i> as its input — which is exactly why we can stack blocks.'},
+];
+let bdStep=0;
+const BOX_DEFS={
+  in:{cls:'',t:'Input vectors',s:'sequence of token embeddings'},
+  norm1:{cls:'norm',t:'LayerNorm',s:'stabilize the numbers'},
+  att:{cls:'att',t:'Multi-Head Attention',s:'tokens mix information'},
+  add1:{cls:'',t:'⊕ Add (residual)',s:'x + attention(x)'},
+  norm2:{cls:'norm',t:'LayerNorm',s:'stabilize again'},
+  ffn:{cls:'ffn',t:'Feed-Forward Network',s:'Linear → GELU → Linear'},
+  add2:{cls:'',t:'⊕ Add (residual)',s:'x + ffn(x) → block output'},
+};
+function renderBlock(){
+  const shown=STEPS[bdStep].boxes;
+  const all=['in','norm1','att','add1','norm2','ffn','add2'];
+  let html='';
+  all.forEach((key,i)=>{
+    const on=shown.includes(key);
+    const isLast=key===shown[shown.length-1];
+    const d=BOX_DEFS[key];
+    if(i>0) html+=`<div class="bd-arrow" style="opacity:${on?1:.2}"></div>`;
+    html+=`<div class="bd-box ${d.cls} ${isLast?'active':''}" style="opacity:${on?1:.25}">
+      <div class="t">${d.t}</div><div class="s">${d.s}</div></div>`;
+  });
+  $('#block-diagram').innerHTML=html;
+  $('#bd-explain').innerHTML=STEPS[bdStep].explain;
+}
+$('#bd-next').onclick=()=>{ bdStep=Math.min(STEPS.length-1,bdStep+1); renderBlock(); };
+$('#bd-prev').onclick=()=>{ bdStep=Math.max(0,bdStep-1); renderBlock(); };
+$('#bd-reset').onclick=()=>{ bdStep=0; renderBlock(); };
+renderBlock();
+
+/* ---- stacking ---- */
+function renderStack(){
+  const n=+$('#depth-sel').value;
+  const stack=$('#stack');
+  const show=Math.min(n,6);
+  let html='<div class="stack-layer" style="background:var(--tok-soft);border-color:var(--tok-line);color:#0a5b63">tokens + position →</div><div class="stack-arrow">↓</div>';
+  for(let i=0;i<show;i++){
+    html+=`<div class="stack-layer">Transformer block ${i+1}</div>`;
+    if(i<show-1) html+='<div class="stack-arrow">↓</div>';
+  }
+  if(n>6){ html+=`<div class="stack-arrow">⋮</div><div class="stack-layer" style="background:var(--bg);border-style:dashed;color:var(--muted)">… ${n-6} more blocks …</div><div class="stack-arrow">↓</div><div class="stack-layer">Transformer block ${n}</div>`; }
+  html+='<div class="stack-arrow">↓</div><div class="stack-layer" style="background:#D1FAE5;border-color:#6EE7B7;color:#065f46">→ prediction head</div>';
+  stack.innerHTML=html;
+  const params={2:'~1M',6:'~110M',12:'124M',48:'1.5B',96:'175B'};
+  $('#stack-note').innerHTML=`A <b>${n}-block</b> model in this configuration has roughly <b>${params[n]||'?'}</b> parameters. Depth is one of the main levers for capability — but it also multiplies compute and the risk of unstable training, which is why residuals and normalization matter so much.`;
+}
+$('#depth-sel').addEventListener('change',renderStack);
+renderStack();
+</script>
+</body>
+</html>

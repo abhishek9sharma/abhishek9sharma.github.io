@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>LLM from scratch · Step 3 — Self-Attention</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F7F8FA;--surface:#FFFFFF;--line:#E3E7EE;--line-strong:#CBD3DF;
+    --ink:#1B2433;--muted:#5C6675;--faint:#8B94A3;
+    --tok:#0E7C86;--tok-soft:#E3F4F5;--tok-line:#9AD7DC;
+    --vec:#4F46E5;--vec-soft:#ECEBFD;--vec-line:#C3BFF6;
+    --att:#EA580C;--att-soft:#FFF7ED;--att-line:#FDBA74;  /* attention = orange */
+    --q:#7048E8;--k:#EA580C;--v:#0CA678;
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+    --disp:'Space Grotesk',system-ui,sans-serif;--body:'Inter',system-ui,sans-serif;
+  }
+
+  /* ── dark mode ── */
+  [data-theme="dark"]{
+    --bg:#18191f;
+    --surface:#22262e;
+    --line:#2d3240;
+    --line-strong:#3d4455;
+    --ink:#dde3ee;
+    --muted:#8b94a8;
+    --faint:#5c6475;
+    --tok-soft:#0a2f32;
+    --tok-line:#1a5c62;
+    --vec-soft:#1a1847;
+    --vec-line:#3730a3;
+    --att-soft:#431407;
+    --att-line:#9A3412;
+  }
+  *{box-sizing:border-box}html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:880px;margin:0 auto;padding:32px 22px 120px}
+  header{padding:18px 0 30px;border-bottom:1px solid var(--line)}
+  .kicker{font-family:var(--mono);font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--att);font-weight:600}
+  h1{font-family:var(--disp);font-weight:700;font-size:clamp(26px,5vw,42px);line-height:1.08;margin:.35em 0 .25em;letter-spacing:-.015em}
+  .lede{color:var(--muted);max-width:62ch;font-size:17px}
+  .pipe{display:flex;margin:26px 0 4px;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--surface)}
+  .pipe .step{flex:1;padding:14px 12px;text-align:center}.pipe .step+.step{border-left:1px solid var(--line)}
+  .pipe .n{font-family:var(--mono);font-size:11px;color:var(--faint)}.pipe .t{font-family:var(--disp);font-weight:600;font-size:14px;margin-top:2px}
+  .pipe .d{font-size:11.5px;color:var(--muted);margin-top:2px}.pipe .a{font-family:var(--mono);font-size:11px;color:var(--faint);margin-top:6px}
+  .step.att .t{color:var(--att)}.step.dim{opacity:.45}
+  section{margin-top:48px}
+  .eyebrow{display:flex;align-items:baseline;gap:12px;margin-bottom:8px}
+  .eyebrow .idx{font-family:var(--mono);font-size:13px;font-weight:600;color:#fff;background:var(--att);border-radius:6px;padding:2px 8px}
+  .eyebrow .lbl{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+  h2{font-family:var(--disp);font-weight:600;font-size:24px;margin:.1em 0 .3em;letter-spacing:-.01em}
+  section>p{color:var(--muted);max-width:64ch}section>p b{color:var(--ink);font-weight:600}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px;margin-top:18px}
+  .card h3{font-family:var(--disp);font-size:14px;font-weight:600;margin:0 0 12px;color:var(--ink)}
+  label.fld{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin:0 0 6px}
+  select{font-family:var(--body);font-size:15px;color:var(--ink);background:var(--bg);border:1px solid var(--line-strong);border-radius:9px;padding:8px 12px;cursor:pointer;appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 16px) 52%,calc(100% - 11px) 52%;background-size:5px 5px,5px 5px;background-repeat:no-repeat;padding-right:30px}
+  :focus-visible{outline:2px solid var(--att);outline-offset:2px}
+  code{font-family:var(--mono);font-size:.88em;background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+  .small{font-size:13px;color:var(--muted)}
+  .toggle{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);cursor:pointer;font-family:var(--mono)}
+  .toggle input{width:16px;height:16px;accent-color:var(--att)}
+  .note{border-left:3px solid var(--vec-line);background:var(--vec-soft);border-radius:0 10px 10px 0;padding:12px 16px;margin-top:16px;font-size:14px;color:#37306b}
+  .note.att{border-left-color:var(--att-line);background:var(--att-soft);color:#7C2D12}
+  .note b{font-weight:600}
+  details{margin-top:12px}summary{cursor:pointer;font-family:var(--mono);font-size:12px;color:var(--att);font-weight:600}
+
+  /* QKV vectors */
+  .qkv-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-top:6px}
+  .qkv-card{border:1px solid var(--line);border-radius:11px;padding:12px;background:var(--bg)}
+  .qkv-card .word{font-family:var(--mono);font-weight:600;font-size:14px;margin-bottom:8px}
+  .qkv-vec{font-family:var(--mono);font-size:11px;display:flex;gap:4px;align-items:center;margin:3px 0}
+  .qkv-vec .tag{width:14px;font-weight:600}
+  .qkv-vec.q .tag{color:var(--q)}.qkv-vec.k .tag{color:var(--k)}.qkv-vec.v .tag{color:var(--v)}
+  .qkv-nums{color:var(--muted)}
+
+  /* attention matrix heatmap */
+  .matrix{display:inline-block;margin-top:10px;font-family:var(--mono);font-size:12px}
+  .mrow{display:flex;align-items:center}
+  .mcell{width:62px;height:42px;display:flex;align-items:center;justify-content:center;border:1px solid #fff;border-radius:4px;color:#fff;font-weight:500;cursor:pointer;transition:transform .1s}
+  .mcell:hover{transform:scale(1.06);z-index:2}
+  .mcell.masked{background:var(--bg)!important;color:var(--faint);cursor:not-allowed;border:1px dashed var(--line-strong)}
+  .mhdr{width:62px;text-align:center;color:var(--att);font-weight:600;font-size:11px}
+  .mlabel{width:64px;text-align:right;padding-right:8px;color:var(--tok);font-weight:600;font-size:11px}
+  .corner{width:64px}
+  .axis-note{font-size:11px;color:var(--faint);font-family:var(--mono);margin-top:6px}
+
+  /* step-by-step computation */
+  .calc{font-family:var(--mono);font-size:13px;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:14px;margin-top:10px;line-height:1.9;overflow-x:auto}
+  .calc .lbl{color:var(--faint);font-size:11px;text-transform:uppercase;letter-spacing:.06em;display:block;margin:10px 0 2px}
+  .calc .hi{color:var(--att);font-weight:600}
+  .calc .qc{color:var(--q)}.calc .kc{color:var(--k)}.calc .vc{color:var(--v)}
+  .wbar{display:inline-block;height:10px;background:var(--att);border-radius:2px;vertical-align:middle;margin-left:6px}
+
+  /* 4-stage flow */
+  .stage-flow{display:flex;flex-direction:column}
+  .stage-row{display:flex;gap:14px;align-items:flex-start;padding:14px 0;border-top:1px solid var(--line)}
+  .stage-row:first-child{border-top:none;padding-top:0}
+  .stage-n{font-family:var(--mono);font-size:24px;font-weight:700;color:var(--line-strong);min-width:28px;line-height:1.1;padding-top:3px}
+  .stage-hd{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+  .stage-label{font-family:var(--disp);font-weight:600;font-size:15px}
+  .stage-txt{font-size:13px;color:var(--muted);line-height:1.55;max-width:56ch}
+  .stage-arrow{font-size:11px;color:var(--faint);padding:1px 0;margin-left:42px;font-family:var(--mono)}
+
+  .next{margin-top:56px;padding:22px;border:1px dashed var(--line-strong);border-radius:14px;background:var(--surface)}
+  .next h3{font-family:var(--disp);font-size:16px;margin:0 0 6px}.next p{color:var(--muted);font-size:14px;margin:0}
+  .pill{display:inline-block;font-family:var(--mono);font-size:11px;color:var(--att);background:var(--att-soft);border:1px solid var(--att-line);border-radius:20px;padding:2px 10px;margin-top:10px;text-decoration:none;cursor:pointer;}
+
+  /* ---- injected series navigator (consistent across all 8 steps) ---- */
+  .series-nav{display:flex;flex-direction:column;align-items:center;gap:7px;padding:10px 0 14px;margin-bottom:4px}
+  .sn-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center}
+  .sn-chips{display:flex;gap:5px}
+  .sn-chip{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:13px;font-weight:600;text-decoration:none;color:var(--muted);background:var(--bg);border:1px solid var(--line-strong);transition:all .12s}
+  .sn-chip:hover{border-color:var(--ink);color:var(--ink)}
+  .sn-chip.current{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .sn-navbtn{font-family:var(--mono);font-size:12px;color:var(--muted);text-decoration:none;padding:6px 11px;border:1px solid var(--line-strong);border-radius:8px;white-space:nowrap;transition:all .12s}
+  .sn-navbtn:hover{border-color:var(--ink);color:var(--ink)}
+  .sn-navbtn.disabled{opacity:.28;pointer-events:none}
+  .sn-caption{font-family:var(--mono);font-size:11.5px;color:var(--faint);letter-spacing:.03em}
+  .sn-caption b{color:var(--ink);font-weight:600}
+  @media(max-width:560px){.sn-chip{width:26px;height:26px;font-size:11px}.sn-navbtn{padding:5px 8px;font-size:11px}}
+</style>
+<script>(function(){
+  var t=localStorage.getItem('theme')||(window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
+  document.documentElement.setAttribute('data-theme',t);
+  window.addEventListener('storage',function(e){
+    if(e.key==='theme') document.documentElement.setAttribute('data-theme',e.newValue||'light');
+  });
+})()</script>
+</head>
+<body>
+<div class="wrap">
+
+
+<nav class="series-nav" aria-label="Series navigation">
+  <div class="sn-bar"><a class="sn-navbtn" href="llm-step2-position-and-prediction.html">‹ prev</a><div class="sn-chips"><a class="sn-chip" href="llm-step1-tokens-and-embeddings.html" title="Step 1: Tokens & Embeddings">1</a><a class="sn-chip" href="llm-step2-position-and-prediction.html" title="Step 2: Position & Prediction">2</a><span class="sn-chip current" title="Self-Attention">3</span><a class="sn-chip" href="llm-step4-transformer-block.html" title="Step 4: Transformer Block">4</a><a class="sn-chip" href="llm-step5-training.html" title="Step 5: Training">5</a><a class="sn-chip" href="llm-step6-generation.html" title="Step 6: Generation">6</a><a class="sn-chip" href="llm-step7-kv-cache.html" title="Step 7: KV Cache">7</a><a class="sn-chip" href="llm-step8-pagedattention-vllm.html" title="Step 8: PagedAttention & vLLM">8</a></div><a class="sn-navbtn" href="llm-step4-transformer-block.html">next ›</a></div>
+  <div class="sn-caption">Step <b>3</b> of 8 &middot; <b>Self-Attention</b> &middot; LLM from scratch</div>
+</nav>
+
+<header>
+  <div class="kicker">Build an LLM · Step 3 of a series</div>
+  <h1>Self-attention: letting tokens look at each other</h1>
+  <p class="lede">This is the mechanism that made Transformers work. Each token asks a
+    <b>question</b> (Query), every token advertises what it <b>has</b> (Key), and the matches decide
+    how much each token's <b>content</b> (Value) flows into the result. The reflexive pronoun "itself" resolves directly back to "dog" — both are in the same sentence.</p>
+  <div class="pipe" aria-hidden="true">
+    <div class="step dim"><div class="n">02</div><div class="t">Positioned</div><div class="d">emb + pos</div><div class="a">→ attention</div></div>
+    <div class="step att"><div class="n">03a</div><div class="t">Q · K</div><div class="d">scores</div><div class="a">↓ scale+softmax</div></div>
+    <div class="step att"><div class="n">03b</div><div class="t">Weights</div><div class="d">who attends to whom</div><div class="a">↓ × V</div></div>
+    <div class="step att"><div class="n">03c</div><div class="t">Output</div><div class="d">context-aware vector</div><div class="a">→ next layer</div></div>
+  </div>
+</header>
+
+<!-- INTUITION -->
+<section>
+  <div class="eyebrow"><span class="idx">01</span><span class="lbl">The Intuition</span></div>
+  <h2>Query, Key, Value — think Netflix</h2>
+  <p>Imagine you open Netflix in a particular mood. You want something <em>tense, psychological, with a
+    twist ending</em>. That mood is your <b style="color:var(--q)">Query</b> — what you're looking for.</p>
+  <p style="margin-top:10px">Every title on the platform has tags: <em>"psychological thriller · dark ·
+    non-linear"</em>. Those tags are the <b style="color:var(--k)">Keys</b> — what each title advertises
+    about itself.</p>
+  <p style="margin-top:10px">Netflix scores your mood against every title's tags. High match → high score
+    → that show gets recommended more heavily. What you actually receive — the episodes, the acting, the
+    story — is the <b style="color:var(--v)">Value</b>. The Key was just the index; the Value is the
+    content.</p>
+
+  <div class="card" style="margin-top:16px">
+    <div style="display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font-size:13px;align-items:start">
+      <span style="font-family:var(--mono);font-weight:700;color:var(--q);padding-top:2px">Q</span>
+      <span><b style="color:var(--q)">Query</b> — what this token is looking for<br>
+        <span style="color:var(--faint)">e.g. "itself" looking for the noun it refers to</span></span>
+      <span style="font-family:var(--mono);font-weight:700;color:var(--k);padding-top:2px">K</span>
+      <span><b style="color:var(--k)">Key</b> — what this token advertises about itself<br>
+        <span style="color:var(--faint)">e.g. "dog" advertising: animate, noun, subject</span></span>
+      <span style="font-family:var(--mono);font-weight:700;color:var(--v);padding-top:2px">V</span>
+      <span><b style="color:var(--v)">Value</b> — the actual content that flows when matched<br>
+        <span style="color:var(--faint)">e.g. the meaning payload "itself" receives from "dog"</span></span>
+    </div>
+    <p class="small" style="margin-top:12px;border-top:1px solid var(--line);padding-top:10px">Score (Q·K) decides <i>how much</i> to attend. Value is <i>what</i> actually flows. You never receive the Key — it's just the index.</p>
+  </div>
+
+  <div class="note att" style="margin-top:16px"><b>In the model:</b> Q, K, and V are each the token's
+    vector multiplied by a learned weight matrix (<code>W_Q</code>, <code>W_K</code>, <code>W_V</code>).
+    In the example below they're hand-set so the numbers are readable — in a real model they're learned
+    from data, exactly like the embeddings in Step 1.</div>
+</section>
+
+<!-- THE EXAMPLE -->
+<section>
+  <div class="eyebrow"><span class="idx">02</span><span class="lbl">Worked Example</span></div>
+  <h2>"the dog groomed itself"</h2>
+  <p>Four tokens. We've given each one a tiny 3-number Query and Key, designed around three readable
+    features: <code>[noun-ness, verb-ness, animate]</code>. <b>"itself"</b> is a reflexive pronoun that
+    unambiguously refers back to <b>"dog"</b> in the same sentence — watch where its attention lands.</p>
+
+  <div class="card">
+    <h3>The Q / K / V vectors for each token</h3>
+    <div class="qkv-grid" id="qkv-grid"></div>
+    <p class="small" style="margin-top:10px">Q = what this token is looking for · K = what it offers ·
+      V = the content it passes on (here, kept simple as a 1-feature "meaning" payload).</p>
+  </div>
+
+  <div class="card">
+    <h3>Attention matrix — who attends to whom</h3>
+    <label class="toggle" style="margin-bottom:10px">
+      <input type="checkbox" id="mask-toggle" checked> causal mask (a token can't see the future)
+    </label>
+    <div class="matrix" id="matrix"></div>
+    <div class="axis-note">Each <b>row</b> is a query token; each <b>cell</b> = how much it attends to that column's token. Rows sum to 100%. Click a row label or cell to see the math.</div>
+    <p class="small" style="margin-top:12px" id="matrix-read"></p>
+  </div>
+
+  <div class="card">
+    <h3>Step-by-step: one token's attention</h3>
+    <div style="max-width:220px;margin-bottom:6px">
+      <label class="fld" for="focus-tok">Compute attention for</label>
+      <select id="focus-tok"></select>
+    </div>
+    <div class="calc" id="calc"></div>
+  </div>
+
+  <div class="note att"><b>Why divide by √d<sub>k</sub>?</b> Dot products grow with vector dimension.
+    Without scaling, large scores push softmax into near-one-hot outputs with tiny gradients, and
+    training stalls. Dividing by the square root of the key dimension keeps scores in a sane range.</div>
+</section>
+
+<!-- THE 4 STAGES -->
+<section>
+  <div class="eyebrow"><span class="idx">03</span><span class="lbl">The Four Stages</span></div>
+  <h2>Score → Scale → Soften → Blend</h2>
+  <p>Every attention output runs through exactly four operations. You already saw them in the step-by-step calc above — here they are named and explained:</p>
+
+  <div class="card">
+    <div class="stage-flow">
+
+      <div class="stage-row">
+        <div class="stage-n" style="color:var(--q)">1</div>
+        <div>
+          <div class="stage-hd">
+            <span class="stage-label" style="color:var(--q)">Score</span>
+            <code>Q · K</code>
+          </div>
+          <div class="stage-txt">Dot-product of the query with every key. A high score means "this token is relevant to my question." Scores are unbounded — any positive or negative number.</div>
+        </div>
+      </div>
+
+      <div class="stage-arrow">↓</div>
+
+      <div class="stage-row">
+        <div class="stage-n">2</div>
+        <div>
+          <div class="stage-hd">
+            <span class="stage-label" style="color:var(--faint)">Scale</span>
+            <code>÷ √d<sub>k</sub></code>
+          </div>
+          <div class="stage-txt">Divide by the square root of the key dimension. Without this, larger embedding sizes produce bigger dot products, pushing softmax into near-zero gradients and making training stall.</div>
+          <details style="margin-top:6px"><summary>why square root specifically?</summary>
+            <p class="small" style="margin-top:6px">If each element of Q and K is drawn from a distribution with variance 1, their dot product has variance d<sub>k</sub>. Dividing by √d<sub>k</sub> brings the variance back to 1 regardless of dimension size.</p>
+          </details>
+        </div>
+      </div>
+
+      <div class="stage-arrow">↓</div>
+
+      <div class="stage-row">
+        <div class="stage-n" style="color:var(--k)">3</div>
+        <div>
+          <div class="stage-hd">
+            <span class="stage-label" style="color:var(--k)">Soften</span>
+            <code>softmax</code>
+          </div>
+          <div class="stage-txt">Converts raw scores into weights that sum to 1 — a probability distribution over which tokens to attend to. Higher scores get exponentially more weight; low scores shrink toward zero.</div>
+        </div>
+      </div>
+
+      <div class="stage-arrow">↓</div>
+
+      <div class="stage-row">
+        <div class="stage-n" style="color:var(--v)">4</div>
+        <div>
+          <div class="stage-hd">
+            <span class="stage-label" style="color:var(--v)">Blend</span>
+            <code>× V</code>
+          </div>
+          <div class="stage-txt">Weighted average of all value vectors. Tokens with high attention weight contribute more of their content. The result is a single context-aware vector for this query token.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- THE FORMULA -->
+<section>
+  <div class="eyebrow"><span class="idx">04</span><span class="lbl">The Whole Thing</span></div>
+  <h2>One formula, four stages</h2>
+  <p>The four stages collapse into a single expression you'll see in every Transformer paper:</p>
+  <div class="card" style="text-align:center">
+    <div style="font-family:var(--mono);font-size:20px;color:var(--ink);padding:14px 0;letter-spacing:.02em">
+      Attention(<span style="color:var(--q)">Q</span>,<span style="color:var(--k)">K</span>,<span style="color:var(--v)">V</span>)
+      = softmax( <span style="color:var(--q)">Q</span><span style="color:var(--k)">K</span><sup>T</sup> / √d<sub>k</sub> ) <span style="color:var(--v)">V</span>
+    </div>
+    <div class="small" style="max-width:60ch;margin:0 auto;text-align:left">
+      <span style="color:var(--q)">Q</span><span style="color:var(--k)">K</span><sup>T</sup> = score every key against every query ·
+      <code>/√d<sub>k</sub></code> = scale ·
+      <code>softmax</code> = soften into weights ·
+      <code>× <span style="color:var(--v)">V</span></code> = blend values
+    </div>
+  </div>
+  <div class="note"><b>This is self-attention</b> because Q, K, and V all come from the <i>same</i> sequence — tokens attend to each other.
+    <details style="margin-top:8px"><summary>cross-attention (used in translation models)</summary>
+      <p class="small" style="margin-top:6px">In encoder-decoder models like the original Transformer, the decoder draws Q from its own tokens but K and V from the encoder's output. The math is identical — only the source of K/V changes.</p>
+    </details>
+  </div>
+</section>
+
+<div class="next">
+  <h3>Where this is heading</h3>
+  <p>One attention pattern only captures one kind of relationship. Real models run <b>many attention
+    heads in parallel</b> — one might track subjects, another track position, another track tone — then
+    combine them. That, plus the feed-forward layers and residual connections that wrap around
+    attention, is the full <b>Transformer block</b>. That's Step 4.</p>
+  <a class="pill" style="opacity:.65" href="llm-step2-position-and-prediction.html">◂ Back · Step 2</a>
+  <a class="pill" href="llm-step4-transformer-block.html">Next ▸ Step 4 · Multi-Head Attention &amp; the Transformer Block</a>
+</div>
+
+</div>
+<script>
+const $=s=>document.querySelector(s);
+
+/* ---- the worked example: "the dog groomed itself" ----
+   Q/K dims = [noun-ness, verb-ness, animate]  (hand-set for legibility)
+   V = a single "meaning payload" number, just to show the weighted blend. */
+const TOKENS=['the','dog','groomed','itself'];
+const Q={ the:[1,0,0], dog:[.3,0,.3], groomed:[.5,0,1], itself:[1,0,1] };   // what each looks for
+const K={ the:[0,0,0], dog:[1,0,1], groomed:[0,1,0], itself:[.7,0,.6] };    // what each offers
+const V={ the:0.1, dog:0.9, groomed:0.5, itself:0.7 };                      // content payload
+const DK=3;
+
+const dot=(a,b)=>a.reduce((s,x,i)=>s+x*b[i],0);
+function scoresFor(qi, masked){
+  // raw scores query qi vs every key, with optional causal mask
+  return TOKENS.map((t,ki)=>{
+    if(masked && ki>qi) return null;            // can't attend to future
+    return dot(Q[TOKENS[qi]],K[t])/Math.sqrt(DK);
+  });
+}
+function softmaxRow(raw){
+  const valid=raw.map((v,i)=>v===null?null:v);
+  const present=valid.filter(v=>v!==null);
+  const mx=Math.max(...present);
+  const exps=valid.map(v=>v===null?0:Math.exp(v-mx));
+  const sum=exps.reduce((a,b)=>a+b,0);
+  return valid.map((v,i)=>v===null?null:exps[i]/sum);
+}
+
+/* ---- render Q/K/V cards ---- */
+function fmt(a){return '['+a.map(x=>x.toFixed(1)).join(', ')+']';}
+$('#qkv-grid').innerHTML=TOKENS.map(t=>`
+  <div class="qkv-card"><div class="word">${t}</div>
+    <div class="qkv-vec q"><span class="tag">Q</span><span class="qkv-nums">${fmt(Q[t])}</span></div>
+    <div class="qkv-vec k"><span class="tag">K</span><span class="qkv-nums">${fmt(K[t])}</span></div>
+    <div class="qkv-vec v"><span class="tag">V</span><span class="qkv-nums">${V[t].toFixed(1)}</span></div>
+  </div>`).join('');
+
+/* ---- heatmap colour ---- */
+function heat(w){ // w in 0..1 -> orange scale
+  if(w===null) return null;
+  const t=Math.max(0,Math.min(1,w));
+  // interpolate from #FFF7ED (orange-50) to #EA580C (orange-600)
+  const r=Math.round(255-(255-234)*t), g=Math.round(247-(247-88)*t), b=Math.round(237-(237-12)*t);
+  return `rgb(${r},${g},${b})`;
+}
+
+let focusRow=3; // start on "itself"
+function renderMatrix(){
+  const masked=$('#mask-toggle').checked;
+  const M=$('#matrix');
+  let html='<div class="mrow"><div class="corner"></div>'+
+    TOKENS.map(t=>`<div class="mhdr">${t}</div>`).join('')+'</div>';
+  TOKENS.forEach((qt,qi)=>{
+    const w=softmaxRow(scoresFor(qi,masked));
+    html+='<div class="mrow"><div class="mlabel" style="cursor:pointer" data-row="'+qi+'">'+qt+'</div>';
+    w.forEach((wi,ki)=>{
+      if(wi===null){ html+=`<div class="mcell masked">—</div>`; }
+      else{
+        const pct=Math.round(wi*100);
+        const tcol = wi>0.45?'#fff':'#7C2D12';
+        html+=`<div class="mcell" data-row="${qi}" data-col="${ki}" style="background:${heat(wi)};color:${tcol}">${pct}%</div>`;
+      }
+    });
+    html+='</div>';
+  });
+  M.innerHTML=html;
+  M.querySelectorAll('[data-row]').forEach(el=>el.addEventListener('click',()=>{
+    focusRow=+el.dataset.row; $('#focus-tok').value=TOKENS[focusRow]; renderCalc(); updateRead();
+  }));
+  updateRead();
+}
+function updateRead(){
+  const masked=$('#mask-toggle').checked;
+  const w=softmaxRow(scoresFor(focusRow,masked));
+  let best=0,bi=0; w.forEach((wi,i)=>{if(wi!==null&&wi>best){best=wi;bi=i;}});
+  $('#matrix-read').innerHTML=`Token <b style="color:var(--tok)">"${TOKENS[focusRow]}"</b> attends most strongly to <b style="color:var(--att)">"${TOKENS[bi]}"</b> (${Math.round(best*100)}%)`+
+    (TOKENS[focusRow]==='itself'&&TOKENS[bi]==='dog'?` — the reflexive pronoun resolves directly to its referent in the same sentence. That's attention doing coreference.`:`.`);
+}
+
+/* ---- focus select ---- */
+$('#focus-tok').innerHTML=TOKENS.map(t=>`<option>${t}</option>`).join('');
+$('#focus-tok').value=TOKENS[focusRow];
+
+function renderCalc(){
+  const masked=$('#mask-toggle').checked;
+  const qi=TOKENS.indexOf($('#focus-tok').value);
+  focusRow=qi;
+  const qt=TOKENS[qi];
+  const raw=scoresFor(qi,masked);
+  const w=softmaxRow(raw);
+  let h='';
+  h+=`<span class="lbl">1 · score = (Q<sub>${qt}</sub> · K<sub>token</sub>) / √${DK}</span>`;
+  TOKENS.forEach((kt,ki)=>{
+    if(raw[ki]===null){ h+=`<div><span class="kc">${kt}</span>: <span style="color:var(--faint)">masked (future)</span></div>`; return; }
+    h+=`<div><span class="qc">Q<sub>${qt}</sub></span>·<span class="kc">K<sub>${kt}</sub></span> = ${fmt(Q[qt])}·${fmt(K[kt])} = ${(dot(Q[qt],K[kt])).toFixed(2)} → /√${DK} = <b>${raw[ki].toFixed(3)}</b></div>`;
+  });
+  h+=`<span class="lbl">2 · softmax → attention weights</span>`;
+  TOKENS.forEach((kt,ki)=>{
+    if(w[ki]===null) return;
+    const pct=(w[ki]*100);
+    h+=`<div><span class="kc">${kt}</span>: <b class="hi">${pct.toFixed(1)}%</b><span class="wbar" style="width:${(pct*1.6).toFixed(0)}px"></span></div>`;
+  });
+  // weighted sum of V
+  let out=0; TOKENS.forEach((kt,ki)=>{ if(w[ki]!==null) out+=w[ki]*V[kt]; });
+  h+=`<span class="lbl">3 · output = Σ (weight × V)</span>`;
+  h+=`<div>`+TOKENS.map((kt,ki)=>w[ki]===null?null:`${(w[ki]).toFixed(2)}×<span class="vc">${V[kt].toFixed(1)}</span>`).filter(Boolean).join(' + ')+` = <b class="hi">${out.toFixed(3)}</b></div>`;
+  h+=`<div class="small" style="margin-top:8px">This number is the new, context-aware representation of "<b>${qt}</b>" — blended from the tokens it attended to.</div>`;
+  $('#calc').innerHTML=h;
+}
+
+$('#mask-toggle').addEventListener('change',()=>{renderMatrix();renderCalc();});
+$('#focus-tok').addEventListener('change',()=>{renderCalc();updateRead();});
+
+renderMatrix(); renderCalc();
+</script>
+</body>
+</html>

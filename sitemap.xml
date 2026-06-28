@@ -33,6 +33,10 @@
         <lastmod>2026-02-16</lastmod>
     </url>
     <url>
+        <loc>https://abhishek9sharma.github.io/blog/llm-from-scratch/</loc>
+        <lastmod>2026-06-28</lastmod>
+    </url>
+    <url>
         <loc>https://abhishek9sharma.github.io/blog/llmops/</loc>
         <lastmod>2025-01-14</lastmod>
     </url>
@@ -185,6 +189,9 @@
         <loc>https://abhishek9sharma.github.io/tags/data-processing/</loc>
     </url>
     <url>
+        <loc>https://abhishek9sharma.github.io/tags/deep-learning/</loc>
+    </url>
+    <url>
         <loc>https://abhishek9sharma.github.io/tags/docker/</loc>
     </url>
     <url>
@@ -204,6 +211,9 @@
     </url>
     <url>
         <loc>https://abhishek9sharma.github.io/tags/icsme/</loc>
+    </url>
+    <url>
+        <loc>https://abhishek9sharma.github.io/tags/interactive/</loc>
     </url>
     <url>
         <loc>https://abhishek9sharma.github.io/tags/kafka/</loc>
@@ -252,5 +262,8 @@
     </url>
     <url>
         <loc>https://abhishek9sharma.github.io/tags/tse/</loc>
+    </url>
+    <url>
+        <loc>https://abhishek9sharma.github.io/tags/tutorial/</loc>
     </url>
 </urlset>

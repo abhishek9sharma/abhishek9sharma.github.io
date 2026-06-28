@@ -1,0 +1,461 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>LLM from scratch · Step 5 — Training</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F7F8FA;--surface:#FFFFFF;--line:#E3E7EE;--line-strong:#CBD3DF;
+    --ink:#1B2433;--muted:#5C6675;--faint:#8B94A3;
+    --tok:#0E7C86;--vec:#4F46E5;--vec-soft:#ECEBFD;--vec-line:#C3BFF6;
+    --trn:#D9480F;--trn-soft:#FFF0E6;--trn-line:#FFB088;  /* training = burnt orange */
+    --loss:#E03131;--good:#0CA678;
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+    --disp:'Space Grotesk',system-ui,sans-serif;--body:'Inter',system-ui,sans-serif;
+  }
+
+  /* ── dark mode ── */
+  [data-theme="dark"]{
+    --bg:#18191f;
+    --surface:#22262e;
+    --line:#2d3240;
+    --line-strong:#3d4455;
+    --ink:#dde3ee;
+    --muted:#8b94a8;
+    --faint:#5c6475;
+    --tok-soft:#0a2f32;
+    --tok-line:#1a5c62;
+    --vec-soft:#1a1847;
+    --vec-line:#3730a3;
+  }
+  *{box-sizing:border-box}html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:880px;margin:0 auto;padding:32px 22px 120px}
+  header{padding:18px 0 30px;border-bottom:1px solid var(--line)}
+  .kicker{font-family:var(--mono);font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--trn);font-weight:600}
+  h1{font-family:var(--disp);font-weight:700;font-size:clamp(26px,5vw,42px);line-height:1.08;margin:.35em 0 .25em;letter-spacing:-.015em}
+  .lede{color:var(--muted);max-width:62ch;font-size:17px}
+  section{margin-top:48px}
+  .eyebrow{display:flex;align-items:baseline;gap:12px;margin-bottom:8px}
+  .eyebrow .idx{font-family:var(--mono);font-size:13px;font-weight:600;color:#fff;background:var(--trn);border-radius:6px;padding:2px 8px}
+  .eyebrow .lbl{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+  h2{font-family:var(--disp);font-weight:600;font-size:24px;margin:.1em 0 .3em;letter-spacing:-.01em}
+  section>p{color:var(--muted);max-width:64ch}section>p b{color:var(--ink);font-weight:600}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px;margin-top:18px}
+  .card h3{font-family:var(--disp);font-size:14px;font-weight:600;margin:0 0 12px;color:var(--ink)}
+  label.fld{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin:0 0 6px}
+  select,input[type=range]{font-family:var(--body);color:var(--ink);background:var(--bg);border:1px solid var(--line-strong);border-radius:9px;padding:8px 12px}
+  input[type=range]{accent-color:var(--trn);padding:0}
+  :focus-visible{outline:2px solid var(--trn);outline-offset:2px}
+  code{font-family:var(--mono);font-size:.88em;background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+  .small{font-size:13px;color:var(--muted)}
+  .note{border-left:3px solid var(--trn-line);background:var(--trn-soft);border-radius:0 10px 10px 0;padding:12px 16px;margin-top:16px;font-size:14px;color:#8a3410}
+  .note.vec{border-left-color:var(--vec-line);background:var(--vec-soft);color:#37306b}
+  .note b{font-weight:600}
+  details{margin-top:12px}summary{cursor:pointer;font-family:var(--mono);font-size:12px;color:var(--trn);font-weight:600}
+  .btn{font-family:var(--body);font-size:14px;font-weight:500;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);padding:9px 18px;border-radius:9px;cursor:pointer}
+  .btn:hover{border-color:var(--trn)}
+  .btn.primary{background:var(--trn);color:#fff;border-color:var(--trn)}
+  .btn:disabled{opacity:.4;cursor:default}
+
+  /* cross-entropy demo */
+  .ce-grid{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+  .ce-row{display:grid;grid-template-columns:80px 1fr 60px;gap:8px;align-items:center;font-family:var(--mono);font-size:12.5px}
+  .ce-row.target{background:var(--trn-soft);border-radius:6px;padding:2px 4px;margin:0 -4px}
+  .ce-track{position:relative;height:14px;background:var(--bg);border:1px solid var(--line);border-radius:5px;overflow:hidden}
+  .ce-bar{position:absolute;top:1px;bottom:1px;left:0;background:var(--vec);border-radius:3px;transition:width .3s}
+  .ce-row.target .ce-bar{background:var(--good)}
+  .ce-pct{text-align:right;color:var(--muted)}
+  .ce-loss{font-family:var(--disp);font-size:30px;font-weight:700;color:var(--loss)}
+
+  /* training viz: loss chart + embedding map side by side */
+  .train-layout{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:10px}
+  @media(max-width:640px){.train-layout{grid-template-columns:1fr}}
+  .viz-box{border:1px solid var(--line);border-radius:11px;background:var(--bg);padding:12px}
+  .viz-box h4{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--faint);margin:0 0 8px}
+  svg{display:block;width:100%;height:auto}
+  .stat-row{display:flex;gap:18px;flex-wrap:wrap;margin-top:14px;font-family:var(--mono);font-size:13px}
+  .stat{display:flex;flex-direction:column}
+  .stat .v{font-size:20px;font-weight:600;color:var(--ink)}
+  .stat .l{font-size:10px;color:var(--faint);text-transform:uppercase;letter-spacing:.06em}
+  .controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:14px}
+  .lr-row{display:flex;align-items:center;gap:10px;margin-top:12px}
+  .lr-row .lv{font-family:var(--mono);font-size:13px;color:var(--trn);min-width:48px}
+
+  .dotc{fill:var(--vec)}.dotlbl{font-family:var(--mono);font-size:9px;fill:var(--ink)}
+  .gridl{stroke:var(--line);stroke-width:1}.axisl{stroke:var(--line-strong);stroke-width:1}
+  .axist{font-family:var(--mono);font-size:9px;fill:var(--faint)}
+
+  .next{margin-top:56px;padding:22px;border:1px dashed var(--line-strong);border-radius:14px;background:var(--surface)}
+  .next h3{font-family:var(--disp);font-size:16px;margin:0 0 6px}.next p{color:var(--muted);font-size:14px;margin:0}
+  .pill{display:inline-block;font-family:var(--mono);font-size:11px;color:var(--trn);background:var(--trn-soft);border:1px solid var(--trn-line);border-radius:20px;padding:2px 10px;margin-top:10px;text-decoration:none;cursor:pointer;}
+
+  /* ---- injected series navigator (consistent across all 8 steps) ---- */
+  .series-nav{display:flex;flex-direction:column;align-items:center;gap:7px;padding:10px 0 14px;margin-bottom:4px}
+  .sn-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center}
+  .sn-chips{display:flex;gap:5px}
+  .sn-chip{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:13px;font-weight:600;text-decoration:none;color:var(--muted);background:var(--bg);border:1px solid var(--line-strong);transition:all .12s}
+  .sn-chip:hover{border-color:var(--ink);color:var(--ink)}
+  .sn-chip.current{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .sn-navbtn{font-family:var(--mono);font-size:12px;color:var(--muted);text-decoration:none;padding:6px 11px;border:1px solid var(--line-strong);border-radius:8px;white-space:nowrap;transition:all .12s}
+  .sn-navbtn:hover{border-color:var(--ink);color:var(--ink)}
+  .sn-navbtn.disabled{opacity:.28;pointer-events:none}
+  .sn-caption{font-family:var(--mono);font-size:11.5px;color:var(--faint);letter-spacing:.03em}
+  .sn-caption b{color:var(--ink);font-weight:600}
+  @media(max-width:560px){.sn-chip{width:26px;height:26px;font-size:11px}.sn-navbtn{padding:5px 8px;font-size:11px}}
+</style>
+<script>(function(){
+  var t=localStorage.getItem('theme')||(window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
+  document.documentElement.setAttribute('data-theme',t);
+  window.addEventListener('storage',function(e){
+    if(e.key==='theme') document.documentElement.setAttribute('data-theme',e.newValue||'light');
+  });
+})()</script>
+</head>
+<body>
+<div class="wrap">
+
+
+<nav class="series-nav" aria-label="Series navigation">
+  <div class="sn-bar"><a class="sn-navbtn" href="llm-step4-transformer-block.html">‹ prev</a><div class="sn-chips"><a class="sn-chip" href="llm-step1-tokens-and-embeddings.html" title="Step 1: Tokens & Embeddings">1</a><a class="sn-chip" href="llm-step2-position-and-prediction.html" title="Step 2: Position & Prediction">2</a><a class="sn-chip" href="llm-step3-self-attention.html" title="Step 3: Self-Attention">3</a><a class="sn-chip" href="llm-step4-transformer-block.html" title="Step 4: Transformer Block">4</a><span class="sn-chip current" title="Training">5</span><a class="sn-chip" href="llm-step6-generation.html" title="Step 6: Generation">6</a><a class="sn-chip" href="llm-step7-kv-cache.html" title="Step 7: KV Cache">7</a><a class="sn-chip" href="llm-step8-pagedattention-vllm.html" title="Step 8: PagedAttention & vLLM">8</a></div><a class="sn-navbtn" href="llm-step6-generation.html">next ›</a></div>
+  <div class="sn-caption">Step <b>5</b> of 8 &middot; <b>Training</b> &middot; LLM from scratch</div>
+</nav>
+
+<header>
+  <div class="kicker">Build an LLM · Step 5 of a series</div>
+  <h1>Training: turning noise into knowledge</h1>
+  <p class="lede">Every weight in the model starts as <b>random noise</b>. Training is a loop: predict,
+    measure how wrong you were (<b>loss</b>), and nudge every weight to be slightly less wrong
+    (<b>gradient descent</b>). Below, you'll actually <b>train embeddings live</b> and watch structure
+    emerge from randomness — the payoff promised back in Step 1.</p>
+</header>
+
+<!-- CROSS ENTROPY -->
+<section>
+  <div class="eyebrow"><span class="idx">01</span><span class="lbl">The Loss</span></div>
+  <h2>Measuring "how wrong" with cross-entropy</h2>
+  <p>The model outputs a probability for every possible next word. The loss compares that distribution
+    to the <b>true</b> next word. If the model gave the correct word high probability, loss is low;
+    if it was confidently wrong, loss is high. Pick the true word and see:</p>
+
+  <div class="card">
+    <h3>Context: "the king sat on the ___"</h3>
+    <div style="max-width:240px;margin-bottom:12px">
+      <label class="fld" for="ce-target">The correct next word is…</label>
+      <select id="ce-target">
+        <option value="throne">throne (model agrees)</option>
+        <option value="chair">chair (close)</option>
+        <option value="dog">dog (model disagrees)</option>
+      </select>
+    </div>
+    <div class="ce-grid" id="ce-grid"></div>
+    <div style="display:flex;align-items:baseline;gap:14px;margin-top:16px">
+      <span class="ce-loss" id="ce-loss">—</span>
+      <span class="small" id="ce-loss-expl"></span>
+    </div>
+    <div class="note" style="margin-top:14px"><b>The formula:</b>
+      <code>loss = −log( P(correct word) )</code>. If the model gave the right word 90% probability,
+      loss = −log(0.9) = 0.10 (tiny). If it gave 2%, loss = −log(0.02) = 3.9 (large). The <code>−log</code>
+      punishes confident mistakes harshly — which is exactly what we want.</div>
+  </div>
+</section>
+
+<!-- GRADIENT DESCENT INTUITION -->
+<section>
+  <div class="eyebrow"><span class="idx">02</span><span class="lbl">The Update</span></div>
+  <h2>Gradient descent: roll downhill</h2>
+  <p>The loss is a function of the weights. Its <b>gradient</b> points in the direction of steepest
+    increase — so we step the opposite way to reduce it. The <b>learning rate</b> sets the step size:
+    too small and it crawls, too big and it overshoots. Drag the ball, set a rate, and watch it descend:</p>
+
+  <div class="card">
+    <div class="viz-box"><h4>Loss landscape (1 weight, for illustration)</h4>
+      <svg id="landscape" viewBox="0 0 600 240" role="img" aria-label="Loss landscape"></svg>
+    </div>
+    <div class="lr-row">
+      <label class="fld" for="lr-sl" style="margin:0;white-space:nowrap">Learning rate</label>
+      <input type="range" id="lr-sl" min="1" max="100" value="30" style="flex:1">
+      <span class="lv" id="lr-val">0.30</span>
+    </div>
+    <div class="controls">
+      <button class="btn primary" id="ld-step">Take one step</button>
+      <button class="btn" id="ld-run">Run to bottom</button>
+      <button class="btn" id="ld-reset">Reset to random</button>
+    </div>
+    <p class="small" id="ld-read" style="margin-top:10px"></p>
+  </div>
+
+  <div class="note"><b>Real models have billions of weights</b>, not one — so the "landscape" is
+    billion-dimensional and impossible to draw. But the rule is identical for every single weight:
+    compute the gradient, step downhill. <b>Backpropagation</b> is just the chain rule applied to compute
+    all those gradients efficiently in one backward pass.</div>
+</section>
+
+<!-- LIVE TRAINING -->
+<section>
+  <div class="eyebrow"><span class="idx">03</span><span class="lbl">Watch It Learn</span></div>
+  <h2>Train real embeddings from noise</h2>
+  <p>This trains a tiny model on a few toy sentences. Each word's embedding starts <b>random</b>. The
+    model learns to predict the next word; as loss drops, words that share contexts drift together. Hit
+    <b>Train</b> and watch the loss curve fall and the word map self-organise — no positions are hand-set
+    this time. It's all learned.</p>
+
+  <div class="card">
+    <div class="small" style="margin-bottom:6px;font-family:var(--mono);color:var(--muted)">
+      Training corpus: <code>king queen man woman</code> · <code>cat dog runs jumps</code> · <code>king runs queen jumps</code> · <code>cat man dog woman</code>
+    </div>
+    <div class="train-layout">
+      <div class="viz-box"><h4>Training loss</h4>
+        <svg id="loss-chart" viewBox="0 0 320 200"></svg>
+      </div>
+      <div class="viz-box"><h4>Embedding map (learned, live)</h4>
+        <svg id="emb-map" viewBox="0 0 320 200"></svg>
+      </div>
+    </div>
+    <div class="stat-row">
+      <div class="stat"><span class="v" id="stat-epoch">0</span><span class="l">epoch</span></div>
+      <div class="stat"><span class="v" id="stat-loss">—</span><span class="l">loss</span></div>
+      <div class="stat"><span class="v" id="stat-lr">0.10</span><span class="l">learn rate</span></div>
+    </div>
+    <div class="controls">
+      <button class="btn primary" id="tr-train">▶ Train 200 epochs</button>
+      <button class="btn" id="tr-step">+20 epochs</button>
+      <button class="btn" id="tr-reset">↺ Reset to noise</button>
+    </div>
+    <p class="small" id="tr-read" style="margin-top:10px">Press Train. At epoch 0 the map is pure random scatter.</p>
+  </div>
+
+  <div class="note vec"><b>This is the Step 1 promise delivered.</b> Back then, the embedding dimensions
+    were hand-labelled so you could read them. Here, nothing is labelled — the structure you see emerge
+    (royalty clustering, animals clustering) is discovered <i>by the gradient</i>, purely from which words
+    appear in similar contexts. That's the core idea behind word2vec and every LLM's embedding layer.</div>
+</section>
+
+<!-- OVERFITTING -->
+<section>
+  <div class="eyebrow"><span class="idx">04</span><span class="lbl">The Catch</span></div>
+  <h2>Overfitting: memorising vs. learning</h2>
+  <p>Train too long on too little data and the model <b>memorises</b> the training set instead of
+    learning general patterns. Training loss keeps dropping, but loss on <b>held-out</b> data starts
+    <i>rising</i> — the model is getting worse at the only thing that matters. Watch the gap open up:</p>
+  <div class="card">
+    <div class="viz-box"><h4>Train loss vs. validation loss</h4>
+      <svg id="overfit-chart" viewBox="0 0 600 240"></svg>
+    </div>
+    <p class="small" style="margin-top:10px">The vertical line marks where validation loss bottoms out —
+      the <b>sweet spot</b> to stop training ("early stopping"). Past it, the model overfits. Real training
+      uses validation curves exactly like this to decide when to stop.</p>
+  </div>
+</section>
+
+<div class="next">
+  <h3>Where this is heading</h3>
+  <p>You now have the complete recipe: a model architecture (Steps 1–4) and a way to train it (Step 5).
+    The last piece is <b>using</b> a trained model to actually produce text — the autoregressive
+    generation loop, end to end, with a working demo you can type into. Step 6 brings it all together.</p>
+  <a class="pill" style="opacity:.65" href="llm-step4-transformer-block.html">◂ Back · Step 4</a>
+  <a class="pill" href="llm-step6-generation.html">Next ▸ Step 6 · Generation: putting it all together</a>
+</div>
+
+</div>
+<script>
+const $=s=>document.querySelector(s);
+
+/* ============ 1. CROSS ENTROPY ============ */
+const CE_DIST={throne:.62,chair:.20,crown:.09,castle:.05,dog:.02,book:.02};
+function renderCE(){
+  const target=$('#ce-target').value;
+  const entries=Object.entries(CE_DIST).sort((a,b)=>b[1]-a[1]);
+  const maxP=entries[0][1];
+  $('#ce-grid').innerHTML=entries.map(([w,p])=>{
+    const isT=w===target;
+    return `<div class="ce-row ${isT?'target':''}"><span>${w}${isT?' ✓':''}</span>
+      <div class="ce-track"><div class="ce-bar" style="width:${(p/maxP*100).toFixed(0)}%"></div></div>
+      <span class="ce-pct">${(p*100).toFixed(0)}%</span></div>`;
+  }).join('');
+  const pT=CE_DIST[target];
+  const loss=-Math.log(pT);
+  $('#ce-loss').textContent=loss.toFixed(2);
+  const q=loss<0.5?'Low loss — the model was confident and correct.':loss<2?'Medium loss — the model hedged.':'High loss — the model was confidently wrong, and gets punished hard.';
+  $('#ce-loss-expl').innerHTML=`loss = −log(${(pT*100).toFixed(0)}%) = <b>${loss.toFixed(2)}</b>. ${q}`;
+}
+$('#ce-target').addEventListener('change',renderCE);
+renderCE();
+
+/* ============ 2. GRADIENT DESCENT LANDSCAPE ============ */
+// loss(w) = quartic-ish bowl with a minimum near w=3.2
+function lossFn(w){ return 0.04*Math.pow(w-3.2,2)+0.3*Math.sin(w*1.1)+1.2; }
+function gradFn(w){ const h=1e-3; return (lossFn(w+h)-lossFn(w-h))/(2*h); }
+let ldW=Math.random()*8+0.5;
+const LD_W=600,LD_H=240,LD_PAD=24,WMIN=0,WMAX=9;
+function wToX(w){return LD_PAD+(w-WMIN)/(WMAX-WMIN)*(LD_W-2*LD_PAD);}
+function lToY(l){const lmin=0.8,lmax=3.2;return (LD_H-LD_PAD)-(l-lmin)/(lmax-lmin)*(LD_H-2*LD_PAD);}
+function renderLandscape(){
+  let path='';
+  for(let i=0;i<=120;i++){ const w=WMIN+(WMAX-WMIN)*i/120; const x=wToX(w),y=lToY(lossFn(w)); path+=(i?'L':'M')+x.toFixed(1)+','+y.toFixed(1);}
+  const bx=wToX(ldW),by=lToY(lossFn(ldW));
+  const g=gradFn(ldW);
+  $('#landscape').innerHTML=`
+    <path d="${path}" fill="none" stroke="#D9480F" stroke-width="2"/>
+    <line x1="${LD_PAD}" y1="${LD_H-LD_PAD}" x2="${LD_W-LD_PAD}" y2="${LD_H-LD_PAD}" class="axisl"/>
+    <circle cx="${bx}" cy="${by}" r="8" fill="#4F46E5" stroke="#fff" stroke-width="2"/>
+    <text x="${bx}" y="${by-14}" text-anchor="middle" class="axist" style="font-size:11px;fill:#4F46E5">w=${ldW.toFixed(2)}</text>
+    <text x="${LD_W-LD_PAD}" y="${LD_H-8}" text-anchor="end" class="axist">weight value →</text>`;
+  $('#ld-read').innerHTML=`Loss = <b>${lossFn(ldW).toFixed(3)}</b> · gradient = <b>${g.toFixed(3)}</b>. The ball steps <b>${g>0?'left':'right'}</b> (opposite the gradient) by learning-rate × gradient.`;
+}
+function ldStep(){
+  const lr=+$('#lr-sl').value/100;
+  ldW-=lr*gradFn(ldW);
+  ldW=Math.max(WMIN,Math.min(WMAX,ldW));
+  renderLandscape();
+}
+$('#lr-sl').addEventListener('input',()=>{ $('#lr-val').textContent=(+$('#lr-sl').value/100).toFixed(2); });
+$('#ld-step').onclick=ldStep;
+$('#ld-reset').onclick=()=>{ ldW=Math.random()*8+0.5; renderLandscape(); };
+$('#ld-run').onclick=()=>{ let n=0; const iv=setInterval(()=>{ldStep(); if(++n>40||Math.abs(gradFn(ldW))<0.005){clearInterval(iv);}},60); };
+renderLandscape();
+
+/* ============ 3. LIVE EMBEDDING TRAINING ============
+   A minimal skip-gram-ish trainer: each word has a learned 2D vector.
+   Objective: nearby words in the corpus should have high dot-product.
+   Trained with plain SGD. Real, just tiny. ============ */
+const CORPUS=[
+  ['king','queen','man','woman'],
+  ['cat','dog','runs','jumps'],
+  ['king','runs','queen','jumps'],
+  ['cat','man','dog','woman'],
+];
+const VOCAB=[...new Set(CORPUS.flat())];
+const DIM=2;
+let E={}, lossHistory=[], epoch=0;
+function initEmb(){
+  E={}; VOCAB.forEach(w=>{ E[w]=[ (Math.random()-.5)*2, (Math.random()-.5)*2 ]; });
+  lossHistory=[]; epoch=0;
+}
+initEmb();
+const sig=x=>1/(1+Math.exp(-x));
+function trainEpoch(lr=0.1){
+  // build positive pairs (co-occurring within a sentence) + negative samples
+  let totalLoss=0, count=0;
+  for(const sent of CORPUS){
+    for(let i=0;i<sent.length;i++){
+      for(let j=0;j<sent.length;j++){
+        if(i===j) continue;
+        const a=sent[i], b=sent[j];
+        // positive: want dot(a,b) high -> label 1
+        updatePair(a,b,1,lr); 
+        // negative: random word, label 0
+        const neg=VOCAB[Math.floor(Math.random()*VOCAB.length)];
+        if(neg!==a) updatePair(a,neg,0,lr);
+        // loss tracking (positive only)
+        const d=dot(E[a],E[b]); const p=sig(d);
+        totalLoss+=-Math.log(p+1e-9); count++;
+      }
+    }
+  }
+  epoch++;
+  lossHistory.push(totalLoss/count);
+}
+function dot(a,b){return a[0]*b[0]+a[1]*b[1];}
+function updatePair(a,b,label,lr){
+  const d=dot(E[a],E[b]); const p=sig(d); const err=(p-label);
+  // gradient of BCE wrt each vector
+  for(let k=0;k<DIM;k++){
+    const ga=err*E[b][k], gb=err*E[a][k];
+    E[a][k]-=lr*ga; E[b][k]-=lr*gb;
+  }
+}
+/* ---- render loss chart ---- */
+function renderLossChart(){
+  const W=320,H=200,pad=26;
+  const svg=$('#loss-chart');
+  if(lossHistory.length<2){ svg.innerHTML=`<text x="${W/2}" y="${H/2}" text-anchor="middle" class="axist">press Train</text>`; return; }
+  const mn=Math.min(...lossHistory), mx=Math.max(...lossHistory);
+  const range=mx-mn||1;
+  const pts=lossHistory.map((l,i)=>{
+    const x=pad+(W-2*pad)*i/(lossHistory.length-1);
+    const y=(H-pad)-(l-mn)/range*(H-2*pad);
+    return x.toFixed(1)+','+y.toFixed(1);
+  }).join(' ');
+  svg.innerHTML=`
+    <line x1="${pad}" y1="${H-pad}" x2="${W-pad}" y2="${H-pad}" class="axisl"/>
+    <line x1="${pad}" y1="${pad}" x2="${pad}" y2="${H-pad}" class="axisl"/>
+    <polyline points="${pts}" fill="none" stroke="#E03131" stroke-width="2"/>
+    <text x="${W-pad}" y="${H-8}" text-anchor="end" class="axist">epoch →</text>
+    <text x="${pad-4}" y="${pad+4}" text-anchor="end" class="axist">${mx.toFixed(2)}</text>
+    <text x="${pad-4}" y="${H-pad}" text-anchor="end" class="axist">${mn.toFixed(2)}</text>`;
+}
+/* ---- render embedding map ---- */
+const WORD_COLOR={king:'#7048E8',queen:'#7048E8',man:'#4F46E5',woman:'#4F46E5',cat:'#0CA678',dog:'#0CA678',runs:'#D9480F',jumps:'#D9480F'};
+function renderEmbMap(){
+  const W=320,H=200,pad=20;
+  const xs=VOCAB.map(w=>E[w][0]), ys=VOCAB.map(w=>E[w][1]);
+  const xmn=Math.min(...xs),xmx=Math.max(...xs),ymn=Math.min(...ys),ymx=Math.max(...ys);
+  const sx=v=>pad+(v-xmn)/((xmx-xmn)||1)*(W-2*pad);
+  const sy=v=>(H-pad)-(v-ymn)/((ymx-ymn)||1)*(H-2*pad);
+  let dots='';
+  VOCAB.forEach(w=>{
+    const x=sx(E[w][0]),y=sy(E[w][1]);
+    dots+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4.5" fill="${WORD_COLOR[w]||'#4F46E5'}"/>
+      <text x="${(x+6).toFixed(1)}" y="${(y+3).toFixed(1)}" class="dotlbl">${w}</text>`;
+  });
+  $('#emb-map').innerHTML=dots;
+}
+function renderTrainStats(){
+  $('#stat-epoch').textContent=epoch;
+  $('#stat-loss').textContent=lossHistory.length?lossHistory[lossHistory.length-1].toFixed(3):'—';
+}
+function refreshTrain(){ renderLossChart(); renderEmbMap(); renderTrainStats(); }
+refreshTrain();
+
+let training=false;
+function runEpochs(n,done){
+  training=true;
+  let i=0;
+  const iv=setInterval(()=>{
+    trainEpoch(0.1);
+    if(++i%4===0||i===n) refreshTrain();
+    if(i>=n){ clearInterval(iv); training=false; refreshTrain(); if(done)done(); }
+  },16);
+}
+$('#tr-train').onclick=()=>{ if(training)return; runEpochs(200,()=>{
+  $('#tr-read').innerHTML=`Trained ${epoch} epochs. Notice the clusters: <b style="color:#7048E8">royalty</b>, <b style="color:#0CA678">animals</b>, <b style="color:#D9480F">verbs</b> — discovered purely from co-occurrence, never hand-set.`;
+}); };
+$('#tr-step').onclick=()=>{ if(training)return; runEpochs(20); };
+$('#tr-reset').onclick=()=>{ if(training)return; initEmb(); refreshTrain(); $('#tr-read').textContent='Reset to noise. The map is random scatter again.'; };
+
+/* ============ 4. OVERFITTING CHART ============ */
+function renderOverfit(){
+  const W=600,H=240,pad=34;
+  const N=50;
+  const train=[],val=[];
+  for(let i=0;i<N;i++){
+    const t=i/(N-1);
+    train.push(2.5*Math.exp(-3*t)+0.15);                 // keeps dropping
+    val.push(2.5*Math.exp(-3*t)+0.15 + 1.1*Math.pow(Math.max(0,t-0.35),2)); // U-shape
+  }
+  // find min of val
+  let minI=0; val.forEach((v,i)=>{if(v<val[minI])minI=i;});
+  const allMax=Math.max(...train,...val), allMin=Math.min(...train,...val);
+  const sx=i=>pad+(W-2*pad)*i/(N-1);
+  const sy=v=>(H-pad)-(v-allMin)/((allMax-allMin)||1)*(H-2*pad);
+  const line=arr=>arr.map((v,i)=>(i?'L':'M')+sx(i).toFixed(1)+','+sy(v).toFixed(1)).join('');
+  $('#overfit-chart').innerHTML=`
+    <line x1="${pad}" y1="${H-pad}" x2="${W-pad}" y2="${H-pad}" class="axisl"/>
+    <line x1="${pad}" y1="${pad}" x2="${pad}" y2="${H-pad}" class="axisl"/>
+    <path d="${line(train)}" fill="none" stroke="#0CA678" stroke-width="2.2"/>
+    <path d="${line(val)}" fill="none" stroke="#E03131" stroke-width="2.2"/>
+    <line x1="${sx(minI)}" y1="${pad}" x2="${sx(minI)}" y2="${H-pad}" stroke="#D9480F" stroke-width="1.5" stroke-dasharray="4 3"/>
+    <text x="${sx(minI)+6}" y="${pad+12}" class="axist" style="fill:#D9480F;font-size:11px">early-stop here</text>
+    <text x="${W-pad}" y="${sy(train[N-1])-8}" text-anchor="end" class="axist" style="fill:#0CA678;font-size:11px">train loss ↓</text>
+    <text x="${W-pad}" y="${sy(val[N-1])+14}" text-anchor="end" class="axist" style="fill:#E03131;font-size:11px">validation loss ↑</text>
+    <text x="${W-pad}" y="${H-8}" text-anchor="end" class="axist">training time →</text>`;
+}
+renderOverfit();
+</script>
+</body>
+</html>

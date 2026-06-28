@@ -1,0 +1,1098 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>LLM serving · Step 7 — The KV Cache</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F7F8FA;--surface:#FFFFFF;--line:#E3E7EE;--line-strong:#CBD3DF;
+    --ink:#1B2433;--muted:#5C6675;--faint:#8B94A3;
+    --tok:#0E7C86;--tok-soft:#E3F4F5;--tok-line:#9AD7DC;
+    --kv:#7C3AED;--kv-soft:#F3EEFF;--kv-line:#D9C8F5;   /* cache = violet */
+    --k:#7C3AED;--v:#C026D3;--waste:#E03131;--good:#0CA678;
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+    --disp:'Space Grotesk',system-ui,sans-serif;--body:'Inter',system-ui,sans-serif;
+  }
+
+  /* ── dark mode ── */
+  [data-theme="dark"]{
+    --bg:#18191f;
+    --surface:#22262e;
+    --line:#2d3240;
+    --line-strong:#3d4455;
+    --ink:#dde3ee;
+    --muted:#8b94a8;
+    --faint:#5c6475;
+    --tok-soft:#0a2f32;
+    --tok-line:#1a5c62;
+    --vec-soft:#1a1847;
+    --vec-line:#3730a3;
+  }
+  *{box-sizing:border-box}html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:880px;margin:0 auto;padding:32px 22px 120px}
+  header{padding:18px 0 30px;border-bottom:1px solid var(--line)}
+  .kicker{font-family:var(--mono);font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--kv);font-weight:600}
+  h1{font-family:var(--disp);font-weight:700;font-size:clamp(26px,5vw,42px);line-height:1.08;margin:.35em 0 .25em;letter-spacing:-.015em}
+  .lede{color:var(--muted);max-width:62ch;font-size:17px}
+  .recap{font-family:var(--mono);font-size:12px;color:var(--faint);margin-top:14px}
+  .recap b{color:var(--kv)}
+  section{margin-top:48px}
+  .eyebrow{display:flex;align-items:baseline;gap:12px;margin-bottom:8px}
+  .eyebrow .idx{font-family:var(--mono);font-size:13px;font-weight:600;color:#fff;background:var(--kv);border-radius:6px;padding:2px 8px}
+  .eyebrow .lbl{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+  h2{font-family:var(--disp);font-weight:600;font-size:24px;margin:.1em 0 .3em;letter-spacing:-.01em}
+  section>p{color:var(--muted);max-width:64ch}section>p b{color:var(--ink);font-weight:600}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px;margin-top:18px}
+  .card h3{font-family:var(--disp);font-size:14px;font-weight:600;margin:0 0 12px;color:var(--ink)}
+  label.fld{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin:0 0 6px}
+  select,input[type=range]{font-family:var(--body);font-size:15px;color:var(--ink);background:var(--bg);border:1px solid var(--line-strong);border-radius:9px;padding:8px 12px}
+  input[type=range]{accent-color:var(--kv);padding:0}
+  :focus-visible{outline:2px solid var(--kv);outline-offset:2px}
+  code{font-family:var(--mono);font-size:.88em;background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+  .small{font-size:13px;color:var(--muted)}
+  .note{border-left:3px solid var(--kv-line);background:var(--kv-soft);border-radius:0 10px 10px 0;padding:12px 16px;margin-top:16px;font-size:14px;color:#4c1d95}
+  .note b{font-weight:600}
+  details{margin-top:12px}summary{cursor:pointer;font-family:var(--mono);font-size:12px;color:var(--kv);font-weight:600}
+  .btn{font-family:var(--body);font-size:14px;font-weight:500;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);padding:9px 18px;border-radius:9px;cursor:pointer}
+  .btn:hover{border-color:var(--kv)}.btn.primary{background:var(--kv);color:#fff;border-color:var(--kv)}
+  .btn:disabled{opacity:.4;cursor:default}
+  .controls{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+
+  /* token grid for cache visualization */
+  .gen-strip{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+  .gtok{font-family:var(--mono);font-size:12px;border:1px solid var(--tok-line);background:var(--tok-soft);color:#0a5b63;border-radius:7px;padding:4px 9px}
+  .gtok.cur{border-color:var(--kv);background:var(--kv-soft);color:var(--kv);font-weight:600}
+
+  .kvgrid{display:flex;flex-direction:column;gap:8px;margin-top:8px;font-family:var(--mono);font-size:11px}
+  .kvline{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .kvline .tag{width:74px;color:var(--muted);text-align:right;flex:0 0 74px}
+  .kvcell{width:40px;height:30px;border-radius:5px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;font-weight:500}
+  .kvcell.cached{background:var(--kv);opacity:.4}
+  .kvcell.fresh{background:var(--kv);box-shadow:0 0 0 2px var(--kv-line)}
+  .kvcell.recompute{background:var(--waste)}
+  .kvcell.q{background:var(--v)}
+  .kvcell.empty{background:var(--bg);border:1px dashed var(--line-strong)}
+
+  /* compute comparison chart */
+  svg{display:block;width:100%;height:auto}
+  .axisl{stroke:var(--line-strong);stroke-width:1}.axist{font-family:var(--mono);font-size:10px;fill:var(--faint)}
+
+  /* memory calculator */
+  .calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:560px){.calc-grid{grid-template-columns:1fr}}
+  .slider-row{display:flex;align-items:center;gap:10px}
+  .slider-row .sv{font-family:var(--mono);font-size:13px;color:var(--kv);min-width:64px;text-align:right}
+  .result-box{margin-top:16px;border:1px solid var(--kv-line);background:var(--kv-soft);border-radius:11px;padding:16px}
+  .result-big{font-family:var(--disp);font-size:34px;font-weight:700;color:var(--kv);line-height:1}
+  .result-sub{font-size:13px;color:#5b3a9e;margin-top:4px}
+  .membar{height:26px;border-radius:7px;overflow:hidden;display:flex;margin-top:14px;border:1px solid var(--line)}
+  .membar .seg{display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:10px;color:#fff;white-space:nowrap;overflow:hidden}
+  .formula{font-family:var(--mono);font-size:12.5px;background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:12px;margin-top:12px;line-height:1.8;overflow-x:auto}
+  .formula .hl{color:var(--kv);font-weight:600}
+
+  .next{margin-top:56px;padding:22px;border:1px dashed var(--line-strong);border-radius:14px;background:var(--surface)}
+  .next h3{font-family:var(--disp);font-size:16px;margin:0 0 6px}.next p{color:var(--muted);font-size:14px;margin:0}
+  .pill{display:inline-block;font-family:var(--mono);font-size:11px;color:var(--kv);background:var(--kv-soft);border:1px solid var(--kv-line);border-radius:20px;padding:2px 10px;margin-top:10px;text-decoration:none;cursor:pointer;}
+
+  /* ---- injected series navigator (consistent across all 8 steps) ---- */
+  .series-nav{display:flex;flex-direction:column;align-items:center;gap:7px;padding:10px 0 14px;margin-bottom:4px}
+  .sn-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center}
+  .sn-chips{display:flex;gap:5px}
+  .sn-chip{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:13px;font-weight:600;text-decoration:none;color:var(--muted);background:var(--bg);border:1px solid var(--line-strong);transition:all .12s}
+  .sn-chip:hover{border-color:var(--ink);color:var(--ink)}
+  .sn-chip.current{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .sn-navbtn{font-family:var(--mono);font-size:12px;color:var(--muted);text-decoration:none;padding:6px 11px;border:1px solid var(--line-strong);border-radius:8px;white-space:nowrap;transition:all .12s}
+  .sn-navbtn:hover{border-color:var(--ink);color:var(--ink)}
+  .sn-navbtn.disabled{opacity:.28;pointer-events:none}
+  .sn-caption{font-family:var(--mono);font-size:11.5px;color:var(--faint);letter-spacing:.03em}
+  .sn-caption b{color:var(--ink);font-weight:600}
+  @media(max-width:560px){.sn-chip{width:26px;height:26px;font-size:11px}.sn-navbtn{padding:5px 8px;font-size:11px}}
+
+  /* worked example — matrix visualization */
+  .step-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+  .step-tabs button{font-family:var(--mono);font-size:12px;border:1px solid var(--line-strong);
+    background:var(--bg);color:var(--muted);padding:6px 13px;border-radius:8px;cursor:pointer}
+  .step-tabs button.active{background:var(--kv);color:#fff;border-color:var(--kv)}
+
+  /* matrix multiply walk-through */
+  .mat-wrap{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;margin-top:8px}
+  .mat-block{display:flex;flex-direction:column;align-items:center;gap:3px}
+  .mat-label{font-family:var(--mono);font-size:10.5px;font-weight:600;
+    letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px;text-align:center}
+  .mat-shape{font-family:var(--mono);font-size:9.5px;color:var(--faint);margin-top:2px}
+  .mat-op{font-family:var(--mono);font-size:18px;color:var(--faint);
+    align-self:center;padding-top:22px}
+  .mat-grid{display:grid;gap:3px}
+  .mc{width:46px;height:32px;display:flex;align-items:center;justify-content:center;
+    font-family:var(--mono);font-size:10.5px;font-weight:500;border-radius:5px;
+    border:1px solid transparent;transition:background .2s}
+  .mc.hdr{background:transparent;color:var(--faint);font-size:9px;border:none;height:18px}
+  .mc.q{background:#F3EEFF;border-color:#C4B5FD;color:#5B21B6}
+  .mc.q.hl{background:#7048E8;color:#fff;border-color:#7048E8}
+  .mc.q.dim{opacity:.22}
+  .mc.k{background:var(--kv-soft);border-color:var(--kv-line);color:var(--kv)}
+  .mc.k.hl{background:var(--kv);color:#fff}
+  .mc.v{background:#D1FAE5;border-color:#6EE7B7;color:#065f46}
+  .mc.v.hl{background:#0CA678;color:#fff}
+  .mc.s{background:var(--bg);border-color:var(--line);color:var(--muted)}
+  .mc.s.hl{background:#FEF3C7;border-color:#FCD34D;color:#92400E;font-weight:700}
+  .mc.s.dim{opacity:.2}
+  .mc.w{background:#FEF9C3;border-color:#FDE047;color:#713F12}
+  .mc.w.hl{background:#F59E0B;color:#fff;font-weight:700}
+  .mc.out{background:#EDE9FE;border-color:#C4B5FD;color:#5B21B6}
+  .mc.out.hl{background:#4F46E5;color:#fff;font-weight:700;border-color:#4F46E5}
+  .mc.out.dim{opacity:.2}
+  .mc.vec{background:#F3EEFF;border-color:#C4B5FD;color:#5B21B6}  /* single Q row */
+  /* sub-steps */
+  .substep{margin-top:14px}
+  .substep-hdr{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+  .substep-num{font-family:var(--mono);font-size:11px;font-weight:700;color:#fff;
+    background:var(--kv);border-radius:5px;padding:2px 8px;white-space:nowrap}
+  .substep-title{font-family:var(--mono);font-size:12.5px;font-weight:600;color:var(--ink)}
+  .substep-desc{font-size:12.5px;color:var(--muted)}
+  .shape-badge{display:inline-block;font-family:var(--mono);font-size:10px;
+    background:var(--bg);border:1px solid var(--line);border-radius:4px;
+    padding:1px 6px;color:var(--muted);margin-left:4px}
+  /* insight */
+  .insight{background:var(--kv-soft);border:1px solid var(--kv-line);border-radius:10px;
+    padding:12px 16px;font-family:var(--mono);font-size:12.5px;color:#4c1d95}
+  .insight b{font-weight:700}
+  .we-tag{display:inline-block;font-size:9.5px;padding:1px 6px;border-radius:4px;
+    font-weight:600;margin-left:4px;vertical-align:middle}
+  .we-tag.r{background:#FEE2E2;color:var(--waste)}
+  .we-tag.c{background:var(--kv-soft);color:var(--kv)}
+  .we-tag.n{background:#D1FAE5;color:var(--good)}
+  .compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:10px}
+  @media(max-width:600px){.compare-grid{grid-template-columns:1fr}}
+  .compare-card{border:1px solid var(--line);border-radius:10px;padding:14px;background:var(--bg)}
+  .compare-card h4{font-family:var(--mono);font-size:12px;font-weight:600;margin:0 0 10px}
+</style>
+<script>(function(){
+  var t=localStorage.getItem('theme')||(window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
+  document.documentElement.setAttribute('data-theme',t);
+  window.addEventListener('storage',function(e){
+    if(e.key==='theme') document.documentElement.setAttribute('data-theme',e.newValue||'light');
+  });
+})()</script>
+</head>
+<body>
+<div class="wrap">
+
+
+<nav class="series-nav" aria-label="Series navigation">
+  <div class="sn-bar"><a class="sn-navbtn" href="llm-step6-generation.html">‹ prev</a><div class="sn-chips"><a class="sn-chip" href="llm-step1-tokens-and-embeddings.html" title="Step 1: Tokens & Embeddings">1</a><a class="sn-chip" href="llm-step2-position-and-prediction.html" title="Step 2: Position & Prediction">2</a><a class="sn-chip" href="llm-step3-self-attention.html" title="Step 3: Self-Attention">3</a><a class="sn-chip" href="llm-step4-transformer-block.html" title="Step 4: Transformer Block">4</a><a class="sn-chip" href="llm-step5-training.html" title="Step 5: Training">5</a><a class="sn-chip" href="llm-step6-generation.html" title="Step 6: Generation">6</a><span class="sn-chip current" title="KV Cache">7</span><a class="sn-chip" href="llm-step8-pagedattention-vllm.html" title="Step 8: PagedAttention & vLLM">8</a></div><a class="sn-navbtn" href="llm-step8-pagedattention-vllm.html">next ›</a></div>
+  <div class="sn-caption">Step <b>7</b> of 8 &middot; <b>KV Cache</b> &middot; LLM from scratch</div>
+</nav>
+
+<header>
+  <div class="kicker">Build an LLM · Step 7 — Serving, part 1</div>
+  <h1>The KV cache: why generation isn't quadratically slow</h1>
+  <p class="lede">In Step 6 you saw generation is a loop — predict one token, append, repeat. Done naively,
+    every step would recompute attention over the entire history from scratch. The <b>KV cache</b> is the
+    one trick that makes serving LLMs practical: store each token's Keys and Values once, reuse them forever.</p>
+  <div class="recap">Builds directly on <b>Step 3 (attention: Q·K, then ×V)</b> and <b>Step 6 (the generation loop)</b>. Self-contained — a quick recap is included.</div>
+</header>
+
+<!-- WORKED EXAMPLE -->
+<section>
+  <div class="eyebrow"><span class="idx">00</span><span class="lbl">Concrete Example First</span></div>
+  <h2>Matrix multiplication, step by step — with and without cache</h2>
+  <p>The KV cache insight lives inside the attention formula
+    <code>softmax(QK<sup>T</sup>/√d) · V</code>. Let's trace it with real numbers for
+    <b>"The dog sat"</b>, watching exactly which matrix operations change when we add a cache.</p>
+
+  <div class="card">
+    <h3>Without KV cache — full matrix multiply every step</h3>
+    <p class="small" style="margin-top:0">Choose how many tokens are in context.
+      Walk through all 4 sub-steps. Notice the shapes grow — and that most of the work is wasted.</p>
+    <div class="step-tabs" id="we-tabs">
+      <button class="active" data-step="0">1 token: "The"</button>
+      <button data-step="1">2 tokens: "The cat"</button>
+      <button data-step="2">3 tokens: "The dog sat"</button>
+    </div>
+    <div id="we-nocache"></div>
+  </div>
+
+  <div class="card" style="margin-top:14px">
+    <h3>With KV cache — Q shrinks to one row, shapes change completely</h3>
+    <p class="small" style="margin-top:0">Same 3-token step but now K and V come from cache.
+      Q is just <b>one row</b> (the new token only). The matrix multiply becomes a
+      <b>vector × matrix</b> — fundamentally cheaper.</p>
+    <div class="step-tabs" id="we-cache-tabs">
+      <button class="active" data-step="0">After step 1 — predict token 2</button>
+      <button data-step="1">After step 2 — predict token 3</button>
+      <button data-step="2">After step 3 — predict token 4</button>
+    </div>
+    <div id="we-cache"></div>
+  </div>
+
+  <div class="card" style="margin-top:14px">
+    <h3>Why this works — three facts in order</h3>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:6px">
+      <div class="insight">
+        <b>1. Only the last output row predicts the next token.</b>
+        The transformer computes one output vector per token, but the prediction head only reads
+        the <em>last</em> one. All other output rows are thrown away immediately.
+      </div>
+      <div class="insight">
+        <b>2. Therefore only the last Q is needed.</b>
+        The last output row = last Q dotted against all Ks. The other rows of Q only produce
+        the output vectors we discard. We never need old Qs during inference.
+      </div>
+      <div class="insight">
+        <b>3. Therefore all Ks and Vs must be kept — but computed only once.</b>
+        The single new Q attends over every past K and V. They never change after being computed.
+        Store them once, reuse them every step. That is the KV cache.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- THE PROBLEM -->
+<section>
+  <div class="eyebrow"><span class="idx">01</span><span class="lbl">The Redundancy</span></div>
+  <h2>Without a cache, you redo everything every step</h2>
+  <p>Recall from Step 3: to process a token, the model computes its <b style="color:var(--v)">Query</b> and
+    dots it against the <b style="color:var(--k)">Key</b> of every earlier token, then blends their
+    <b>Values</b>. Here's the catch during generation — the Keys and Values of past tokens
+    <b>never change</b>. Yet a naive loop recomputes all of them at every step:</p>
+
+  <div class="card">
+    <h3>Generating token by token — naive (no cache)</h3>
+    <div class="gen-strip" id="naive-strip"></div>
+    <div class="kvgrid" id="naive-grid"></div>
+    <div class="controls">
+      <button class="btn primary" id="naive-step">Generate next token ›</button>
+      <button class="btn" id="naive-reset">Reset</button>
+    </div>
+    <p class="small" id="naive-read" style="margin-top:10px"></p>
+  </div>
+  <div class="note"><b>The waste compounds.</b> At step <code>n</code>, the naive approach recomputes K and V
+    for all <code>n</code> tokens. Summed across a sequence that's <code>1+2+3+…+n ≈ n²/2</code> Key/Value
+    computations — quadratic in sequence length, almost all of it redundant.</div>
+</section>
+
+<!-- THE FIX -->
+<section>
+  <div class="eyebrow"><span class="idx">02</span><span class="lbl">The Fix</span></div>
+  <h2>Cache the Keys and Values</h2>
+  <p>The fix is almost embarrassingly simple: after computing a token's K and V, <b>keep them</b>. On the
+    next step you only compute K and V for the <b>single new token</b> and append to the cache. The Query
+    is only ever needed for the current token. Watch the cache grow by exactly one column per step:</p>
+
+  <div class="card">
+    <h3>Generating token by token — with KV cache</h3>
+    <div class="gen-strip" id="cache-strip"></div>
+    <div class="kvgrid" id="cache-grid"></div>
+    <div class="controls">
+      <button class="btn primary" id="cache-step">Generate next token ›</button>
+      <button class="btn" id="cache-reset">Reset</button>
+    </div>
+    <p class="small" id="cache-read" style="margin-top:10px"></p>
+  </div>
+  <div class="note"><b>Why only K and V — not Q?</b> A cached token never needs its Query again: it already
+    "asked its question" on the step it was generated. But it remains an <i>answer source</i> for all future
+    tokens, so its Key (how it's matched) and Value (what it contributes) must stick around. Hence
+    <b>KV</b> cache, not QKV cache.</div>
+</section>
+
+<!-- COMPUTE COMPARISON -->
+<section>
+  <div class="eyebrow"><span class="idx">03</span><span class="lbl">The Payoff</span></div>
+  <h2>Quadratic work becomes linear</h2>
+  <p>Per generated token, the cached version does a fixed amount of new K/V work; the naive version does
+    work proportional to the whole history. Across a full sequence the difference is dramatic:</p>
+  <div class="card">
+    <div style="max-width:260px;margin-bottom:6px">
+      <label class="fld" for="seq-sl">Sequence length: <span id="seq-v" style="color:var(--kv)">512</span> tokens</label>
+      <input type="range" id="seq-sl" min="16" max="2048" step="16" value="512" style="width:100%">
+    </div>
+    <svg id="compute-chart" viewBox="0 0 600 260" role="img" aria-label="Compute comparison"></svg>
+    <p class="small" id="compute-read" style="margin-top:8px"></p>
+  </div>
+  <div class="note"><b>The cache trades compute for memory.</b> You stop recomputing — but now you must
+    <i>store</i> all those Keys and Values. For long contexts and many concurrent users, that storage
+    becomes the dominant cost, and the central problem of LLM serving. Let's size it.</div>
+</section>
+
+<!-- MEMORY CALCULATOR -->
+<section>
+  <div class="eyebrow"><span class="idx">04</span><span class="lbl">The Cost</span></div>
+  <h2>How big does the KV cache get?</h2>
+  <p>The cache stores K and V for every layer, every token. Pick a model and context size and see the real
+    memory footprint — and how it stacks against the model's own weights:</p>
+
+  <div class="card">
+    <div class="calc-grid">
+      <div>
+        <label class="fld" for="model-sel">Model</label>
+        <select id="model-sel" style="width:100%"></select>
+      </div>
+      <div>
+        <label class="fld" for="dtype-sel">KV precision</label>
+        <select id="dtype-sel" style="width:100%">
+          <option value="2">fp16 / bf16 (2 bytes)</option>
+          <option value="1">fp8 (1 byte)</option>
+          <option value="4">fp32 (4 bytes)</option>
+        </select>
+      </div>
+    </div>
+    <div class="calc-grid" style="margin-top:14px">
+      <div>
+        <label class="fld" for="ctx-sl">Context length: <span id="ctx-v" style="color:var(--kv)">4096</span></label>
+        <div class="slider-row"><input type="range" id="ctx-sl" min="512" max="32768" step="512" value="4096" style="flex:1"></div>
+      </div>
+      <div>
+        <label class="fld" for="batch-sl">Concurrent requests: <span id="batch-v" style="color:var(--kv)">16</span></label>
+        <div class="slider-row"><input type="range" id="batch-sl" min="1" max="128" step="1" value="16" style="flex:1"></div>
+      </div>
+    </div>
+
+    <div class="result-box">
+      <div class="result-big" id="kv-total">—</div>
+      <div class="result-sub" id="kv-sub"></div>
+      <div class="membar" id="membar"></div>
+      <div class="small" id="membar-legend" style="margin-top:8px;font-family:var(--mono)"></div>
+    </div>
+
+    <div class="formula" id="formula"></div>
+  </div>
+  <div class="note"><b>GQA to the rescue (partly).</b> Modern models use <b>Grouped-Query Attention</b> —
+    many query heads share a few Key/Value heads — which shrinks the KV cache several-fold. That's baked
+    into the presets above (notice Llama-3-8B's cache is far smaller than its layer count suggests). Even
+    so, at high batch sizes the cache can rival or exceed the model weights.</div>
+</section>
+
+<!-- PREFILL AND DECODE NOTE -->
+<section style="margin-top:48px">
+  <div class="eyebrow"><span class="idx">05</span><span class="lbl">Two Phases</span></div>
+  <h2>Prefill vs. decode — the two stages of every generation</h2>
+  <p>The KV cache splits inference into two very different phases. Understanding them
+    explains why the <b>first token is slow</b> and all subsequent tokens are fast.</p>
+
+  <div class="card">
+    <h3>Phase 1 — Prefill</h3>
+    <p class="small" style="margin-top:0">When you send a prompt, the model processes
+      <b>all input tokens in parallel</b> in a single forward pass. This is fast because
+      modern GPUs excel at matrix × matrix operations. The output: <b>K and V for every
+      prompt token are computed and stored in the cache</b>, and the first output token
+      is generated.</p>
+    <div style="font-family:var(--mono);font-size:12px;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:14px;margin-top:8px">
+      <div style="color:var(--muted);margin-bottom:8px">Prompt: <b style="color:var(--ink)">"The dog sat on the"</b> → 5 tokens processed together</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">
+        <span style="font-family:var(--mono);font-size:11px;background:#F3EEFF;border:1px solid #C4B5FD;color:#5B21B6;border-radius:6px;padding:3px 8px">Q [5×d]</span>
+        <span style="font-size:13px;color:var(--faint)">×</span>
+        <span style="font-family:var(--mono);font-size:11px;background:var(--kv-soft);border:1px solid var(--kv-line);color:var(--kv);border-radius:6px;padding:3px 8px">Kᵀ [d×5]</span>
+        <span style="font-size:13px;color:var(--faint)">=</span>
+        <span style="font-family:var(--mono);font-size:11px;background:#FEF9C3;border:1px solid #FDE047;color:#713F12;border-radius:6px;padding:3px 8px">score [5×5]</span>
+        <span style="font-size:13px;color:var(--faint)">→ last row only → first token</span>
+      </div>
+      <div style="color:var(--good);font-weight:600;font-size:12px">✓ Cache now holds K,V for all 5 prompt tokens</div>
+    </div>
+    <div class="note" style="margin-top:10px;border-left-color:var(--kv-line);background:var(--kv-soft);color:#4c1d95">
+      <b>This is the pause before ChatGPT starts typing.</b> You see the spinner, then suddenly
+      the first word appears. That pause is the prefill phase: processing your entire prompt,
+      building the cache, generating the first token.
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:14px">
+    <h3>Phase 2 — Decode</h3>
+    <p class="small" style="margin-top:0">Every token <em>after</em> the first is generated
+      one at a time using the cache. Each decode step is:</p>
+    <div style="font-family:var(--mono);font-size:12px;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:14px;margin-top:8px">
+      <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">
+        <span style="font-family:var(--mono);font-size:11px;background:#F3EEFF;border:1px solid #C4B5FD;color:#5B21B6;border-radius:6px;padding:3px 8px">q [1×d]</span>
+        <span style="font-size:13px;color:var(--faint)">×</span>
+        <span style="font-family:var(--mono);font-size:11px;background:var(--kv-soft);border:1px solid var(--kv-line);color:var(--kv);border-radius:6px;padding:3px 8px">K_cache [d×n]</span>
+        <span style="font-size:13px;color:var(--faint)">=</span>
+        <span style="font-family:var(--mono);font-size:11px;background:#FEF9C3;border:1px solid #FDE047;color:#713F12;border-radius:6px;padding:3px 8px">score [1×n]</span>
+        <span style="font-size:13px;color:var(--faint)">→ softmax → × V_cache → output → next token</span>
+      </div>
+      <div style="margin-top:10px;color:var(--muted);font-size:11px">
+        n grows by 1 each step. Q is always <b>1 row</b>. Vector-matrix multiply, not matrix-matrix.
+      </div>
+    </div>
+    <div class="note" style="margin-top:10px;border-left-color:var(--kv-line);background:var(--kv-soft);color:#4c1d95">
+      <b>This is why streaming feels fast.</b> Once the first token appears, each subsequent
+      token only needs one new K,V computation plus a vector-matrix multiply. The work per
+      token stays nearly constant regardless of how long the output grows.
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:14px">
+    <h3>Side by side</h3>
+    <table style="width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12.5px">
+      <thead>
+        <tr>
+          <th style="padding:7px 12px;border-bottom:2px solid var(--line-strong);text-align:left;font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--faint)"></th>
+          <th style="padding:7px 12px;border-bottom:2px solid var(--line-strong);text-align:left;color:var(--kv)">Prefill</th>
+          <th style="padding:7px 12px;border-bottom:2px solid var(--line-strong);text-align:left;color:#0CA678">Decode (per token)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td style="padding:7px 12px;border-bottom:1px solid var(--line);color:var(--muted)">tokens processed</td><td style="padding:7px 12px;border-bottom:1px solid var(--line)">all N prompt tokens at once</td><td style="padding:7px 12px;border-bottom:1px solid var(--line)">1 new token</td></tr>
+        <tr><td style="padding:7px 12px;border-bottom:1px solid var(--line);color:var(--muted)">Q shape</td><td style="padding:7px 12px;border-bottom:1px solid var(--line)">N × d (matrix)</td><td style="padding:7px 12px;border-bottom:1px solid var(--line)">1 × d (vector)</td></tr>
+        <tr><td style="padding:7px 12px;border-bottom:1px solid var(--line);color:var(--muted)">compute type</td><td style="padding:7px 12px;border-bottom:1px solid var(--line)">matrix × matrix (GPU-fast)</td><td style="padding:7px 12px;border-bottom:1px solid var(--line)">vector × matrix</td></tr>
+        <tr><td style="padding:7px 12px;border-bottom:1px solid var(--line);color:var(--muted)">K,V written</td><td style="padding:7px 12px;border-bottom:1px solid var(--line)">all N rows to cache</td><td style="padding:7px 12px;border-bottom:1px solid var(--line)">1 new row appended</td></tr>
+        <tr><td style="padding:7px 12px;color:var(--muted)">bottleneck</td><td style="padding:7px 12px">compute (FLOP-bound)</td><td style="padding:7px 12px">memory bandwidth (reading cache)</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<div class="next">
+  <h3>Where this is heading</h3>
+  <p>So the KV cache is essential <i>and</i> huge — and its size per request <b>grows and shrinks
+    unpredictably</b> as each user's generation runs. Allocating that memory naively wastes 60–80% of it
+    to fragmentation. The fix borrows a 1960s operating-systems idea — paging — and is what makes vLLM
+    fast. That's Step 8.</p>
+  <a class="pill" style="opacity:.65" href="llm-step6-generation.html">◂ Back · Step 6</a>
+  <a class="pill" href="llm-step8-pagedattention-vllm.html">Next ▸ Step 8 · PagedAttention &amp; vLLM</a>
+</div>
+
+</div>
+<script>
+const $=s=>document.querySelector(s);
+const TOKENS=['The','dog','sat','on','the','mat','and','slept'];
+
+/* ============================================================
+   WORKED EXAMPLE — matrix multiply walk-through
+   "The dog sat" with 2D vectors (d_k = 2)
+   ============================================================ */
+// Raw embeddings (2D for readability)
+// W matrices are designed so emb × W = Q/K/V exactly (verified)
+const WQ = [[0.5, 0.2],[0.3, 0.7]];   // row-major: WQ[i] is row i
+const WK = [[0.8, 0.1],[0.1, 0.6]];
+const WV = [[0.9, 0.3],[0.2, 0.8]];
+
+// Q/K/V are derived as: emb × W  (emb is a row vector, W is 2×2)
+// e.g. The=[1.0,0.0] × WQ=[[0.5,0.2],[0.3,0.7]] = [1×0.5+0×0.3, 1×0.2+0×0.7] = [0.50, 0.20]
+const TOK = [
+  { w:'The', emb:[1.0, 0.0], Q:[0.50, 0.20], K:[0.80, 0.10], V:[0.90, 0.30] },
+  { w:'dog', emb:[0.6, 0.8], Q:[0.54, 0.68], K:[0.56, 0.54], V:[0.70, 0.82] },
+  { w:'sat', emb:[0.4, 0.6], Q:[0.38, 0.50], K:[0.38, 0.40], V:[0.48, 0.60] },
+];
+const PREDICT = ['dog','sat','on'];
+const DK = 2;
+
+function f2(x){ return (x>=0?'+':'')+x.toFixed(2); }
+function fn(x){ return x.toFixed(2); }
+function dot(a,b){ return a[0]*b[0]+a[1]*b[1]; }
+function smx(arr){
+  const m=Math.max(...arr), e=arr.map(v=>Math.exp(v-m)), s=e.reduce((a,b)=>a+b,0);
+  return e.map(v=>v/s);
+}
+
+/* ── render one matrix as a CSS grid ──
+   rows: array of arrays of {val, cls}  */
+function matGrid(rows, cols){
+  return `<div class="mat-grid" style="grid-template-columns:repeat(${cols},46px)">
+    ${rows.flat().map(c=>`<div class="mc ${c.cls||''}" title="${c.tip||''}">${c.v}</div>`).join('')}
+  </div>`;
+}
+
+/* ── NO-CACHE: show all 4 sub-steps for n-token context ── */
+function renderNocache(n){
+  const ctx = TOK.slice(0,n);
+  const lastRow = n-1;
+
+  // Sub-step 0: embedding → projection → Q, K, V
+  function step0(){
+    // Show one token per row: embedding | × W_Q → Q | × W_K → K | × W_V → V
+    const wRows = (W,label,cls) => {
+      // W is 2×2 row-major
+      return [0,1].map(r=>W[r].map(v=>({v:fn(v), cls})));
+    };
+
+    // helper: one projection row  emb × W = out
+    function projRow(emb, W, wCls, wLabel, out, outCls, isLast){
+      return `<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:3px 0">
+        <!-- emb -->
+        <div class="mat-block">
+          <div class="mat-shape" style="font-size:9px;color:#6B7280;margin-bottom:2px">embedding</div>
+          <div style="display:flex;gap:3px">
+            ${emb.map(v=>`<div class="mc" style="background:#F3F4F6;border-color:#D1D5DB;color:#374151;width:36px;height:26px">${fn(v)}</div>`).join('')}
+          </div>
+        </div>
+        <div style="color:var(--faint);font-size:15px">×</div>
+        <!-- W -->
+        <div class="mat-block">
+          <div class="mat-shape" style="font-size:9px;color:${wCls==='q'?'#7048E8':wCls==='k'?'var(--kv)':'#0CA678'};margin-bottom:2px">${wLabel}</div>
+          ${matGrid([[{v:fn(W[0][0]),cls:wCls},{v:fn(W[0][1]),cls:wCls}],
+                     [{v:fn(W[1][0]),cls:wCls},{v:fn(W[1][1]),cls:wCls}]], 2)}
+        </div>
+        <div style="color:var(--faint);font-size:15px">=</div>
+        <!-- result -->
+        <div class="mat-block">
+          <div class="mat-shape" style="font-size:9px;color:${wCls==='q'?'#7048E8':wCls==='k'?'var(--kv)':'#0CA678'};margin-bottom:2px">${outCls==='q'?'Q':''}${outCls==='k'?'K':''}${outCls==='v'?'V':''} row</div>
+          <div style="display:flex;gap:3px">
+            ${out.map(v=>`<div class="mc ${outCls}${isLast&&outCls==='q'?' hl':''}" style="width:36px;height:26px">${fn(v)}</div>`).join('')}
+          </div>
+        </div>
+      </div>`;
+    }
+
+    const rows = ctx.map((t,ti)=>{
+      const isLast = ti === lastRow;
+      return `<div style="padding:10px 12px;border-bottom:1px solid var(--line);border-radius:8px;margin-bottom:6px;background:${isLast?'#F5F3FF':'var(--bg)'}">
+        <!-- token name -->
+        <div style="font-family:var(--mono);font-size:12px;font-weight:700;color:${isLast?'#7048E8':'var(--ink)'};margin-bottom:6px">
+          "${t.w}"${isLast?' ← new query token':''}
+        </div>
+        <!-- three separate projections, stacked vertically -->
+        ${projRow(t.emb, WQ, 'q', 'W_Q', t.Q, 'q', isLast)}
+        ${projRow(t.emb, WK, 'k', 'W_K', t.K, 'k', false)}
+        ${projRow(t.emb, WV, 'v', 'W_V', t.V, 'v', false)}
+      </div>`;
+    }).join('');
+
+    return `<div class="substep">
+      <div class="substep-hdr">
+        <span class="substep-num">0</span>
+        <span class="substep-title">Embedding → Q, K, V via projection</span>
+        <span class="shape-badge">emb [1×2] × W [2×2] = vector [1×2]</span>
+      </div>
+      <div class="substep-desc" style="margin-bottom:10px">
+        Each token starts as an <b>embedding vector</b> (its position in the vocabulary space from Step 1).
+        Three learned weight matrices <b style="color:#7048E8">W_Q</b>, <b style="color:var(--kv)">W_K</b>,
+        <b style="color:#0CA678">W_V</b> project it into the Query, Key, and Value spaces.
+        Same embedding, three different linear transforms, three different meanings.
+      </div>
+      <div style="overflow-x:auto">${rows}</div>
+      <p class="small" style="margin-top:10px;color:var(--muted)">
+        W_Q, W_K, W_V are <b>learned during training</b> — they start random and are nudged by gradient
+        descent until the projections produce useful Q/K/V representations. In real models each is
+        (d_model × d_k), e.g. 4096 × 128. Here they are 2×2 for readability.
+      </p>
+    </div>`;
+  }
+
+  // Sub-step 1: the three input matrices
+  function step1(){
+    // Q matrix n×2
+    const qRows = ctx.map((t,i)=>{
+      const hl = i===lastRow;
+      return t.Q.map(v=>({v:fn(v), cls:`q${hl?' hl':i<lastRow?' dim':''}`, tip:`Q[${t.w}]`}));
+    });
+    const kRows = ctx.map(t=>t.K.map(v=>({v:fn(v), cls:'k', tip:`K[${t.w}]`})));
+    const vRows = ctx.map(t=>t.V.map(v=>({v:fn(v), cls:'v', tip:`V[${t.w}]`})));
+    return `<div class="substep">
+      <div class="substep-hdr">
+        <span class="substep-num">A</span>
+        <span class="substep-title">The three matrices going in</span>
+      </div>
+      <div class="substep-desc" style="margin-bottom:8px">
+        Every token gets a Q, K, V row from its embedding × learned weight matrices.
+      </div>
+      <div class="mat-wrap">
+        <div class="mat-block">
+          <div class="mat-label" style="color:#7048E8">Q matrix</div>
+          <div class="mat-shape">${n} × ${DK}</div>
+          ${matGrid(qRows, DK)}
+          <div style="font-family:var(--mono);font-size:9px;color:#7048E8;margin-top:3px">↑ last row is "${ctx[lastRow].w}"</div>
+        </div>
+        <div class="mat-op">×</div>
+        <div class="mat-block">
+          <div class="mat-label" style="color:var(--kv)">Kᵀ matrix</div>
+          <div class="mat-shape">${DK} × ${n}</div>
+          ${matGrid([ctx.map(t=>({v:t.w.slice(0,3), cls:'hdr'})),
+                     ctx.map(t=>({v:fn(t.K[0]), cls:'k'})),
+                     ctx.map(t=>({v:fn(t.K[1]), cls:'k'}))], n)}
+        </div>
+        <div class="mat-op" style="font-size:14px">and</div>
+        <div class="mat-block">
+          <div class="mat-label" style="color:#0CA678">V matrix</div>
+          <div class="mat-shape">${n} × ${DK}</div>
+          ${matGrid(vRows, DK)}
+        </div>
+      </div>
+    </div>`;
+  }
+
+  // Sub-step 2: QKT score matrix
+  function step2(){
+    const scores = ctx.map((qi,i)=>
+      ctx.map((kj,j)=> j<=i ? dot(qi.Q,kj.K)/Math.sqrt(DK) : null)
+    );
+    const cells = scores.map((row,i)=>
+      row.map((v,j)=>({
+        v: v===null ? '—' : fn(v),
+        cls: v===null ? 's dim' : (i===lastRow ? 's hl' : 's dim'),
+        tip: v===null ? 'masked' : `Q[${ctx[i].w}]·K[${ctx[j].w}]=${fn(v)}`
+      }))
+    );
+    const hdrs = [
+      [{v:'',cls:'hdr'}, ...ctx.map(t=>({v:t.w.slice(0,3), cls:'hdr'}))],
+      ...cells.map((row,i)=>[{v:ctx[i].w.slice(0,3)+':',cls:'hdr'}, ...row])
+    ];
+    return `<div class="substep">
+      <div class="substep-hdr">
+        <span class="substep-num">B</span>
+        <span class="substep-title">QKᵀ/√${DK} — the score matrix</span>
+        <span class="shape-badge">${n}×${DK} × ${DK}×${n} = ${n}×${n}</span>
+      </div>
+      <div class="substep-desc" style="margin-bottom:8px">
+        Every query dot-producted with every key. Causal mask zeros upper triangle.
+        <b style="color:#92400E">Only the last row (${ctx[lastRow].w}) feeds the prediction.</b>
+        All other rows are wasted work.
+      </div>
+      <div class="mat-wrap">
+        <div class="mat-block">
+          <div class="mat-label">Score matrix</div>
+          <div class="mat-shape">${n} × ${n}</div>
+          ${matGrid(hdrs, n+1)}
+        </div>
+      </div>
+    </div>`;
+  }
+
+  // Sub-step 3: softmax last row only
+  function step3(){
+    const scores_last = ctx.map((kj,j)=> dot(ctx[lastRow].Q, kj.K)/Math.sqrt(DK));
+    const weights = smx(scores_last);
+    const scoreCells = scores_last.map((v,j)=>({v:fn(v), cls:'s hl', tip:`score[${j}]`}));
+    const weightCells = weights.map((v,j)=>({v:fn(v), cls:'w hl', tip:`weight[${j}]`}));
+    return `<div class="substep">
+      <div class="substep-hdr">
+        <span class="substep-num">C</span>
+        <span class="substep-title">softmax on the last row only</span>
+        <span class="shape-badge">1×${n} → 1×${n} probabilities</span>
+      </div>
+      <div class="substep-desc" style="margin-bottom:8px">
+        Softmax turns raw scores into weights that sum to 1.
+        We only need this for the last row — the others are already discarded.
+      </div>
+      <div class="mat-wrap">
+        <div class="mat-block">
+          <div class="mat-label">raw scores (last row)</div>
+          ${matGrid([[{v:ctx[lastRow].w+' row:',cls:'hdr'},...scoreCells]], n+1)}
+        </div>
+        <div class="mat-op">→</div>
+        <div class="mat-block">
+          <div class="mat-label" style="color:#713F12">attention weights</div>
+          ${matGrid([[{v:'weights:',cls:'hdr'},...weightCells]], n+1)}
+        </div>
+      </div>
+    </div>`;
+  }
+
+  // Sub-step 4: weighted sum of V
+  function step4(){
+    const scores_last = ctx.map((kj,j)=> dot(ctx[lastRow].Q, kj.K)/Math.sqrt(DK));
+    const weights = smx(scores_last);
+    const out = [0,1].map(d=> weights.reduce((s,w,i)=>s+w*ctx[i].V[d], 0));
+    const vRows = ctx.map((t,i)=>t.V.map(v=>({v:fn(v), cls:`v${weights[i]>0.3?' hl':''}`})));
+    const wCells = weights.map((w,i)=>({v:fn(w), cls:'w hl'}));
+    const outCells = out.map(v=>({v:fn(v), cls:'out hl'}));
+    return `<div class="substep">
+      <div class="substep-hdr">
+        <span class="substep-num">D</span>
+        <span class="substep-title">weights × V → one output vector</span>
+        <span class="shape-badge">1×${n} · ${n}×${DK} = 1×${DK}</span>
+      </div>
+      <div class="substep-desc" style="margin-bottom:8px">
+        Blend all Value rows by their weights. This single output vector goes to the
+        prediction head → softmax → <b style="color:#0CA678">next token = "${PREDICT[n-1]}"</b>.
+      </div>
+      <div class="mat-wrap">
+        <div class="mat-block">
+          <div class="mat-label" style="color:#713F12">weights</div>
+          <div class="mat-shape">1 × ${n}</div>
+          ${matGrid([wCells], n)}
+        </div>
+        <div class="mat-op">×</div>
+        <div class="mat-block">
+          <div class="mat-label" style="color:#0CA678">V matrix</div>
+          <div class="mat-shape">${n} × ${DK}</div>
+          ${matGrid(vRows, DK)}
+        </div>
+        <div class="mat-op">=</div>
+        <div class="mat-block">
+          <div class="mat-label" style="color:#4F46E5">output vector</div>
+          <div class="mat-shape">1 × ${DK}</div>
+          ${matGrid([outCells], DK)}
+          <div style="font-family:var(--mono);font-size:9px;color:#4F46E5;margin-top:3px">→ prediction head</div>
+        </div>
+      </div>
+      <div class="note" style="margin-top:12px;border-left-color:#E03131;background:#FEF2F2;color:#7f1d1d">
+        <b>Total work this step (no cache):</b> computed Q, K, V for all ${n} tokens,
+        ran ${n}×${n} matrix multiply, kept only 1 output row.
+        <b>${n-1} rows of QKᵀ were pure waste.</b>
+      </div>
+    </div>`;
+  }
+
+  document.getElementById('we-nocache').innerHTML =
+    step0() + step1() + step2() + step3() + step4();
+}
+
+/* ── WITH CACHE: Q is 1 row, K/V grow from cache ── */
+function renderCacheWE(n){
+  // n = number of tokens already in cache; we compute attention for token n+1
+  const ctx    = TOK.slice(0, n+1);          // full context = cache + new token
+  const newTok = TOK[n];                      // the new token being processed
+  const cached = TOK.slice(0, n);            // what was already cached
+
+  // Sub-step 1: show cache + new token's Q only
+  function cstep1(){
+    const qCell = newTok.Q.map(v=>({v:fn(v), cls:'q hl'}));
+    const kRows = ctx.map((t,i)=>{
+      const isCached = i<n;
+      return t.K.map(v=>({v:fn(v), cls:`k${isCached?' dim':'  hl'}`,
+        tip:isCached?`cached K[${t.w}]`:`new K[${t.w}]`}));
+    });
+    const vRows = ctx.map((t,i)=>{
+      const isCached = i<n;
+      return t.V.map(v=>({v:fn(v), cls:`v${isCached?' dim':'  hl'}`,
+        tip:isCached?`cached V[${t.w}]`:`new V[${t.w}]`}));
+    });
+    return `<div class="substep">
+      <div class="substep-hdr">
+        <span class="substep-num">A</span>
+        <span class="substep-title">New token Q + cached K, V</span>
+      </div>
+      <div class="substep-desc" style="margin-bottom:8px">
+        The new token "<b>${newTok.w}</b>" starts as an embedding, projected by W_Q/W_K/W_V to
+        give its Q, K, V vectors. Q is just <b>one row</b> — only the new token asks a question.
+        K and V from past tokens: <span style="color:var(--faint)">faded = from cache</span>,
+        <b>bright = freshly computed</b> for "${newTok.w}" and then stored.
+      </div>
+      <!-- show embedding → projection for the new token -->
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+          padding:8px 12px;background:var(--bg);border:1px solid var(--line);border-radius:9px;
+          margin-bottom:10px;font-family:var(--mono);font-size:11px">
+        <span style="font-weight:600;color:var(--ink)">${newTok.w}</span>
+        <div class="mat-block">
+          <div class="mat-shape" style="font-size:9px;color:#6B7280;margin-bottom:2px">embedding</div>
+          <div style="display:flex;gap:3px">
+            ${newTok.emb.map(v=>`<div class="mc" style="background:#F3F4F6;border-color:#D1D5DB;color:#374151;width:38px;height:28px">${fn(v)}</div>`).join('')}
+          </div>
+        </div>
+        <!-- three separate projections stacked — same embedding, three different W matrices -->
+        <div style="display:flex;flex-direction:column;gap:6px;margin-top:4px">
+          <!-- emb × WQ = Q -->
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <div class="mat-block">
+              <div class="mat-shape" style="font-size:9px;color:#6B7280;margin-bottom:2px">embedding</div>
+              <div style="display:flex;gap:3px">${newTok.emb.map(v=>`<div class="mc" style="background:#F3F4F6;border-color:#D1D5DB;color:#374151;width:36px;height:26px">${fn(v)}</div>`).join('')}</div>
+            </div>
+            <span style="color:var(--faint)">×</span>
+            <div class="mat-block">
+              <div class="mat-shape" style="font-size:9px;color:#7048E8;margin-bottom:2px">W_Q</div>
+              ${matGrid([[{v:fn(WQ[0][0]),cls:'q'},{v:fn(WQ[0][1]),cls:'q'}],[{v:fn(WQ[1][0]),cls:'q'},{v:fn(WQ[1][1]),cls:'q'}]], 2)}
+            </div>
+            <span style="color:var(--faint)">=</span>
+            <div class="mat-block">
+              <div class="mat-shape" style="font-size:9px;color:#7048E8;margin-bottom:2px">Q (new)</div>
+              <div style="display:flex;gap:3px">${newTok.Q.map(v=>`<div class="mc q hl" style="width:36px;height:26px">${fn(v)}</div>`).join('')}</div>
+            </div>
+          </div>
+          <!-- emb × WK = K -->
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <div class="mat-block">
+              <div class="mat-shape" style="font-size:9px;color:#6B7280;margin-bottom:2px">embedding</div>
+              <div style="display:flex;gap:3px">${newTok.emb.map(v=>`<div class="mc" style="background:#F3F4F6;border-color:#D1D5DB;color:#374151;width:36px;height:26px">${fn(v)}</div>`).join('')}</div>
+            </div>
+            <span style="color:var(--faint)">×</span>
+            <div class="mat-block">
+              <div class="mat-shape" style="font-size:9px;color:var(--kv);margin-bottom:2px">W_K</div>
+              ${matGrid([[{v:fn(WK[0][0]),cls:'k'},{v:fn(WK[0][1]),cls:'k'}],[{v:fn(WK[1][0]),cls:'k'},{v:fn(WK[1][1]),cls:'k'}]], 2)}
+            </div>
+            <span style="color:var(--faint)">=</span>
+            <div class="mat-block">
+              <div class="mat-shape" style="font-size:9px;color:var(--kv);margin-bottom:2px">K (new → cache)</div>
+              <div style="display:flex;gap:3px">${newTok.K.map(v=>`<div class="mc k hl" style="width:36px;height:26px">${fn(v)}</div>`).join('')}</div>
+            </div>
+            <span class="we-tag n">stored in cache</span>
+          </div>
+          <!-- emb × WV = V -->
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <div class="mat-block">
+              <div class="mat-shape" style="font-size:9px;color:#6B7280;margin-bottom:2px">embedding</div>
+              <div style="display:flex;gap:3px">${newTok.emb.map(v=>`<div class="mc" style="background:#F3F4F6;border-color:#D1D5DB;color:#374151;width:36px;height:26px">${fn(v)}</div>`).join('')}</div>
+            </div>
+            <span style="color:var(--faint)">×</span>
+            <div class="mat-block">
+              <div class="mat-shape" style="font-size:9px;color:#0CA678;margin-bottom:2px">W_V</div>
+              ${matGrid([[{v:fn(WV[0][0]),cls:'v'},{v:fn(WV[0][1]),cls:'v'}],[{v:fn(WV[1][0]),cls:'v'},{v:fn(WV[1][1]),cls:'v'}]], 2)}
+            </div>
+            <span style="color:var(--faint)">=</span>
+            <div class="mat-block">
+              <div class="mat-shape" style="font-size:9px;color:#0CA678;margin-bottom:2px">V (new → cache)</div>
+              <div style="display:flex;gap:3px">${newTok.V.map(v=>`<div class="mc v hl" style="width:36px;height:26px">${fn(v)}</div>`).join('')}</div>
+            </div>
+            <span class="we-tag n">stored in cache</span>
+          </div>
+        </div>
+      </div>
+      <div class="mat-wrap">
+        <div class="mat-block">
+          <div class="mat-label" style="color:#7048E8">Q — just 1 row!</div>
+          <div class="mat-shape">1 × ${DK}</div>
+          ${matGrid([qCell], DK)}
+          <div style="font-family:var(--mono);font-size:9px;color:#7048E8;margin-top:3px">"${newTok.w}" only</div>
+        </div>
+        <div class="mat-op">×</div>
+        <div class="mat-block">
+          <div class="mat-label" style="color:var(--kv)">Kᵀ (cached + new)</div>
+          <div class="mat-shape">${DK} × ${n+1}</div>
+          ${matGrid([ctx.map(t=>({v:t.w.slice(0,3), cls:'hdr'})),
+                     ctx.map((t,i)=>({v:fn(t.K[0]), cls:i<n?'k dim':'k hl'})),
+                     ctx.map((t,i)=>({v:fn(t.K[1]), cls:i<n?'k dim':'k hl'}))], n+1)}
+        </div>
+        <div class="mat-op" style="font-size:14px">and</div>
+        <div class="mat-block">
+          <div class="mat-label" style="color:#0CA678">V (cached + new)</div>
+          <div class="mat-shape">${n+1} × ${DK}</div>
+          ${matGrid(vRows, DK)}
+        </div>
+      </div>
+    </div>`;
+  }
+
+  // Sub-step 2: score vector (1×(n+1)) not matrix
+  function cstep2(){
+    const scores = ctx.map(kj=> dot(newTok.Q, kj.K)/Math.sqrt(DK));
+    const scoreCells = scores.map((v,j)=>({v:fn(v), cls:'s hl', tip:`q·K[${ctx[j].w}]`}));
+    return `<div class="substep">
+      <div class="substep-hdr">
+        <span class="substep-num">B</span>
+        <span class="substep-title">q · Kᵀ — a vector, not a matrix</span>
+        <span class="shape-badge">1×${DK} · ${DK}×${n+1} = 1×${n+1}</span>
+      </div>
+      <div class="substep-desc" style="margin-bottom:8px">
+        Without cache this was <b>${n+1}×${n+1}</b> matrix × matrix.
+        With cache it is <b>1×${n+1}</b> — a vector × matrix.
+        No wasted rows. <b>All scores are used.</b>
+      </div>
+      <div class="mat-wrap">
+        <div class="mat-block">
+          <div class="mat-label">score vector (all used)</div>
+          <div class="mat-shape">1 × ${n+1}</div>
+          ${matGrid([[{v:newTok.w+':',cls:'hdr'},...scoreCells]], n+2)}
+        </div>
+      </div>
+    </div>`;
+  }
+
+  // Sub-step 3: softmax
+  function cstep3(){
+    const scores = ctx.map(kj=> dot(newTok.Q, kj.K)/Math.sqrt(DK));
+    const weights = smx(scores);
+    const wCells = weights.map((v,j)=>({v:fn(v), cls:'w hl'}));
+    return `<div class="substep">
+      <div class="substep-hdr">
+        <span class="substep-num">C</span>
+        <span class="substep-title">softmax → attention weights</span>
+        <span class="shape-badge">1 × ${n+1}</span>
+      </div>
+      <div class="substep-desc" style="margin-bottom:8px">
+        Identical operation — but now it is the <em>only</em> row, not one of n rows.
+      </div>
+      <div class="mat-wrap">
+        <div class="mat-block">
+          <div class="mat-label" style="color:#713F12">weights</div>
+          ${matGrid([[{v:'',cls:'hdr'},...wCells]], n+2)}
+        </div>
+      </div>
+    </div>`;
+  }
+
+  // Sub-step 4: output
+  function cstep4(){
+    const scores = ctx.map(kj=> dot(newTok.Q, kj.K)/Math.sqrt(DK));
+    const weights = smx(scores);
+    const out = [0,1].map(d=> weights.reduce((s,w,i)=>s+w*ctx[i].V[d], 0));
+    const outCells = out.map(v=>({v:fn(v), cls:'out hl'}));
+    const wCells = weights.map((v,j)=>({v:fn(v), cls:'w hl'}));
+    const vRows = ctx.map((t,i)=>t.V.map(v=>({v:fn(v), cls:i<n?'v dim':'v hl'})));
+    return `<div class="substep">
+      <div class="substep-hdr">
+        <span class="substep-num">D</span>
+        <span class="substep-title">weights × V → output vector</span>
+        <span class="shape-badge">1×${n+1} · ${n+1}×${DK} = 1×${DK}</span>
+      </div>
+      <div class="substep-desc" style="margin-bottom:8px">
+        Identical result to without-cache. KV cache changes <em>what we compute</em>, not <em>what we get</em>.
+      </div>
+      <div class="mat-wrap">
+        <div class="mat-block">
+          <div class="mat-label" style="color:#713F12">weights</div>
+          <div class="mat-shape">1 × ${n+1}</div>
+          ${matGrid([wCells], n+1)}
+        </div>
+        <div class="mat-op">×</div>
+        <div class="mat-block">
+          <div class="mat-label" style="color:#0CA678">V</div>
+          <div class="mat-shape">${n+1} × ${DK}</div>
+          ${matGrid(vRows, DK)}
+        </div>
+        <div class="mat-op">=</div>
+        <div class="mat-block">
+          <div class="mat-label" style="color:#4F46E5">output vector</div>
+          <div class="mat-shape">1 × ${DK}</div>
+          ${matGrid([outCells], DK)}
+        </div>
+      </div>
+      <div class="note" style="margin-top:12px;border-left-color:#0CA678;background:#D1FAE5;color:#065f46">
+        <b>Total work this step (with cache):</b> computed Q, K, V for 1 token ("${newTok.w}").
+        Retrieved ${n} K,V rows from cache. Ran 1×${n+1} vector-matrix multiply.
+        <b>Zero wasted rows. Same output.</b>
+      </div>
+    </div>`;
+  }
+
+  document.getElementById('we-cache').innerHTML =
+    cstep1() + cstep2() + cstep3() + cstep4();
+}
+
+/* ── wire tabs ── */
+document.querySelectorAll('#we-tabs button').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('#we-tabs button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    renderNocache(+btn.dataset.step+1);
+  });
+});
+document.querySelectorAll('#we-cache-tabs button').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('#we-cache-tabs button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    renderCacheWE(+btn.dataset.step);
+  });
+});
+renderNocache(1);
+renderCacheWE(0);
+
+/* ---------- shared mini cell renderer ---------- */
+function cell(cls,txt){ return `<div class="kvcell ${cls}">${txt||''}</div>`; }
+
+/* ========== 1. NAIVE (no cache) ========== */
+let naiveN=1;
+function renderNaive(){
+  const n=naiveN;
+  $('#naive-strip').innerHTML=TOKENS.slice(0,n).map((t,i)=>
+    `<span class="gtok ${i===n-1?'cur':''}">${t}</span>`).join('')+
+    (n<TOKENS.length?'<span class="gtok" style="opacity:.3">…</span>':'');
+  // K row, V row, Q row — all recomputed (red) each step
+  let kRow='<div class="kvline"><span class="tag">Keys</span>';
+  let vRow='<div class="kvline"><span class="tag">Values</span>';
+  let qRow='<div class="kvline"><span class="tag">Query</span>';
+  for(let i=0;i<n;i++){ kRow+=cell('recompute','K'+i); vRow+=cell('recompute','V'+i); }
+  for(let i=0;i<n;i++){ qRow+= i===n-1?cell('q','Q'+i):cell('empty',''); }
+  $('#naive-grid').innerHTML=kRow+'</div>'+vRow+'</div>'+qRow+'</div>';
+  const recomputed=n;
+  $('#naive-read').innerHTML=`Step ${n}: recomputing <b style="color:var(--waste)">${recomputed} Keys + ${recomputed} Values</b> from scratch — even though K0…K${n-2} are identical to last step. <b>${n>1?(n-1)+' of them are pure waste.':'(nothing wasted yet — it begins next step.)'}</b>`;
+}
+$('#naive-step').onclick=()=>{ naiveN=Math.min(TOKENS.length,naiveN+1); renderNaive(); };
+$('#naive-reset').onclick=()=>{ naiveN=1; renderNaive(); };
+renderNaive();
+
+/* ========== 2. WITH CACHE ========== */
+let cacheN=1;
+function renderCache(){
+  const n=cacheN;
+  $('#cache-strip').innerHTML=TOKENS.slice(0,n).map((t,i)=>
+    `<span class="gtok ${i===n-1?'cur':''}">${t}</span>`).join('')+
+    (n<TOKENS.length?'<span class="gtok" style="opacity:.3">…</span>':'');
+  let kRow='<div class="kvline"><span class="tag">Keys</span>';
+  let vRow='<div class="kvline"><span class="tag">Values</span>';
+  let qRow='<div class="kvline"><span class="tag">Query</span>';
+  for(let i=0;i<n;i++){
+    const fresh=i===n-1;
+    kRow+=cell(fresh?'fresh':'cached','K'+i);
+    vRow+=cell(fresh?'fresh':'cached','V'+i);
+  }
+  for(let i=0;i<n;i++){ qRow+= i===n-1?cell('q','Q'+i):cell('empty',''); }
+  $('#cache-grid').innerHTML=kRow+'</div>'+vRow+'</div>'+qRow+'</div>';
+  $('#cache-read').innerHTML=`Step ${n}: <b style="color:var(--kv)">1 new Key + 1 new Value</b> computed (bright), the other ${n-1} <b>reused from cache</b> (faded). Constant work per step, no matter how long the history.`;
+}
+$('#cache-step').onclick=()=>{ cacheN=Math.min(TOKENS.length,cacheN+1); renderCache(); };
+$('#cache-reset').onclick=()=>{ cacheN=1; renderCache(); };
+renderCache();
+
+/* ========== 3. COMPUTE CHART ========== */
+function renderCompute(){
+  const N=+$('#seq-sl').value;
+  $('#seq-v').textContent=N;
+  const W=600,H=260,pad=40;
+  // naive cumulative KV computations = n(n+1)/2 ; cached = n
+  const naiveAt=x=>x*(x+1)/2;
+  const cachedAt=x=>x;
+  const ymax=naiveAt(N);
+  const sx=x=>pad+(x/N)*(W-2*pad);
+  const sy=y=>(H-pad)-(y/ymax)*(H-2*pad);
+  let pN='',pC='';
+  for(let i=0;i<=60;i++){ const x=N*i/60; pN+=(i?'L':'M')+sx(x).toFixed(1)+','+sy(naiveAt(x)).toFixed(1); pC+=(i?'L':'M')+sx(x).toFixed(1)+','+sy(cachedAt(x)).toFixed(1); }
+  $('#compute-chart').innerHTML=`
+    <line x1="${pad}" y1="${H-pad}" x2="${W-pad}" y2="${H-pad}" class="axisl"/>
+    <line x1="${pad}" y1="${pad}" x2="${pad}" y2="${H-pad}" class="axisl"/>
+    <path d="${pN}" fill="none" stroke="#E03131" stroke-width="2.4"/>
+    <path d="${pC}" fill="none" stroke="#0CA678" stroke-width="2.4"/>
+    <text x="${W-pad}" y="${sy(naiveAt(N))-8}" text-anchor="end" class="axist" style="fill:#E03131;font-size:12px">naive · O(n²)</text>
+    <text x="${W-pad}" y="${sy(cachedAt(N))-8}" text-anchor="end" class="axist" style="fill:#0CA678;font-size:12px">cached · O(n)</text>
+    <text x="${W-pad}" y="${H-8}" text-anchor="end" class="axist">tokens generated →</text>
+    <text x="${pad+4}" y="${pad+4}" class="axist">cumulative K/V computations</text>`;
+  const ratio=Math.round(naiveAt(N)/cachedAt(N));
+  $('#compute-read').innerHTML=`At <b>${N}</b> tokens, the naive approach performs <b style="color:var(--waste)">${ratio}× more</b> Key/Value computation than the cached one (${naiveAt(N).toLocaleString()} vs ${cachedAt(N).toLocaleString()}).`;
+}
+$('#seq-sl').addEventListener('input',renderCompute);
+renderCompute();
+
+/* ========== 4. MEMORY CALCULATOR ========== */
+// presets: [n_layers, kv_dim (= n_kv_heads × head_dim), weight_GB_fp16, label]
+const MODELS={
+  'gpt2-small':   {layers:12, kvdim:768,  weights:0.25, name:'GPT-2 small (124M, MHA)'},
+  'llama2-7b':    {layers:32, kvdim:4096, weights:13,   name:'Llama-2-7B (MHA)'},
+  'llama2-13b':   {layers:40, kvdim:5120, weights:26,   name:'Llama-2-13B (MHA)'},
+  'llama3-8b':    {layers:32, kvdim:1024, weights:16,   name:'Llama-3-8B (GQA, 8 KV heads)'},
+  'llama2-70b':   {layers:80, kvdim:1024, weights:138,  name:'Llama-2-70B (GQA, 8 KV heads)'},
+};
+$('#model-sel').innerHTML=Object.entries(MODELS).map(([k,m],i)=>`<option value="${k}" ${k==='llama3-8b'?'selected':''}>${m.name}</option>`).join('');
+
+function fmtBytes(b){
+  if(b>=1e9) return (b/1e9).toFixed(2)+' GB';
+  if(b>=1e6) return (b/1e6).toFixed(1)+' MB';
+  if(b>=1e3) return (b/1e3).toFixed(1)+' KB';
+  return b+' B';
+}
+function renderCalc(){
+  const m=MODELS[$('#model-sel').value];
+  const bytes=+$('#dtype-sel').value;
+  const ctx=+$('#ctx-sl').value;
+  const batch=+$('#batch-sl').value;
+  $('#ctx-v').textContent=ctx; $('#batch-v').textContent=batch;
+
+  // KV bytes = 2 (K&V) × layers × kvdim × ctx × bytes × batch
+  const perToken=2*m.layers*m.kvdim*bytes;
+  const perReq=perToken*ctx;
+  const total=perReq*batch;
+
+  $('#kv-total').textContent=fmtBytes(total);
+  $('#kv-sub').innerHTML=`KV cache for <b>${batch}</b> request(s) × <b>${ctx}</b> tokens · ${fmtBytes(perToken)}/token · ${fmtBytes(perReq)}/request`;
+
+  // membar: compare KV total vs model weights vs free (assume 80GB GPU)
+  const gpu=80e9;
+  const weights=m.weights*1e9;
+  const kv=total;
+  const used=weights+kv;
+  const free=Math.max(0,gpu-used);
+  function seg(val,color,label){ const pct=Math.max(0,val/gpu*100); return pct<0.5?'':`<div class="seg" style="width:${pct}%;background:${color}">${pct>8?label:''}</div>`; }
+  $('#membar').innerHTML=seg(weights,'#5C6675','weights')+seg(kv,'#7C3AED','KV cache')+seg(free,'#E3E7EE','');
+  const over=used>gpu;
+  $('#membar-legend').innerHTML=`<span style="color:#5C6675">■</span> weights ${m.weights}GB &nbsp; <span style="color:#7C3AED">■</span> KV ${fmtBytes(kv)} &nbsp; <span style="color:#8B94A3">■</span> free ${over?'<b style="color:#E03131">— exceeds 80GB! OOM</b>':fmtBytes(free)} <span class="small">(of one 80GB GPU)</span>`;
+
+  $('#formula').innerHTML=`<span class="hl">KV bytes</span> = 2 <span class="small">(K&amp;V)</span> × ${m.layers} <span class="small">layers</span> × ${m.kvdim} <span class="small">kv-dim</span> × ${ctx} <span class="small">tokens</span> × ${bytes} <span class="small">bytes</span> × ${batch} <span class="small">batch</span><br>= <span class="hl">${fmtBytes(total)}</span>`;
+}
+['#model-sel','#dtype-sel'].forEach(s=>$(s).addEventListener('change',renderCalc));
+['#ctx-sl','#batch-sl'].forEach(s=>$(s).addEventListener('input',renderCalc));
+renderCalc();
+</script>
+</body>
+</html>

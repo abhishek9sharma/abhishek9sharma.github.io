@@ -1,0 +1,899 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>LLM from scratch · Step 1 — Tokens &amp; Embeddings</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F7F8FA;
+    --surface:#FFFFFF;
+    --line:#E3E7EE;
+    --line-strong:#CBD3DF;
+    --ink:#1B2433;
+    --muted:#5C6675;
+    --faint:#8B94A3;
+    /* token world = teal, vector world = indigo */
+    --tok:#0E7C86;
+    --tok-soft:#E3F4F5;
+    --tok-line:#9AD7DC;
+    --vec:#4F46E5;
+    --vec-soft:#ECEBFD;
+    --vec-line:#C3BFF6;
+    --amber:#B45309;
+    --pos:#0E9F6E;
+    --neg:#E02424;
+    --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+    --disp:'Space Grotesk',system-ui,sans-serif;
+    --body:'Inter',system-ui,sans-serif;
+  }
+
+  /* ── dark mode ── */
+  [data-theme="dark"]{
+    --bg:#18191f;
+    --surface:#22262e;
+    --line:#2d3240;
+    --line-strong:#3d4455;
+    --ink:#dde3ee;
+    --muted:#8b94a8;
+    --faint:#5c6475;
+    --tok-soft:#0a2f32;
+    --tok-line:#1a5c62;
+    --vec-soft:#1a1847;
+    --vec-line:#3730a3;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;background:var(--bg);color:var(--ink);
+    font-family:var(--body);font-size:16px;line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:880px;margin:0 auto;padding:32px 22px 120px}
+
+  /* ---------- header ---------- */
+  header{padding:18px 0 30px;border-bottom:1px solid var(--line)}
+  .kicker{font-family:var(--mono);font-size:12.5px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--vec);font-weight:600}
+  h1{font-family:var(--disp);font-weight:700;font-size:clamp(28px,5vw,42px);
+    line-height:1.08;margin:.35em 0 .25em;letter-spacing:-.015em}
+  .lede{color:var(--muted);max-width:62ch;font-size:17px}
+
+  /* ---------- pipeline strip ---------- */
+  .pipe{display:flex;align-items:stretch;gap:0;margin:26px 0 4px;
+    border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--surface)}
+  .pipe .step{flex:1;padding:14px 12px;text-align:center;position:relative}
+  .pipe .step + .step{border-left:1px solid var(--line)}
+  .pipe .n{font-family:var(--mono);font-size:11px;color:var(--faint)}
+  .pipe .t{font-family:var(--disp);font-weight:600;font-size:14px;margin-top:2px}
+  .pipe .d{font-size:11.5px;color:var(--muted);margin-top:2px}
+  .pipe .a{font-family:var(--mono);font-size:11px;color:var(--faint);margin-top:6px}
+  .pipe .step.tok .t{color:var(--tok)} .pipe .step.vec .t{color:var(--vec)}
+
+  /* ---------- sections ---------- */
+  section{margin-top:48px}
+  .eyebrow{display:flex;align-items:baseline;gap:12px;margin-bottom:8px}
+  .eyebrow .idx{font-family:var(--mono);font-size:13px;font-weight:600;
+    color:#fff;background:var(--ink);border-radius:6px;padding:2px 8px}
+  .eyebrow.tok .idx{background:var(--tok)} .eyebrow.vec .idx{background:var(--vec)}
+  .eyebrow .lbl{font-family:var(--mono);font-size:12px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--muted)}
+  h2{font-family:var(--disp);font-weight:600;font-size:24px;margin:.1em 0 .3em;letter-spacing:-.01em}
+  section > p{color:var(--muted);max-width:64ch}
+  section > p b{color:var(--ink);font-weight:600}
+
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;
+    padding:20px;margin-top:18px}
+  .card h3{font-family:var(--disp);font-size:14px;font-weight:600;margin:0 0 12px;
+    letter-spacing:.01em;color:var(--ink)}
+  label.fld{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--faint);margin:0 0 6px}
+
+  textarea,select,input[type=text]{
+    font-family:var(--body);font-size:15px;color:var(--ink);background:var(--bg);
+    border:1px solid var(--line-strong);border-radius:9px;padding:10px 12px;width:100%}
+  textarea{min-height:64px;resize:vertical;line-height:1.5}
+  select{cursor:pointer;appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);
+    background-position:calc(100% - 16px) 52%,calc(100% - 11px) 52%;background-size:5px 5px,5px 5px;background-repeat:no-repeat;padding-right:30px}
+  :focus-visible{outline:2px solid var(--vec);outline-offset:2px}
+
+  .seg{display:inline-flex;border:1px solid var(--line-strong);border-radius:9px;overflow:hidden;background:var(--bg)}
+  .seg button{font-family:var(--body);font-size:13.5px;font-weight:500;border:0;background:transparent;
+    color:var(--muted);padding:8px 14px;cursor:pointer}
+  .seg button + button{border-left:1px solid var(--line-strong)}
+  .seg button[aria-pressed=true]{background:var(--tok);color:#fff}
+
+  .row{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end}
+  .row > div{flex:1;min-width:150px}
+
+  /* token chips */
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;font-family:var(--mono)}
+  .chip{display:inline-flex;flex-direction:column;align-items:center;gap:2px;
+    background:var(--tok-soft);border:1px solid var(--tok-line);border-radius:8px;
+    padding:5px 9px 4px;font-size:13px;color:#0a5b63;line-height:1.1}
+  .chip .id{font-size:9.5px;color:var(--tok);opacity:.8}
+  .chip .sp{color:var(--tok-line)}
+  .count{font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:12px}
+  .count b{color:var(--tok);font-weight:600}
+
+  /* merge viewer */
+  .merges{font-family:var(--mono);font-size:12.5px;line-height:1.9;
+    max-height:170px;overflow:auto;border:1px solid var(--line);border-radius:9px;
+    padding:10px 12px;background:var(--bg);margin-top:10px}
+  .merges .m{color:var(--muted)}
+  .merges .m b{color:var(--tok)}
+  .merges .ar{color:var(--faint)}
+
+  /* vocab table */
+  table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12.5px;margin-top:6px}
+  th,td{text-align:left;padding:6px 10px;border-bottom:1px solid var(--line)}
+  th{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-weight:600}
+  td.id{color:var(--tok);width:64px}
+  .scroll{max-height:230px;overflow:auto;border:1px solid var(--line);border-radius:9px}
+
+  /* embedding bars */
+  .vec-grid{display:grid;grid-template-columns:96px 1fr 52px;gap:7px 12px;align-items:center;
+    font-family:var(--mono);font-size:12px;margin-top:6px}
+  .vec-grid .dname{color:var(--muted);text-align:right}
+  .vec-grid .track{position:relative;height:16px;background:var(--bg);border:1px solid var(--line);border-radius:5px;overflow:hidden}
+  .vec-grid .mid{position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--line-strong)}
+  .vec-grid .bar{position:absolute;top:1px;bottom:1px;background:var(--vec);border-radius:3px;opacity:.85}
+  .vec-grid .val{color:var(--vec);text-align:right}
+
+  /* similarity meter */
+  .simbar{height:12px;border-radius:6px;background:linear-gradient(90deg,#fde2e2,#fff3da,#d7f3e6);
+    position:relative;margin:10px 0 6px;border:1px solid var(--line)}
+  .simbar .dot{position:absolute;top:50%;width:14px;height:14px;border-radius:50%;
+    background:var(--vec);border:2px solid #fff;transform:translate(-50%,-50%);box-shadow:0 1px 4px rgba(0,0,0,.18)}
+  .simval{font-family:var(--mono);font-size:22px;font-weight:600;color:var(--vec)}
+  .simverdict{font-size:13px;color:var(--muted)}
+
+  /* map */
+  .mapwrap{margin-top:8px;border:1px solid var(--line);border-radius:11px;background:var(--bg);overflow:hidden}
+  svg{display:block;width:100%;height:auto}
+  .dot-c{fill:var(--vec);opacity:.85}
+  .dot-lbl{font-family:var(--mono);font-size:10px;fill:var(--ink)}
+  .grid-l{stroke:var(--line);stroke-width:1}
+  .axis-l{stroke:var(--line-strong);stroke-width:1.2}
+  .axis-t{font-family:var(--mono);font-size:10px;fill:var(--faint)}
+
+  /* analogy */
+  .analogy{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-family:var(--mono);font-size:14px}
+  .analogy select{width:auto;min-width:96px}
+  .analogy .op{color:var(--muted);font-weight:600;font-size:16px}
+  .ans{font-family:var(--disp);font-weight:600;color:var(--vec);font-size:18px;
+    background:var(--vec-soft);border:1px solid var(--vec-line);border-radius:8px;padding:4px 12px}
+
+  /* note / callout */
+  .note{border-left:3px solid var(--vec-line);background:var(--vec-soft);
+    border-radius:0 10px 10px 0;padding:12px 16px;margin-top:16px;font-size:14px;color:#37306b}
+  .note.tok{border-left-color:var(--tok-line);background:var(--tok-soft);color:#0a5158}
+  .note b{font-weight:600}
+  details{margin-top:12px}
+  summary{cursor:pointer;font-family:var(--mono);font-size:12px;color:var(--vec);font-weight:600}
+  summary::marker{color:var(--vec-line)}
+  details[open] summary{margin-bottom:8px}
+  .small{font-size:13px;color:var(--muted)}
+  code{font-family:var(--mono);font-size:.9em;background:var(--bg);border:1px solid var(--line);
+    border-radius:4px;padding:1px 5px}
+  .next{margin-top:56px;padding:22px;border:1px dashed var(--line-strong);border-radius:14px;background:var(--surface)}
+  .next h3{font-family:var(--disp);font-size:16px;margin:0 0 6px}
+  .next p{color:var(--muted);font-size:14px;margin:0}
+  .pill{display:inline-block;font-family:var(--mono);font-size:11px;color:var(--vec);
+    background:var(--vec-soft);border:1px solid var(--vec-line);border-radius:20px;padding:2px 10px;margin-top:10px;text-decoration:none;cursor:pointer;}
+
+  @media (prefers-reduced-motion:no-preference){
+    .chip,.dot-c{transition:all .15s ease}
+  }
+
+  /* ---- injected series navigator (consistent across all 8 steps) ---- */
+  .series-nav{display:flex;flex-direction:column;align-items:center;gap:7px;padding:10px 0 14px;margin-bottom:4px}
+  .sn-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center}
+  .sn-chips{display:flex;gap:5px}
+  .sn-chip{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:13px;font-weight:600;text-decoration:none;color:var(--muted);background:var(--bg);border:1px solid var(--line-strong);transition:all .12s}
+  .sn-chip:hover{border-color:var(--ink);color:var(--ink)}
+  .sn-chip.current{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .sn-navbtn{font-family:var(--mono);font-size:12px;color:var(--muted);text-decoration:none;padding:6px 11px;border:1px solid var(--line-strong);border-radius:8px;white-space:nowrap;transition:all .12s}
+  .sn-navbtn:hover{border-color:var(--ink);color:var(--ink)}
+  .sn-navbtn.disabled{opacity:.28;pointer-events:none}
+  .sn-caption{font-family:var(--mono);font-size:11.5px;color:var(--faint);letter-spacing:.03em}
+  .sn-caption b{color:var(--ink);font-weight:600}
+  @media(max-width:560px){.sn-chip{width:26px;height:26px;font-size:11px}.sn-navbtn{padding:5px 8px;font-size:11px}}
+
+  /* array transition panel */
+  .arr-trans{display:flex;flex-direction:column;gap:10px;margin-top:10px}
+  .arr-row{display:flex;align-items:flex-start;gap:10px;flex-wrap:nowrap}
+  .arr-label{font-family:var(--mono);font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:.07em;min-width:70px;padding-top:10px;flex:0 0 70px}
+  .arr-code{font-family:var(--mono);font-size:13px;background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:9px 13px;line-height:1.9;overflow-x:auto;flex:1;min-width:0}
+  .arr-vec-row{white-space:nowrap;display:block}
+  .arr-bracket{color:var(--faint)} .arr-str{color:var(--tok);font-weight:600} .arr-num{color:var(--vec);font-weight:600}
+  .arr-arrow{font-size:18px;color:var(--faint);padding-top:4px}
+
+  /* vector explainer table */
+  .vec-intro{display:grid;grid-template-columns:auto 1fr;gap:0;margin:10px 0;border:1px solid var(--line);border-radius:10px;overflow:hidden;font-family:var(--mono);font-size:13px}
+  .vi-hdr{background:var(--vec-soft);border-bottom:1px solid var(--vec-line);padding:6px 14px;font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--vec);font-weight:600}
+  .vi-row{display:contents}
+  .vi-row>div{padding:7px 14px;border-bottom:1px solid var(--line)}
+  .vi-row:last-child>div{border-bottom:0}
+  .vi-row>div:first-child{color:var(--vec);font-weight:600;background:var(--vec-soft);border-right:1px solid var(--vec-line);white-space:nowrap}
+  .vi-row>div:last-child{color:var(--muted)}
+  .vec-array-demo{font-family:var(--mono);font-size:16px;text-align:center;padding:14px;background:var(--bg);border:1px solid var(--line);border-radius:10px;margin:10px 0;line-height:1.9}
+</style>
+<script>(function(){
+  var t=localStorage.getItem('theme')||(window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
+  document.documentElement.setAttribute('data-theme',t);
+  window.addEventListener('storage',function(e){
+    if(e.key==='theme') document.documentElement.setAttribute('data-theme',e.newValue||'light');
+  });
+})()</script>
+</head>
+<body>
+<div class="wrap">
+
+  
+<nav class="series-nav" aria-label="Series navigation">
+  <div class="sn-bar"><span class="sn-navbtn disabled">‹ prev</span><div class="sn-chips"><span class="sn-chip current" title="Tokens & Embeddings">1</span><a class="sn-chip" href="llm-step2-position-and-prediction.html" title="Step 2: Position & Prediction">2</a><a class="sn-chip" href="llm-step3-self-attention.html" title="Step 3: Self-Attention">3</a><a class="sn-chip" href="llm-step4-transformer-block.html" title="Step 4: Transformer Block">4</a><a class="sn-chip" href="llm-step5-training.html" title="Step 5: Training">5</a><a class="sn-chip" href="llm-step6-generation.html" title="Step 6: Generation">6</a><a class="sn-chip" href="llm-step7-kv-cache.html" title="Step 7: KV Cache">7</a><a class="sn-chip" href="llm-step8-pagedattention-vllm.html" title="Step 8: PagedAttention & vLLM">8</a></div><a class="sn-navbtn" href="llm-step2-position-and-prediction.html">next ›</a></div>
+  <div class="sn-caption">Step <b>1</b> of 8 &middot; <b>Tokens & Embeddings</b> &middot; LLM from scratch</div>
+</nav>
+
+<header>
+    <div class="kicker">Build an LLM · Step 1 of a series</div>
+    <h1>How text becomes numbers</h1>
+    <p class="lede">Before a language model can predict anything, it has to turn your words
+      into vectors of numbers. This page is the first link in that chain — tokenization and
+      embeddings — and everything is live: type, toggle, and watch the pipeline react.</p>
+
+    <div class="pipe" aria-hidden="true">
+      <div class="step tok"><div class="n">raw</div><div class="t">Text</div><div class="d">"the king"</div><div class="a">↓ tokenize</div></div>
+      <div class="step tok"><div class="n">01</div><div class="t">Tokens</div><div class="d">the · king</div><div class="a">↓ look up</div></div>
+      <div class="step tok"><div class="n">02</div><div class="t">IDs</div><div class="d">4 · 11</div><div class="a">↓ embed</div></div>
+      <div class="step vec"><div class="n">03</div><div class="t">Vectors</div><div class="d" style="font-size:10px;line-height:1.5">the·[0.0, 0.0,…]<br>king·[0.9, 0.9,…]</div><div class="a">→ the model</div></div>
+    </div>
+  </header>
+
+  <!-- ============ SECTION 1 — TOKENIZATION ============ -->
+  <section id="tok">
+    <div class="eyebrow tok"><span class="idx">01</span><span class="lbl">Tokenization</span></div>
+    <h2>Cutting text into pieces</h2>
+    <p>A model can't read a sentence as one blob — it needs a fixed list of building blocks called a
+      <b>vocabulary</b>. Tokenization is the rule for chopping text into those blocks. There are three
+      common granularities; flip between them and watch the same sentence split differently.</p>
+
+    <div class="card">
+      <label class="fld" for="txt">Your text</label>
+      <textarea id="txt" spellcheck="false">The king and the queen walked.</textarea>
+
+      <div class="row" style="margin-top:14px">
+        <div style="flex:0 0 auto;min-width:auto">
+          <label class="fld">Tokenizer</label>
+          <div class="seg" id="seg" role="group" aria-label="Tokenizer mode">
+            <button data-mode="char" aria-pressed="false">Characters</button>
+            <button data-mode="word" aria-pressed="true">Words</button>
+            <button data-mode="bpe"  aria-pressed="false">Subword (BPE)</button>
+          </div>
+        </div>
+        <div id="bpeCtl">
+          <label class="fld" for="merges">BPE merges learned: <span id="mval" style="color:var(--tok)">30</span></label>
+          <input id="merges" type="range" min="0" max="80" value="30" style="width:100%">
+        </div>
+      </div>
+
+      <div class="chips" id="chips" aria-live="polite"></div>
+      <div class="count" id="count"></div>
+
+      <details id="bpeDet">
+        <summary>Show the merge rules being learned ▾</summary>
+        <p class="small" style="margin:.4em 0">BPE starts with single characters, then repeatedly fuses the
+          most frequent adjacent pair into a new token. Each line below is one learned merge, in order. These
+          exact rules are then applied to your text above. <code>·</code> marks a word boundary.</p>
+        <div class="merges" id="merges-list"></div>
+      </details>
+    </div>
+
+    <div class="note tok"><b>Why subword wins.</b> Characters give a tiny vocabulary but very long sequences.
+      Words give short sequences but a huge, brittle vocabulary that breaks on anything unseen
+      (<code>Kingdoms</code> → unknown). BPE is the compromise real models use: common chunks like
+      <code>king</code> become single tokens, while rare words fall back to smaller pieces — so nothing is ever
+      truly out-of-vocabulary.</div>
+  </section>
+
+  <!-- ============ SECTION 2 — IDS ============ -->
+  <section id="ids">
+    <div class="eyebrow tok"><span class="idx">02</span><span class="lbl">Token IDs</span></div>
+    <h2>Every token gets a number</h2>
+    <p>Neural networks only do math on numbers, so each unique token is assigned an integer <b>ID</b> —
+      just its row number in the vocabulary. There's no meaning in the number itself yet; <code>king</code>
+      being ID 11 instead of 9 changes nothing. It's a name tag. Here's the vocabulary built from your tokens above:</p>
+
+    <!-- array transition visual -->
+    <div class="card">
+      <h3>From sentence to integer array — step by step</h3>
+      <p class="small" style="margin-top:0">This is the exact data the model receives. Each stage is a real array you could print in Python.</p>
+      <div class="arr-trans" id="array-transition">
+        <div class="arr-row">
+          <span class="arr-label">text</span>
+          <div class="arr-code"><span class="arr-str" id="at-text"></span></div>
+        </div>
+        <div class="arr-row"><span style="padding-left:80px;font-size:18px;color:var(--faint)">↓ tokenize</span></div>
+        <div class="arr-row">
+          <span class="arr-label">tokens</span>
+          <div class="arr-code" id="at-tokens"></div>
+        </div>
+        <div class="arr-row"><span style="padding-left:80px;font-size:18px;color:var(--faint)">↓ vocab lookup (each token → its row number in the vocab table)</span></div>
+        <div class="arr-row">
+          <span class="arr-label">IDs</span>
+          <div class="arr-code" id="at-ids"></div>
+        </div>
+        <div class="arr-row"><span style="padding-left:80px;font-size:18px;color:var(--faint)">↓ embedding table → look up one vector per ID</span></div>
+        <div class="arr-row">
+          <span class="arr-label">vectors</span>
+          <div class="arr-code" id="at-vectors"></div>
+        </div>
+      </div>
+      <p class="small" style="margin-top:12px">Notice the shape: a <b>2D array</b> — rows = tokens in your sentence, columns = embedding dimensions. This grid is what gets fed into every subsequent layer.</p>
+    </div>
+
+    <div class="card">
+      <h3>Vocabulary <span class="small" id="vocab-size" style="font-weight:400"></span></h3>
+      <div class="scroll">
+        <table>
+          <thead><tr><th class="id">ID</th><th>Token</th><th>Appears</th></tr></thead>
+          <tbody id="vocab-body"></tbody>
+        </table>
+      </div>
+      <div class="count" style="margin-top:14px">Your text as IDs:</div>
+      <div class="chips" id="idseq" style="margin-top:6px"></div>
+    </div>
+  </section>
+
+  <!-- ============ SECTION 3 — EMBEDDINGS ============ -->
+  <section id="emb">
+    <div class="eyebrow vec"><span class="idx">03</span><span class="lbl">Embeddings</span></div>
+    <h2>Numbers that finally carry meaning</h2>
+    <p>An ID is meaningless, so the model keeps an <b>embedding table</b>: one learned vector per token.
+      During training these vectors arrange themselves so that words used in similar ways end up close together.
+      Below, instead of random training, I've <b>hand-labelled 7 dimensions</b> so you can read them directly —
+      a real model has hundreds of dimensions and nobody hand-labels them, but the principle is identical.</p>
+
+    <div class="card">
+      <h3>What is a vector? What is a dimension?</h3>
+      <p class="small" style="margin-top:0">A <b>vector</b> is just a list of numbers — like coordinates.
+        A <b>dimension</b> is one slot in that list. We've given each word 7 dimensions, and labelled each
+        one so you can actually read what it means:</p>
+      <div class="vec-intro">
+        <div style="display:contents"><div class="vi-hdr">dim index</div><div class="vi-hdr">what it measures (hand-labelled for this lesson)</div></div>
+        <div class="vi-row"><div>dim 0</div><div>living — is this a living thing? (+1 yes, −1 no)</div></div>
+        <div class="vi-row"><div>dim 1</div><div>human — is it a person? (+1 yes, −1 no)</div></div>
+        <div class="vi-row"><div>dim 2</div><div>gender — +1 male, −1 female, 0 neutral</div></div>
+        <div class="vi-row"><div>dim 3</div><div>royalty — is there rank/title involved?</div></div>
+        <div class="vi-row"><div>dim 4</div><div>size — large (+1) to small (−1)</div></div>
+        <div class="vi-row"><div>dim 5</div><div>action — does it describe doing something?</div></div>
+        <div class="vi-row"><div>dim 6</div><div>abstract — concept vs. concrete thing</div></div>
+      </div>
+      <p class="small">So "king" as a 7-number array looks like:</p>
+      <!-- vec-array-demo: column-labelled table matching the array panel style -->
+      <div style="font-family:var(--mono);font-size:12.5px;margin:10px 0;overflow-x:auto">
+        <table style="border-collapse:collapse;width:100%">
+          <thead>
+            <tr>
+              <th style="text-align:left;padding:5px 10px;color:var(--faint);font-size:10px;letter-spacing:.07em;border-bottom:1px solid var(--line);white-space:nowrap">word</th>
+              <th style="padding:5px 8px;color:var(--faint);font-size:10px;letter-spacing:.07em;border-bottom:1px solid var(--line);text-align:center">living<br><span style="font-weight:400;opacity:.6">dim 0</span></th>
+              <th style="padding:5px 8px;color:var(--faint);font-size:10px;letter-spacing:.07em;border-bottom:1px solid var(--line);text-align:center">human<br><span style="font-weight:400;opacity:.6">dim 1</span></th>
+              <th style="padding:5px 8px;color:#C2255C;font-size:10px;letter-spacing:.07em;border-bottom:1px solid var(--line);text-align:center;background:#FFF0F7">gender<br><span style="font-weight:400;opacity:.6">dim 2</span></th>
+              <th style="padding:5px 8px;color:var(--faint);font-size:10px;letter-spacing:.07em;border-bottom:1px solid var(--line);text-align:center">royalty<br><span style="font-weight:400;opacity:.6">dim 3</span></th>
+              <th style="padding:5px 8px;color:var(--faint);font-size:10px;letter-spacing:.07em;border-bottom:1px solid var(--line);text-align:center">size<br><span style="font-weight:400;opacity:.6">dim 4</span></th>
+              <th style="padding:5px 8px;color:var(--faint);font-size:10px;letter-spacing:.07em;border-bottom:1px solid var(--line);text-align:center">action<br><span style="font-weight:400;opacity:.6">dim 5</span></th>
+              <th style="padding:5px 8px;color:var(--faint);font-size:10px;letter-spacing:.07em;border-bottom:1px solid var(--line);text-align:center">abstract<br><span style="font-weight:400;opacity:.6">dim 6</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="background:var(--bg)">
+              <td style="padding:7px 10px;font-weight:600;color:var(--tok);border-bottom:1px solid var(--line)">king</td>
+              <td style="padding:7px 8px;text-align:center;color:#4F46E5;font-weight:600;border-bottom:1px solid var(--line)">+0.9</td>
+              <td style="padding:7px 8px;text-align:center;color:#4F46E5;font-weight:600;border-bottom:1px solid var(--line)">+0.9</td>
+              <td style="padding:7px 8px;text-align:center;color:#4F46E5;font-weight:700;border-bottom:1px solid var(--line);background:#F3EEFF">+0.9</td>
+              <td style="padding:7px 8px;text-align:center;color:#4F46E5;font-weight:600;border-bottom:1px solid var(--line)">+0.9</td>
+              <td style="padding:7px 8px;text-align:center;color:#4F46E5;font-weight:600;border-bottom:1px solid var(--line)">+0.6</td>
+              <td style="padding:7px 8px;text-align:center;color:#8B94A3;border-bottom:1px solid var(--line)">+0.0</td>
+              <td style="padding:7px 8px;text-align:center;color:#8B94A3;border-bottom:1px solid var(--line)">+0.1</td>
+            </tr>
+            <tr style="background:var(--surface)">
+              <td style="padding:7px 10px;font-weight:600;color:var(--tok)">queen</td>
+              <td style="padding:7px 8px;text-align:center;color:#4F46E5;font-weight:600">+0.9</td>
+              <td style="padding:7px 8px;text-align:center;color:#4F46E5;font-weight:600">+0.9</td>
+              <td style="padding:7px 8px;text-align:center;color:#C2255C;font-weight:700;background:#FFF0F7">−0.9 ←</td>
+              <td style="padding:7px 8px;text-align:center;color:#4F46E5;font-weight:600">+0.9</td>
+              <td style="padding:7px 8px;text-align:center;color:#4F46E5;font-weight:600">+0.5</td>
+              <td style="padding:7px 8px;text-align:center;color:#8B94A3">+0.0</td>
+              <td style="padding:7px 8px;text-align:center;color:#8B94A3">+0.1</td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="small" style="margin-top:8px;color:var(--faint)">
+          ↑ king and queen are identical on every dimension except <b style="color:#C2255C">dim 2 (gender)</b> — that single column flip is all that separates them in the model's eyes.
+        </p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>A single word as a vector — bar view</h3>
+      <div style="max-width:240px">
+        <label class="fld" for="w1">Pick a word</label>
+        <select id="w1"></select>
+      </div>
+      <div class="vec-grid" id="bars"></div>
+      <p class="small" style="margin-top:12px">Same 7 numbers, shown as bars centred on zero. Bar length = the magnitude of that dimension. <code>king</code> and <code>queen</code> are near-identical except dim 2 (gender) flips sign.</p>
+    </div>
+
+    <div class="card">
+      <h3>How close are two words?</h3>
+      <div class="row">
+        <div><label class="fld" for="cA">Word A</label><select id="cA"></select></div>
+        <div><label class="fld" for="cB">Word B</label><select id="cB"></select></div>
+      </div>
+      <div class="simbar"><div class="dot" id="simdot"></div></div>
+      <div style="display:flex;align-items:baseline;gap:10px">
+        <span class="simval" id="simval">—</span>
+        <span class="simverdict" id="simverdict"></span>
+      </div>
+      <details>
+        <summary>What is "cosine similarity"? ▾</summary>
+        <p class="small" style="margin:8px 0 6px">Measures the <b>angle</b> between two vectors — length is ignored:</p>
+        <div style="text-align:center;font-family:var(--mono);font-size:13px;padding:7px 12px;background:var(--bg);border-radius:8px;border:1px solid var(--line);margin-bottom:8px">
+          cos(θ) = (A · B) / (‖A‖ · ‖B‖)
+        </div>
+        <div style="display:grid;grid-template-columns:auto 1fr;gap:3px 10px;font-size:12px;margin-bottom:8px">
+          <b style="color:#4F46E5">+1</b><span>same direction — very similar meaning</span>
+          <b style="color:#8B94A3">&nbsp;0</b><span>perpendicular — unrelated</span>
+          <b style="color:#C2255C">−1</b><span>opposite direction — opposite meaning</span>
+        </div>
+        <p class="small" style="margin:0;border-top:1px solid var(--line);padding-top:6px"><b>Why angle, not distance?</b> Two vectors can point the same direction regardless of how long they are — direction is what carries meaning and stays consistent as embedding dimensions grow.</p>
+      </details>
+    </div>
+
+    <div class="card">
+      <h3>The embedding space, on two axes you choose</h3>
+      <p class="small" style="margin-top:-4px">Each word is a point. Change the axes to explore different slices of the 7-dimensional space.</p>
+      <div class="note" style="margin:10px 0 4px">
+        <b>Try:</b> set <b style="color:#4F46E5">X → gender</b> and <b style="color:#0CA678">Y → royalty</b> — <code>king · queen · man · woman</code> will form a parallelogram. That geometry is what makes the word analogy below work.
+      </div>
+      <div class="row" style="margin:12px 0">
+        <div><label class="fld" for="ax" style="color:#4F46E5;font-weight:600">X axis</label><select id="ax"></select></div>
+        <div><label class="fld" for="ay" style="color:#0CA678;font-weight:600">Y axis</label><select id="ay"></select></div>
+      </div>
+      <div class="mapwrap"><svg id="map" viewBox="0 0 640 420" role="img" aria-label="2D embedding map"></svg></div>
+    </div>
+
+    <div class="card">
+      <h3>Vector arithmetic: the famous analogy</h3>
+      <p class="small" style="margin-top:-4px">Because meaning lives in directions, you can do algebra on words.
+        Take <code>king</code>, subtract its "maleness," add "femaleness," and you land next to <code>queen</code>.</p>
+      <div class="analogy" style="margin-top:14px">
+        <select id="aA"></select><span class="op">−</span>
+        <select id="aB"></select><span class="op">+</span>
+        <select id="aC"></select><span class="op">≈</span>
+        <span class="ans" id="aAns">?</span>
+      </div>
+      <p class="small" id="aExplain" style="margin-top:12px"></p>
+    </div>
+
+    <div class="note"><b>The honest caveat.</b> These vectors were hand-set so the lesson is legible — a real
+      model never sees labels like "gender" or "royalty." In Step 5 you'll train real embeddings live and
+      watch the same structure emerge from random noise, with no human labelling at all.</div>
+  </section>
+
+  <div class="next">
+    <h3>Where this is heading</h3>
+    <p>You now have the model's input: a sequence of vectors. Steps still to come — <b>positional information</b>
+      (order matters: "dog bites man" ≠ "man bites dog"), the <b>attention</b> mechanism that lets tokens look at
+      each other, and finally turning the last vector back into a <b>next-token prediction</b>. Each will get its own page like this one.</p>
+    <a class="pill" href="llm-step2-position-and-prediction.html">Next ▸ Step 2 · Position &amp; the prediction head</a>
+  </div>
+
+</div>
+
+<script>
+/* ============================================================
+   STEP 1 — Tokenization, IDs, Embeddings
+   Everything here is intentionally readable. Skim the comments.
+   ============================================================ */
+
+/* ---------- tiny helpers ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+// show spaces/visible separators inside chips
+const vis = t => t.replace(/ /g,'<span class="sp">␣</span>');
+
+/* ============================================================
+   1. TOKENIZERS
+   ============================================================ */
+
+// --- character level: literally every character ---
+function tokenizeChars(text){ return [...text]; }
+
+// --- word level: words and punctuation as separate tokens ---
+function tokenizeWords(text){
+  return text.match(/\w+|[^\w\s]|\s+/g) || [];
+}
+
+/* --- Byte Pair Encoding (BPE) ---------------------------------
+   This is the real algorithm (simplified to characters, not bytes):
+   1. Split the corpus into words; each word is a list of chars + an
+      end-of-word marker so the model can tell "in" (inside) from "in" (word).
+   2. Count every adjacent symbol PAIR across all words.
+   3. Merge the most frequent pair into one new symbol. Record the rule.
+   4. Repeat for N merges. The ordered list of merges *is* the tokenizer.
+--------------------------------------------------------------- */
+const EOW = '</w>';                       // end-of-word marker
+
+function bpeTrain(corpus, numMerges){
+  // word -> frequency
+  const freq = {};
+  (corpus.toLowerCase().match(/[a-z]+/g) || []).forEach(w=>{
+    freq[w] = (freq[w]||0)+1;
+  });
+  // represent each word as an array of symbols (chars + EOW)
+  let words = Object.entries(freq).map(([w,f]) => ({
+    syms: [...w, EOW], f
+  }));
+
+  const merges = [];
+  for(let i=0;i<numMerges;i++){
+    // count adjacent pairs
+    const pairs = new Map();
+    for(const {syms,f} of words){
+      for(let j=0;j<syms.length-1;j++){
+        const key = syms[j]+'\u0000'+syms[j+1];
+        pairs.set(key,(pairs.get(key)||0)+f);
+      }
+    }
+    if(pairs.size===0) break;
+    // pick the most frequent pair
+    let best=null,bestN=-1;
+    for(const [k,n] of pairs){ if(n>bestN){bestN=n;best=k;} }
+    if(bestN<2) break;                    // nothing worth merging anymore
+    const [a,b] = best.split('\u0000');
+    merges.push([a,b]);
+    // apply the merge everywhere
+    words = words.map(({syms,f})=>{
+      const out=[];
+      for(let j=0;j<syms.length;j++){
+        if(j<syms.length-1 && syms[j]===a && syms[j+1]===b){ out.push(a+b); j++; }
+        else out.push(syms[j]);
+      }
+      return {syms:out,f};
+    });
+  }
+  return merges;
+}
+
+// apply learned merges to one word
+function bpeApply(word, merges){
+  let syms = [...word.toLowerCase(), EOW];
+  for(const [a,b] of merges){
+    const out=[];
+    for(let j=0;j<syms.length;j++){
+      if(j<syms.length-1 && syms[j]===a && syms[j+1]===b){ out.push(a+b); j++; }
+      else out.push(syms[j]);
+    }
+    syms = out;
+  }
+  // strip the EOW marker for display, mark word end with ·
+  return syms.map(s => s.endsWith(EOW) ? s.slice(0,-EOW.length)+'·' : s)
+             .filter(s => s!=='·' || syms.length===1);
+}
+
+function tokenizeBPE(text, merges){
+  const out=[];
+  // split into words / punctuation / whitespace, keep order
+  const parts = text.match(/[A-Za-z]+|[^A-Za-z\s]|\s+/g) || [];
+  for(const p of parts){
+    if(/^[A-Za-z]+$/.test(p)) out.push(...bpeApply(p, merges));
+    else if(/^\s+$/.test(p)) { /* drop pure whitespace; · already marks ends */ }
+    else out.push(p);                      // punctuation as-is
+  }
+  return out;
+}
+
+/* ============================================================
+   2. STATE + RENDER for tokenization & IDs
+   ============================================================ */
+let mode = 'word';
+const els = {
+  txt:$('#txt'), chips:$('#chips'), count:$('#count'),
+  mergesList:$('#merges-list'), mval:$('#mval'), merges:$('#merges'),
+  vocabBody:$('#vocab-body'), vocabSize:$('#vocab-size'),
+  idseq:$('#idseq'), bpeCtl:$('#bpeCtl'), bpeDet:$('#bpeDet')
+};
+
+function currentTokens(){
+  const t = els.txt.value;
+  if(mode==='char') return tokenizeChars(t);
+  if(mode==='word') return tokenizeWords(t).filter(x=>!/^\s+$/.test(x)); // hide whitespace tokens
+  // bpe — train on the user's text itself (a real tokenizer trains on a big corpus once)
+  const merges = bpeTrain(t, +els.merges.value);
+  renderMerges(merges);
+  return tokenizeBPE(t, merges);
+}
+
+function renderMerges(merges){
+  if(!merges.length){ els.mergesList.innerHTML='<span class="small">No merges yet — every token is a single character. Drag the slider up.</span>'; return; }
+  els.mergesList.innerHTML = merges.map(([a,b],i)=>{
+    const show = s => esc(s.replace(EOW,'·'));
+    return `<div class="m">${String(i+1).padStart(2,'0')}. <b>${show(a)}</b> + <b>${show(b)}</b> <span class="ar">→</span> <b>${show(a+b)}</b></div>`;
+  }).join('');
+}
+
+function render(){
+  const toks = currentTokens();
+
+  // chips with their (position-based vocab) id
+  const vocab = buildVocab(toks);
+  els.chips.innerHTML = toks.map(t=>{
+    const id = vocab.index.get(t);
+    return `<span class="chip">${vis(esc(t))||'·'}<span class="id">#${id}</span></span>`;
+  }).join('') || '<span class="small">type something…</span>';
+
+  els.count.innerHTML = `<b>${toks.length}</b> tokens · <b>${vocab.list.length}</b> unique`;
+
+  // bpe controls visibility
+  els.bpeCtl.style.display = mode==='bpe' ? '' : 'none';
+  els.bpeDet.style.display = mode==='bpe' ? '' : 'none';
+
+  // vocab table
+  els.vocabSize.textContent = `· ${vocab.list.length} entries`;
+  els.vocabBody.innerHTML = vocab.list.map((t,i)=>
+    `<tr><td class="id">${i}</td><td>${vis(esc(t))||'·'}</td><td>${vocab.counts.get(t)}×</td></tr>`
+  ).join('');
+
+  // id sequence
+  els.idseq.innerHTML = toks.map(t=>
+    `<span class="chip"><span style="color:var(--tok);font-weight:600">${vocab.index.get(t)}</span><span class="id">${vis(esc(t))||'·'}</span></span>`
+  ).join('');
+
+  // ── update the fully-live array-transition panel ──
+  const atText = document.getElementById('at-text');
+  const atToks = document.getElementById('at-tokens');
+  const atIds  = document.getElementById('at-ids');
+  const atVecs = document.getElementById('at-vectors');
+
+  if(atText) atText.textContent = '"' + els.txt.value + '"';
+
+  const MAX_SHOW = 5;   // show up to 5 tokens, then ellipsis
+  const display = toks.slice(0, MAX_SHOW);
+  const hasMore = toks.length > MAX_SHOW;
+  const ellipsis = hasMore
+    ? `, <span style="color:var(--faint)">… +${toks.length - MAX_SHOW} more</span>`
+    : '';
+
+  if(atToks){
+    atToks.innerHTML = '<span class="arr-bracket">[</span>'
+      + display.map(t => `<span class="arr-str">"${esc(t)}"</span>`).join(', ')
+      + ellipsis
+      + '<span class="arr-bracket">]</span>';
+  }
+
+  if(atIds){
+    atIds.innerHTML = '<span class="arr-bracket">[</span>'
+      + display.map(t => `<span class="arr-num">${vocab.index.get(t)}</span>`).join(', ')
+      + ellipsis
+      + '<span class="arr-bracket">]</span>';
+  }
+
+  if(atVecs){
+    const DIM_NAMES = ['living','human','gender','royalty','size','action','abstract'];
+    const COL_W = 58; // px per dim column
+
+    // header row
+    const headerCols = DIM_NAMES.map(d =>
+      `<span style="color:var(--faint);font-size:10px;width:${COL_W}px;display:inline-block;text-align:center;vertical-align:middle">${d}</span>`
+    ).join('');
+    const header = `<div class="arr-vec-row" style="margin-bottom:2px">`
+      + `<span style="display:inline-block;width:18px"></span>`  // indent for "["
+      + `<span style="color:var(--faint);font-size:10px;margin-right:4px;vertical-align:middle">dims→</span>`
+      + headerCols + `</div>`;
+
+    // one data row per token
+    const vecLines = display.map(t => {
+      const raw = t.replace(/[·]/g,'').replace(/[^a-zA-Z]/g,'').toLowerCase();
+      const v = EMB[raw] || Array(7).fill(0.0);
+      const cells = v.map((x, i) => {
+        const col = x > 0.5 ? '#4F46E5' : x < -0.5 ? '#C2255C' : '#8B94A3';
+        const fw = Math.abs(x) > 0.5 ? '600' : '400';
+        return `<span style="width:${COL_W}px;display:inline-block;text-align:center;color:${col};font-weight:${fw};vertical-align:middle">${x >= 0 ? '+' : ''}${x.toFixed(1)}</span>`;
+      }).join('');
+      return `<div class="arr-vec-row">`
+        + `<span class="arr-bracket" style="vertical-align:middle">[</span>`
+        + cells
+        + `<span class="arr-bracket" style="vertical-align:middle">]</span>`
+        + `<span style="color:var(--faint);font-size:11px;margin-left:8px;vertical-align:middle">← "${esc(t)}"</span>`
+        + `</div>`;
+    });
+
+    if(hasMore){
+      vecLines.push(
+        `<div class="arr-vec-row"><span style="color:var(--faint);font-size:11px">&nbsp;… +${toks.length - MAX_SHOW} more rows …</span></div>`
+      );
+    }
+
+    atVecs.innerHTML =
+        `<div class="arr-vec-row"><span class="arr-bracket">[</span></div>`
+      + header
+      + vecLines.join('')
+      + `<div class="arr-vec-row"><span class="arr-bracket">]</span><span style="color:var(--faint);font-size:11px;margin-left:6px">shape: (${toks.length} tokens × 7 dims)</span></div>`;
+  }
+}
+
+// build a vocabulary: unique tokens -> stable IDs (first-seen order)
+function buildVocab(toks){
+  const index=new Map(), counts=new Map(), list=[];
+  for(const t of toks){
+    if(!index.has(t)){ index.set(t,list.length); list.push(t); }
+    counts.set(t,(counts.get(t)||0)+1);
+  }
+  return {index,counts,list};
+}
+
+/* wire up tokenization UI */
+$('#seg').addEventListener('click', e=>{
+  const b = e.target.closest('button'); if(!b) return;
+  mode = b.dataset.mode;
+  [...$('#seg').children].forEach(x=>x.setAttribute('aria-pressed', x===b));
+  render();
+});
+els.txt.addEventListener('input', render);
+els.merges.addEventListener('input', ()=>{ els.mval.textContent=els.merges.value; render(); });
+
+/* ============================================================
+   3. EMBEDDINGS  (hand-labelled, interpretable dimensions)
+   ============================================================ */
+const DIMS = ['living','human','gender','royalty','size','action','abstract'];
+// values in [-1, 1]. gender: +male / -female. living: +alive / -object.
+const EMB = {
+  king:    [ .9, .9,  .9, .9, .6,  0, .1],
+  queen:   [ .9, .9, -.9, .9, .5,  0, .1],
+  man:     [ .9, .9,  .9,  0, .5,  0, .1],
+  woman:   [ .9, .9, -.9,  0, .5,  0, .1],
+  boy:     [ .9, .9,  .8,  0, .2, .1, .1],
+  girl:    [ .9, .9, -.8,  0, .2, .1, .1],
+  prince:  [ .9, .9,  .9, .7, .3,  0, .1],
+  princess:[ .9, .9, -.9, .7, .3,  0, .1],
+  dog:     [ .9,-.8,   0,  0, .3, .2,  0],
+  cat:     [ .9,-.8,   0,  0, .2, .2,  0],
+  puppy:   [ .9,-.8,   0,  0,-.3, .2,  0],
+  kitten:  [ .9,-.8,   0,  0,-.4, .2,  0],
+  lion:    [ .9,-.8,   0, .2, .6, .3,  0],
+  mouse:   [ .9,-.8,   0,  0,-.6, .2,  0],
+  run:     [  0,  0,   0,  0,  0,.95, .2],
+  walk:    [  0,  0,   0,  0,  0, .9, .2],
+  jump:    [  0,  0,   0,  0,  0, .9, .2],
+  eat:     [  0,  0,   0,  0,  0,.85, .2],
+  happy:   [  0,  0,   0,  0,  0, .1, .9],
+  sad:     [  0,  0,   0,  0,  0, .1, .9],
+  car:     [-.9,  0,   0,  0, .5, .1,-.2],
+  house:   [-.9,  0,   0,  0, .8,  0,-.2],
+  rock:    [-.9,  0,   0,  0, .2,  0,-.3],
+  water:   [-.9,  0,   0,  0, .3,  0,-.3],
+};
+const WORDS = Object.keys(EMB);
+
+/* vector math */
+const dot=(a,b)=>a.reduce((s,x,i)=>s+x*b[i],0);
+const norm=a=>Math.sqrt(dot(a,a))||1e-9;
+const cosine=(a,b)=>dot(a,b)/(norm(a)*norm(b));
+const sub=(a,b)=>a.map((x,i)=>x-b[i]);
+const add=(a,b)=>a.map((x,i)=>x+b[i]);
+
+function nearest(vec, exclude=[]){
+  let best=null,bestS=-Infinity;
+  for(const w of WORDS){
+    if(exclude.includes(w)) continue;
+    const s=cosine(vec,EMB[w]);
+    if(s>bestS){bestS=s;best=w;}
+  }
+  return {word:best,score:bestS};
+}
+
+/* populate every <select> with the word list */
+function fillSelect(sel,def){
+  sel.innerHTML = WORDS.map(w=>`<option ${w===def?'selected':''}>${w}</option>`).join('');
+}
+fillSelect($('#w1'),'king');
+fillSelect($('#cA'),'king'); fillSelect($('#cB'),'queen');
+fillSelect($('#aA'),'king'); fillSelect($('#aB'),'man'); fillSelect($('#aC'),'woman');
+
+/* axis selectors hold dimension names */
+function fillAxis(sel,def){
+  sel.innerHTML = DIMS.map((d,i)=>`<option value="${i}" ${i===def?'selected':''}>${d}</option>`).join('');
+}
+fillAxis($('#ax'),2);  // gender
+fillAxis($('#ay'),3);  // royalty
+
+/* ---- single-word bars ---- */
+function renderBars(){
+  const w = $('#w1').value, v = EMB[w];
+  $('#bars').innerHTML = DIMS.map((d,i)=>{
+    const x=v[i]; const w50=Math.abs(x)*50;          // half-track width %
+    const left = x>=0 ? 50 : 50-w50;
+    return `<div class="dname">${d}</div>
+      <div class="track"><div class="mid"></div>
+        <div class="bar" style="left:${left}%;width:${w50}%;${x<0?'opacity:.55':''}"></div></div>
+      <div class="val">${x>=0?'+':''}${x.toFixed(2)}</div>`;
+  }).join('');
+}
+
+/* ---- similarity ---- */
+function renderSim(){
+  const a=$('#cA').value, b=$('#cB').value;
+  const s=cosine(EMB[a],EMB[b]);
+  $('#simval').textContent = s.toFixed(3);
+  // map [-1,1] -> [0,100]%
+  $('#simdot').style.left = ((s+1)/2*100)+'%';
+  let verdict;
+  if(a===b) verdict='identical word — cosine with itself is exactly 1';
+  else if(s>0.9) verdict='nearly the same kind of thing';
+  else if(s>0.6) verdict='strongly related';
+  else if(s>0.2) verdict='loosely related';
+  else if(s>-0.2) verdict='basically unrelated (near perpendicular)';
+  else verdict='pointing in opposite directions';
+  $('#simverdict').textContent=verdict;
+}
+
+/* ---- 2D map ---- */
+function renderMap(){
+  const xi=+$('#ax').value, yi=+$('#ay').value;
+  const W=640,H=420, pad=40;
+  const sx = v => pad + (v+1)/2*(W-2*pad);
+  const sy = v => (H-pad) - (v+1)/2*(H-2*pad);
+  let svg='';
+  // grid at -1,-.5,0,.5,1
+  for(const g of [-1,-.5,0,.5,1]){
+    svg+=`<line class="grid-l" x1="${sx(g)}" y1="${pad}" x2="${sx(g)}" y2="${H-pad}"/>`;
+    svg+=`<line class="grid-l" x1="${pad}" y1="${sy(g)}" x2="${W-pad}" y2="${sy(g)}"/>`;
+  }
+  // zero axes
+  svg+=`<line class="axis-l" x1="${sx(0)}" y1="${pad}" x2="${sx(0)}" y2="${H-pad}"/>`;
+  svg+=`<line class="axis-l" x1="${pad}" y1="${sy(0)}" x2="${W-pad}" y2="${sy(0)}"/>`;
+  // axis titles
+  svg+=`<text class="axis-t" x="${W-pad}" y="${sy(0)-6}" text-anchor="end" fill="#4F46E5" font-weight="600">${DIMS[xi]} →</text>`;
+  svg+=`<text class="axis-t" x="${sx(0)+6}" y="${pad+4}" fill="#0CA678" font-weight="600">↑ ${DIMS[yi]}</text>`;
+  // points — jitter identical coords slightly so labels don't stack
+  const seen={};
+  for(const w of WORDS){
+    const v=EMB[w]; let X=sx(v[xi]), Y=sy(v[yi]);
+    const key=v[xi]+','+v[yi]; const k=seen[key]=(seen[key]||0)+1;
+    if(k>1){ X+=(k-1)*7; Y+=(k-1)*11; }
+    svg+=`<circle class="dot-c" cx="${X}" cy="${Y}" r="4.5"/>`;
+    svg+=`<text class="dot-lbl" x="${X+7}" y="${Y+3}">${w}</text>`;
+  }
+  $('#map').innerHTML=svg;
+}
+
+/* ---- analogy ---- */
+function renderAnalogy(){
+  const A=$('#aA').value, B=$('#aB').value, C=$('#aC').value;
+  const target = add(sub(EMB[A],EMB[B]),EMB[C]);   // A - B + C
+  const {word,score} = nearest(target,[A,B,C]);
+  $('#aAns').textContent = word;
+  $('#aExplain').innerHTML =
+    `Computed <code>${A} − ${B} + ${C}</code>, then searched every word for the closest direction. ` +
+    `Nearest is <b>${word}</b> (cosine ${score.toFixed(3)}). Excluding the three inputs themselves, of course.`;
+}
+
+/* wire embedding UI */
+$('#w1').addEventListener('change',renderBars);
+$('#cA').addEventListener('change',renderSim);
+$('#cB').addEventListener('change',renderSim);
+$('#ax').addEventListener('change',renderMap);
+$('#ay').addEventListener('change',renderMap);
+['#aA','#aB','#aC'].forEach(s=>$(s).addEventListener('change',renderAnalogy));
+
+/* ---------- first paint ---------- */
+render();
+renderBars(); renderSim(); renderMap(); renderAnalogy();
+</script>
+</body>
+</html>

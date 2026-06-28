@@ -1,0 +1,483 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>LLM serving · Step 8 — PagedAttention &amp; vLLM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F7F8FA;--surface:#FFFFFF;--line:#E3E7EE;--line-strong:#CBD3DF;
+    --ink:#1B2433;--muted:#5C6675;--faint:#8B94A3;
+    --kv:#7C3AED;--sky:#0284C7;--sky-soft:#E0F2FE;--sky-line:#A5D8F0;  /* paged = sky */
+    --waste:#E03131;--good:#0CA678;--amber:#D9480F;
+    --r1:#0284C7;--r2:#7C3AED;--r3:#0CA678;--r4:#D9480F;  /* request colors */
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+    --disp:'Space Grotesk',system-ui,sans-serif;--body:'Inter',system-ui,sans-serif;
+  }
+
+  /* ── dark mode ── */
+  [data-theme="dark"]{
+    --bg:#18191f;
+    --surface:#22262e;
+    --line:#2d3240;
+    --line-strong:#3d4455;
+    --ink:#dde3ee;
+    --muted:#8b94a8;
+    --faint:#5c6475;
+    --tok-soft:#0a2f32;
+    --tok-line:#1a5c62;
+    --vec-soft:#1a1847;
+    --vec-line:#3730a3;
+  }
+  *{box-sizing:border-box}html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:880px;margin:0 auto;padding:32px 22px 120px}
+  header{padding:18px 0 30px;border-bottom:1px solid var(--line)}
+  .kicker{font-family:var(--mono);font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--sky);font-weight:600}
+  h1{font-family:var(--disp);font-weight:700;font-size:clamp(26px,5vw,42px);line-height:1.08;margin:.35em 0 .25em;letter-spacing:-.015em}
+  .lede{color:var(--muted);max-width:62ch;font-size:17px}
+  .recap{font-family:var(--mono);font-size:12px;color:var(--faint);margin-top:14px}
+  .recap b{color:var(--sky)}
+  section{margin-top:48px}
+  .eyebrow{display:flex;align-items:baseline;gap:12px;margin-bottom:8px}
+  .eyebrow .idx{font-family:var(--mono);font-size:13px;font-weight:600;color:#fff;background:var(--sky);border-radius:6px;padding:2px 8px}
+  .eyebrow .lbl{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+  h2{font-family:var(--disp);font-weight:600;font-size:24px;margin:.1em 0 .3em;letter-spacing:-.01em}
+  section>p{color:var(--muted);max-width:64ch}section>p b{color:var(--ink);font-weight:600}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px;margin-top:18px}
+  .card h3{font-family:var(--disp);font-size:14px;font-weight:600;margin:0 0 12px;color:var(--ink)}
+  label.fld{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin:0 0 6px}
+  select{font-family:var(--body);font-size:15px;color:var(--ink);background:var(--bg);border:1px solid var(--line-strong);border-radius:9px;padding:8px 12px;cursor:pointer}
+  :focus-visible{outline:2px solid var(--sky);outline-offset:2px}
+  code{font-family:var(--mono);font-size:.88em;background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+  .small{font-size:13px;color:var(--muted)}
+  .note{border-left:3px solid var(--sky-line);background:var(--sky-soft);border-radius:0 10px 10px 0;padding:12px 16px;margin-top:16px;font-size:14px;color:#075985}
+  .note b{font-weight:600}
+  details{margin-top:12px}summary{cursor:pointer;font-family:var(--mono);font-size:12px;color:var(--sky);font-weight:600}
+  .btn{font-family:var(--body);font-size:14px;font-weight:500;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);padding:9px 16px;border-radius:9px;cursor:pointer}
+  .btn:hover{border-color:var(--sky)}.btn.primary{background:var(--sky);color:#fff;border-color:var(--sky)}
+  .btn:disabled{opacity:.4;cursor:default}
+  .controls{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;align-items:center}
+
+  /* toggle */
+  .seg-toggle{display:inline-flex;border:1px solid var(--line-strong);border-radius:9px;overflow:hidden}
+  .seg-toggle button{font-family:var(--body);font-size:13.5px;border:0;background:var(--bg);color:var(--muted);padding:8px 16px;cursor:pointer}
+  .seg-toggle button.active{background:var(--sky);color:#fff}
+
+  /* memory bar (naive contiguous) */
+  .memwrap{margin-top:8px}
+  .memrow{display:flex;height:38px;border:1px solid var(--line-strong);border-radius:8px;overflow:hidden;background:var(--bg)}
+  .memrow .blk{display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:10px;color:#fff;border-right:1px solid rgba(255,255,255,.5);position:relative}
+  .memrow .blk.wasted{background:repeating-linear-gradient(45deg,#f3b0b0,#f3b0b0 5px,#fadbdb 5px,#fadbdb 10px);color:#a01;}
+  .memrow .blk.free{background:var(--bg);color:var(--faint)}
+  .util-meter{display:flex;align-items:center;gap:12px;margin-top:12px}
+  .util-meter .big{font-family:var(--disp);font-size:30px;font-weight:700}
+  .util-meter .lbl{font-size:12px;color:var(--muted)}
+
+  /* paged grid */
+  .pagegrid{display:grid;grid-template-columns:repeat(12,1fr);gap:4px;margin-top:8px}
+  .pageblk{aspect-ratio:1;border-radius:5px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:9px;color:#fff;background:var(--bg);border:1px solid var(--line)}
+  .pageblk.free{background:var(--bg);color:var(--line-strong);border:1px dashed var(--line-strong)}
+  .pageblk.partial{opacity:.55}
+
+  /* block table */
+  .blocktable{font-family:var(--mono);font-size:12px;margin-top:8px}
+  .bt-row{display:flex;align-items:center;gap:8px;margin:3px 0}
+  .bt-logical{background:var(--sky-soft);border:1px solid var(--sky-line);color:#075985;border-radius:6px;padding:3px 9px;min-width:120px}
+  .bt-arrow{color:var(--faint)}
+  .bt-physical{border-radius:6px;padding:3px 9px;color:#fff;font-weight:500}
+
+  /* batching timeline */
+  .timeline{margin-top:8px}
+  .tl-row{display:flex;align-items:center;gap:8px;margin:5px 0;font-family:var(--mono);font-size:11px}
+  .tl-label{width:54px;color:var(--muted);flex:0 0 54px}
+  .tl-track{flex:1;display:flex;height:24px;border-radius:5px;overflow:hidden;background:var(--bg);border:1px solid var(--line)}
+  .tl-seg{display:flex;align-items:center;justify-content:center;color:#fff;font-size:9px}
+  .tl-seg.idle{background:repeating-linear-gradient(45deg,#e3e7ee,#e3e7ee 4px,#f0f2f5 4px,#f0f2f5 8px);color:var(--faint)}
+
+  /* result stat cards */
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:6px}
+  @media(max-width:560px){.stats{grid-template-columns:1fr}}
+  .statcard{border:1px solid var(--sky-line);background:var(--sky-soft);border-radius:11px;padding:14px;text-align:center}
+  .statcard .v{font-family:var(--disp);font-size:26px;font-weight:700;color:var(--sky)}
+  .statcard .l{font-size:11px;color:#075985;margin-top:2px}
+
+  .next{margin-top:56px;padding:22px;border:1px solid var(--sky-line);border-radius:14px;background:var(--sky-soft)}
+  .next h3{font-family:var(--disp);font-size:16px;margin:0 0 6px;color:#075985}.next p{color:#0369a1;font-size:14px;margin:0}
+  .pill{display:inline-block;font-family:var(--mono);font-size:11px;color:#075985;background:var(--sky-soft);border:1px solid var(--sky-line);border-radius:20px;padding:2px 10px;margin-top:10px;text-decoration:none;cursor:pointer;}
+  .src{font-size:11px;color:var(--faint);margin-top:8px;font-family:var(--mono)}
+
+  /* ---- injected series navigator (consistent across all 8 steps) ---- */
+  .series-nav{display:flex;flex-direction:column;align-items:center;gap:7px;padding:10px 0 14px;margin-bottom:4px}
+  .sn-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center}
+  .sn-chips{display:flex;gap:5px}
+  .sn-chip{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:13px;font-weight:600;text-decoration:none;color:var(--muted);background:var(--bg);border:1px solid var(--line-strong);transition:all .12s}
+  .sn-chip:hover{border-color:var(--ink);color:var(--ink)}
+  .sn-chip.current{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .sn-navbtn{font-family:var(--mono);font-size:12px;color:var(--muted);text-decoration:none;padding:6px 11px;border:1px solid var(--line-strong);border-radius:8px;white-space:nowrap;transition:all .12s}
+  .sn-navbtn:hover{border-color:var(--ink);color:var(--ink)}
+  .sn-navbtn.disabled{opacity:.28;pointer-events:none}
+  .sn-caption{font-family:var(--mono);font-size:11.5px;color:var(--faint);letter-spacing:.03em}
+  .sn-caption b{color:var(--ink);font-weight:600}
+  @media(max-width:560px){.sn-chip{width:26px;height:26px;font-size:11px}.sn-navbtn{padding:5px 8px;font-size:11px}}
+</style>
+<script>(function(){
+  var t=localStorage.getItem('theme')||(window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
+  document.documentElement.setAttribute('data-theme',t);
+  window.addEventListener('storage',function(e){
+    if(e.key==='theme') document.documentElement.setAttribute('data-theme',e.newValue||'light');
+  });
+})()</script>
+</head>
+<body>
+<div class="wrap">
+
+
+<nav class="series-nav" aria-label="Series navigation">
+  <div class="sn-bar"><a class="sn-navbtn" href="llm-step7-kv-cache.html">‹ prev</a><div class="sn-chips"><a class="sn-chip" href="llm-step1-tokens-and-embeddings.html" title="Step 1: Tokens & Embeddings">1</a><a class="sn-chip" href="llm-step2-position-and-prediction.html" title="Step 2: Position & Prediction">2</a><a class="sn-chip" href="llm-step3-self-attention.html" title="Step 3: Self-Attention">3</a><a class="sn-chip" href="llm-step4-transformer-block.html" title="Step 4: Transformer Block">4</a><a class="sn-chip" href="llm-step5-training.html" title="Step 5: Training">5</a><a class="sn-chip" href="llm-step6-generation.html" title="Step 6: Generation">6</a><a class="sn-chip" href="llm-step7-kv-cache.html" title="Step 7: KV Cache">7</a><span class="sn-chip current" title="PagedAttention & vLLM">8</span></div><span class="sn-navbtn disabled">next ›</span></div>
+  <div class="sn-caption">Step <b>8</b> of 8 &middot; <b>PagedAttention & vLLM</b> &middot; LLM from scratch</div>
+</nav>
+
+<header>
+  <div class="kicker">Build an LLM · Step 8 — Serving, part 2</div>
+  <h1>PagedAttention &amp; vLLM: managing the cache</h1>
+  <p class="lede">Step 7 showed the KV cache is essential but enormous — and its size per request grows and
+    shrinks unpredictably. Store it naively and you waste <b>60–80%</b> of GPU memory. PagedAttention fixes
+    this by borrowing the oldest trick in operating systems: <b>paging</b>. It's the core idea behind vLLM.</p>
+  <div class="recap">Builds on <b>Step 7 (the KV cache and its memory cost)</b>. Self-contained — the key facts are recapped as we go.</div>
+</header>
+
+<!-- THE PROBLEM -->
+<section>
+  <div class="eyebrow"><span class="idx">01</span><span class="lbl">The Waste</span></div>
+  <h2>Why contiguous allocation bleeds memory</h2>
+  <p>The naive approach: when a request arrives, reserve one <b>contiguous</b> block of memory big enough
+    for the <i>maximum</i> sequence length it might reach — say 2048 tokens — even though it might only
+    generate 30. This creates two kinds of waste:</p>
+
+  <div class="card">
+    <h3>Naive contiguous KV allocation — 4 requests on a GPU</h3>
+    <div class="memwrap"><div class="memrow" id="naive-mem"></div></div>
+    <div class="util-meter">
+      <span class="big" style="color:var(--waste)" id="naive-util">—</span>
+      <span class="lbl">of reserved KV memory actually holds real tokens.<br>The rest is reserved-but-empty (<b style="color:var(--waste)">internal fragmentation</b>) or unusable gaps (<b style="color:var(--waste)">external fragmentation</b>).</span>
+    </div>
+    <div class="controls">
+      <button class="btn" id="naive-grow">Let requests generate more ›</button>
+      <button class="btn" id="naive-reset2">Reset</button>
+    </div>
+  </div>
+  <div class="note"><b>Two fragmentation types.</b> <i>Internal</i>: each request reserves its max length but
+    uses far less — the reserved-but-empty tail is dead memory for the request's whole lifetime.
+    <i>External</i>: when a request finishes and frees its block, the gap may be too small or oddly-shaped
+    for the next request's contiguous need. Real systems lose <b>60–80%</b> of KV memory this way.</div>
+</section>
+
+<!-- THE SOLUTION -->
+<section>
+  <div class="eyebrow"><span class="idx">02</span><span class="lbl">The Idea</span></div>
+  <h2>Paging: store the cache in small blocks, anywhere</h2>
+  <p>Operating systems solved this for RAM decades ago. Don't demand one big contiguous chunk — split
+    memory into fixed-size <b>blocks</b> (vLLM uses 16 tokens each) and let a sequence's blocks live
+    <b>anywhere</b>, in any order. A <b>block table</b> remembers where each one is. Toggle the two schemes
+    and watch utilization jump:</p>
+
+  <div class="card">
+    <div class="seg-toggle" id="paged-toggle" style="margin-bottom:14px">
+      <button data-mode="naive">Naive contiguous</button>
+      <button data-mode="paged" class="active">PagedAttention</button>
+    </div>
+    <div class="pagegrid" id="page-grid"></div>
+    <div class="util-meter">
+      <span class="big" id="paged-util">—</span>
+      <span class="lbl" id="paged-util-lbl"></span>
+    </div>
+    <div class="controls">
+      <button class="btn primary" id="paged-add">+ Add request</button>
+      <button class="btn" id="paged-finish">− Finish a request</button>
+      <button class="btn" id="paged-reset3">Reset</button>
+    </div>
+    <p class="small" id="paged-read" style="margin-top:8px"></p>
+  </div>
+
+  <div class="card">
+    <h3>The block table — logical tokens → physical blocks</h3>
+    <p class="small" style="margin-top:0">Just like an OS page table. The sequence <i>thinks</i> its tokens
+      are contiguous (positions 0–47); physically they're scattered wherever there was a free block.</p>
+    <div class="blocktable" id="block-table"></div>
+  </div>
+
+  <div class="note"><b>The waste collapses to almost nothing.</b> The only unused space is the partially-filled
+    <i>last</i> block of each sequence — at most 15 tokens with a block size of 16. That brings total waste
+    to <b>under 4%</b>, versus 60–80% before.</div>
+</section>
+
+<!-- PREFIX SHARING -->
+<section>
+  <div class="eyebrow"><span class="idx">03</span><span class="lbl">Bonus Win</span></div>
+  <h2>Sharing blocks across requests</h2>
+  <p>Once the cache lives in blocks with a lookup table, identical blocks can be <b>shared</b> instead of
+    duplicated — exactly like copy-on-write pages in an OS. Two big cases:</p>
+  <div class="card">
+    <h3>Shared system prompt → one copy, many requests</h3>
+    <div id="prefix-viz"></div>
+    <p class="small" style="margin-top:10px">When many requests share a long system prompt (or a RAG
+      document, or few-shot examples), vLLM's <b>automatic prefix caching</b> stores those blocks
+      <b>once</b> and points every request at them. Parallel samples from one prompt share the prompt's
+      blocks until they diverge, then copy-on-write only the block that changes.</p>
+  </div>
+  <div class="note"><b>Why it compounds.</b> Less memory per request → more requests fit at once → bigger
+    batches → the GPU's tensor cores stay busy → higher throughput. Memory efficiency and speed are the
+    same lever here.</div>
+</section>
+
+<!-- CONTINUOUS BATCHING -->
+<section>
+  <div class="eyebrow"><span class="idx">04</span><span class="lbl">The Scheduler</span></div>
+  <h2>Continuous batching keeps the GPU full</h2>
+  <p>Flexible block memory unlocks one more win. <b>Static batching</b> groups N requests, runs them
+    together, and waits for the <i>slowest</i> to finish before starting the next batch — so finished
+    sequences leave the GPU idle. <b>Continuous batching</b> slots a new request into a free spot the
+    instant one finishes. Compare:</p>
+  <div class="card">
+    <div class="seg-toggle" id="batch-toggle" style="margin-bottom:14px">
+      <button data-mode="static">Static batching</button>
+      <button data-mode="continuous" class="active">Continuous batching</button>
+    </div>
+    <div class="timeline" id="batch-timeline"></div>
+    <div class="util-meter">
+      <span class="big" id="batch-util" style="color:var(--sky)">—</span>
+      <span class="lbl">GPU slot utilization across the run. Striped = idle slots (wasted compute).</span>
+    </div>
+  </div>
+</section>
+
+<!-- PAYOFF -->
+<section>
+  <div class="eyebrow"><span class="idx">05</span><span class="lbl">The Result</span></div>
+  <h2>What it adds up to</h2>
+  <div class="card">
+    <div class="stats">
+      <div class="statcard"><div class="v">&lt;4%</div><div class="l">KV memory wasted<br>(was 60–80%)</div></div>
+      <div class="statcard"><div class="v">2–4×</div><div class="l">throughput vs.<br>contiguous baselines</div></div>
+      <div class="statcard"><div class="v">16</div><div class="l">tokens per block<br>(typical)</div></div>
+    </div>
+    <p class="small" style="margin-top:14px">PagedAttention turns KV-cache memory from the bottleneck that
+      caps batch size into a non-issue, so a single GPU can serve far more concurrent users. It's why vLLM
+      became the default open-source serving engine, and the technique now appears in nearly every
+      production inference stack.</p>
+    <div class="src">Source: Kwon et al., "Efficient Memory Management for LLM Serving with PagedAttention," SOSP 2023 (arXiv:2309.06180), and the vLLM project.</div>
+  </div>
+  <details>
+    <summary>The trade-offs PagedAttention introduces ▾</summary>
+    <p class="small">Nothing is free. Paging adds a custom attention kernel that must gather K/V from
+      non-contiguous blocks (a little slower per-op than a dense read), CPU bookkeeping to track thousands
+      of block tables, and a preemption/swapping path for when the block pool runs out — evicting a
+      sequence's blocks to CPU RAM and recomputing or swapping them back later, which causes latency
+      spikes. In practice the memory win dwarfs these costs, which is why it's near-universal.</p>
+  </details>
+</section>
+
+<div class="next">
+  <h3>🎉 The serving picture is complete</h3>
+  <p>You've now followed an LLM from raw text all the way to efficient production serving: tokens →
+    embeddings → position → attention → blocks → training → generation → <b>KV cache → PagedAttention</b>.
+    Natural next topics if you want them: speculative decoding (predict several tokens at once),
+    quantization (FP8/INT4 weights and KV), tensor/pipeline parallelism across GPUs, and disaggregated
+    prefill vs. decode. Ask whenever you'd like to go further.</p>
+  <a class="pill" style="opacity:.65" href="llm-step7-kv-cache.html">◂ Back · Step 7</a>
+</div>
+
+</div>
+<script>
+const $=s=>document.querySelector(s);
+const RC=['var(--r1)','var(--r2)','var(--r3)','var(--r4)'];
+
+/* ========== 1. NAIVE CONTIGUOUS MEMORY ========== */
+// each request reserves maxLen; uses 'used' tokens. waste = reserved-used.
+let naiveReqs=[{used:8,max:40},{used:5,max:30},{used:14,max:50},{used:3,max:24}];
+function renderNaiveMem(){
+  const totalReserved=naiveReqs.reduce((s,r)=>s+r.max,0);
+  const row=$('#naive-mem'); row.innerHTML='';
+  let realTokens=0;
+  naiveReqs.forEach((r,i)=>{
+    const usedPct=r.used/totalReserved*100;
+    const wastePct=(r.max-r.used)/totalReserved*100;
+    realTokens+=r.used;
+    row.innerHTML+=`<div class="blk" style="width:${usedPct}%;background:${RC[i]}">R${i+1}</div>`+
+      `<div class="blk wasted" style="width:${wastePct}%">waste</div>`;
+  });
+  const util=Math.round(realTokens/totalReserved*100);
+  $('#naive-util').textContent=util+'%';
+}
+$('#naive-grow').onclick=()=>{ naiveReqs=naiveReqs.map(r=>({...r,used:Math.min(r.max,r.used+5)})); renderNaiveMem(); };
+$('#naive-reset2').onclick=()=>{ naiveReqs=[{used:8,max:40},{used:5,max:30},{used:14,max:50},{used:3,max:24}]; renderNaiveMem(); };
+renderNaiveMem();
+
+/* ========== 2. PAGED GRID ========== */
+const TOTAL_BLOCKS=48, BLOCK=16;
+let pagedMode='paged';
+// requests: each has a token count; blocks needed = ceil(tokens/BLOCK)
+let reqs=[{tokens:40},{tokens:18},{tokens:55}];
+let physical=new Array(TOTAL_BLOCKS).fill(null); // which request owns each physical block
+function allocatePaged(){
+  physical=new Array(TOTAL_BLOCKS).fill(null);
+  if(pagedMode==='paged'){
+    // fill any free block, scattered — simulate non-contiguous by interleaving
+    let order=[...Array(TOTAL_BLOCKS).keys()];
+    // deterministic shuffle for scattered look
+    order.sort((a,b)=>((a*7+3)%TOTAL_BLOCKS)-((b*7+3)%TOTAL_BLOCKS));
+    let oi=0;
+    reqs.forEach((r,ri)=>{
+      const need=Math.ceil(r.tokens/BLOCK);
+      for(let b=0;b<need;b++){ if(oi<order.length){ physical[order[oi++]]={ri,partial:b===need-1 && r.tokens%BLOCK!==0}; } }
+    });
+  } else {
+    // naive contiguous: each request reserves max (say 4 blocks) contiguously
+    let ptr=0;
+    reqs.forEach((r,ri)=>{
+      const reserve=4; // reserves 4 blocks (64 tokens) regardless of use
+      const used=Math.ceil(r.tokens/BLOCK);
+      for(let b=0;b<reserve;b++){ if(ptr<TOTAL_BLOCKS){ physical[ptr]={ri,wasted:b>=used}; ptr++; } }
+    });
+  }
+}
+function renderPaged(){
+  allocatePaged();
+  const grid=$('#page-grid'); grid.innerHTML='';
+  let usedReal=0, occupied=0;
+  physical.forEach(cell=>{
+    if(cell===null){ grid.innerHTML+=`<div class="pageblk free">·</div>`; }
+    else{
+      occupied++;
+      if(cell.wasted){ grid.innerHTML+=`<div class="pageblk" style="background:repeating-linear-gradient(45deg,#f3b0b0,#f3b0b0 4px,#fadbdb 4px,#fadbdb 8px);color:#a01">×</div>`; }
+      else{ usedReal++; grid.innerHTML+=`<div class="pageblk ${cell.partial?'partial':''}" style="background:${RC[cell.ri]}">R${cell.ri+1}</div>`; }
+    }
+  });
+  // utilization = real-token blocks / occupied blocks
+  const util=occupied?Math.round(usedReal/occupied*100):100;
+  $('#paged-util').textContent=util+'%';
+  $('#paged-util').style.color=util>85?'var(--good)':'var(--waste)';
+  if(pagedMode==='paged'){
+    $('#paged-util-lbl').innerHTML='of occupied blocks hold real tokens. Blocks are scattered across physical memory — order doesn\'t matter, the block table tracks them. Only each sequence\'s last block is partly empty.';
+  } else {
+    $('#paged-util-lbl').innerHTML='of occupied blocks hold real tokens. Each request pre-reserves 4 contiguous blocks (64 tokens) up front; the unused tail (<span style="color:var(--waste)">striped</span>) is dead memory.';
+  }
+  $('#paged-read').innerHTML=`${reqs.length} active request(s) · ${occupied}/${TOTAL_BLOCKS} blocks occupied · block size = ${BLOCK} tokens.`;
+  renderBlockTable();
+}
+function renderBlockTable(){
+  // show block table for request 1 (paged) — logical positions -> physical indices
+  const r0Blocks=[];
+  physical.forEach((cell,idx)=>{ if(cell&&cell.ri===0&&!cell.wasted) r0Blocks.push(idx); });
+  let html='';
+  r0Blocks.forEach((phys,logical)=>{
+    const lo=logical*BLOCK, hi=lo+BLOCK-1;
+    html+=`<div class="bt-row">
+      <span class="bt-logical">tokens ${lo}–${hi}</span>
+      <span class="bt-arrow">→ physical block</span>
+      <span class="bt-physical" style="background:${RC[0]}">#${phys}</span></div>`;
+  });
+  if(!r0Blocks.length) html='<span class="small">No active blocks for R1.</span>';
+  $('#block-table').innerHTML=`<div class="small" style="margin-bottom:6px">Block table for <b style="color:${RC[0]}">Request 1</b>:</div>`+html;
+}
+document.querySelectorAll('#paged-toggle button').forEach(b=>b.addEventListener('click',()=>{
+  pagedMode=b.dataset.mode;
+  document.querySelectorAll('#paged-toggle button').forEach(x=>x.classList.toggle('active',x===b));
+  renderPaged();
+}));
+$('#paged-add').onclick=()=>{ if(reqs.length<4) reqs.push({tokens:10+Math.floor(Math.random()*45)}); renderPaged(); };
+$('#paged-finish').onclick=()=>{ reqs.pop(); renderPaged(); };
+$('#paged-reset3').onclick=()=>{ reqs=[{tokens:40},{tokens:18},{tokens:55}]; renderPaged(); };
+renderPaged();
+
+/* ========== 3. PREFIX SHARING ========== */
+function renderPrefix(){
+  const promptBlocks=3, // shared system prompt
+        tails=[2,3,1];   // per-request unique continuation
+  let html='<div style="display:flex;flex-direction:column;gap:10px">';
+  // shared prompt row
+  html+='<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span class="small" style="width:120px;flex:0 0 120px">Shared prompt:</span>';
+  for(let i=0;i<promptBlocks;i++) html+=`<div class="pageblk" style="aspect-ratio:auto;width:42px;height:30px;background:var(--kv)">P${i}</div>`;
+  html+='<span class="small" style="color:var(--good)">← stored once</span></div>';
+  // each request
+  tails.forEach((t,ri)=>{
+    html+=`<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span class="small" style="width:120px;flex:0 0 120px">Request ${ri+1}:</span>`;
+    for(let i=0;i<promptBlocks;i++) html+=`<div class="pageblk" style="aspect-ratio:auto;width:42px;height:30px;background:var(--kv);opacity:.4">P${i}</div>`;
+    for(let i=0;i<t;i++) html+=`<div class="pageblk" style="aspect-ratio:auto;width:42px;height:30px;background:${RC[ri]}">${i}</div>`;
+    html+='</div>';
+  });
+  html+='</div>';
+  html+='<p class="small" style="margin-top:10px"><span style="color:var(--kv)">■</span> faded prompt blocks are <b>pointers to the same 3 physical blocks</b>, not copies. Only the colored tails are unique per request.</p>';
+  $('#prefix-viz').innerHTML=html;
+}
+renderPrefix();
+
+/* ========== 4. BATCHING TIMELINE ========== */
+let batchMode='continuous';
+// 4 slots, requests of varying length arriving/finishing over 12 time steps
+function renderBatching(){
+  const SLOTS=4, STEPS=12;
+  // request durations
+  const reqLens=[3,7,2,5,4,6,3,8]; // generation lengths
+  const colors=['var(--r1)','var(--r2)','var(--r3)','var(--r4)'];
+  // build per-slot timeline
+  const slots=[];
+  if(batchMode==='static'){
+    // batches of 4; each batch runs until the LONGEST finishes; others idle after they finish
+    let t=0, ri=0; const tl=Array.from({length:SLOTS},()=>[]);
+    while(t<STEPS && ri<reqLens.length){
+      const batch=reqLens.slice(ri,ri+SLOTS);
+      const dur=Math.max(...batch);
+      batch.forEach((len,si)=>{
+        for(let k=0;k<dur;k++){ tl[si].push(k<len?{r:ri+si}:{idle:true}); }
+      });
+      // fill missing slots if batch<SLOTS
+      for(let si=batch.length;si<SLOTS;si++) for(let k=0;k<dur;k++) tl[si].push({idle:true});
+      ri+=SLOTS; t+=dur;
+    }
+    slots.push(...tl.map(s=>s.slice(0,STEPS)));
+  } else {
+    // continuous: each slot immediately picks up the next request when free
+    const tl=Array.from({length:SLOTS},()=>[]);
+    let nextReq=0;
+    const slotEnd=Array(SLOTS).fill(0);
+    for(let t=0;t<STEPS;t++){
+      for(let si=0;si<SLOTS;si++){
+        if(t>=slotEnd[si]){ // free -> grab next
+          if(nextReq<reqLens.length){ const len=reqLens[nextReq]; slotEnd[si]=t+len; tl[si].push({r:nextReq,start:true}); nextReq++; }
+          else tl[si].push({idle:true});
+        } else {
+          tl[si].push({r:tl[si][t-1].r});
+        }
+      }
+    }
+    slots.push(...tl);
+  }
+  // render
+  let busy=0,total=0;
+  let html='';
+  slots.forEach((slot,si)=>{
+    html+=`<div class="tl-row"><span class="tl-label">slot ${si+1}</span><div class="tl-track">`;
+    slot.forEach(cell=>{
+      total++;
+      if(cell.idle){ html+=`<div class="tl-seg idle" style="flex:1"></div>`; }
+      else{ busy++; html+=`<div class="tl-seg" style="flex:1;background:${colors[cell.r%4]}">${cell.start?'R'+(cell.r+1):''}</div>`; }
+    });
+    html+='</div></div>';
+  });
+  $('#batch-timeline').innerHTML=html+'<div class="small" style="margin-top:6px">time →</div>';
+  $('#batch-util').textContent=Math.round(busy/total*100)+'%';
+}
+document.querySelectorAll('#batch-toggle button').forEach(b=>b.addEventListener('click',()=>{
+  batchMode=b.dataset.mode;
+  document.querySelectorAll('#batch-toggle button').forEach(x=>x.classList.toggle('active',x===b));
+  renderBatching();
+}));
+renderBatching();
+</script>
+</body>
+</html>

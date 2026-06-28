@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>LLM from scratch · Step 6 — Generation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F7F8FA;--surface:#FFFFFF;--line:#E3E7EE;--line-strong:#CBD3DF;
+    --ink:#1B2433;--muted:#5C6675;--faint:#8B94A3;
+    --tok:#0E7C86;--tok-soft:#E3F4F5;--tok-line:#9AD7DC;
+    --vec:#4F46E5;--att:#C2255C;--blk:#3B82C4;--trn:#D9480F;
+    --gen:#0CA678;--gen-soft:#D1FAE5;--gen-line:#6EE7B7;  /* generation = emerald */
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+    --disp:'Space Grotesk',system-ui,sans-serif;--body:'Inter',system-ui,sans-serif;
+  }
+
+  /* ── dark mode ── */
+  [data-theme="dark"]{
+    --bg:#18191f;
+    --surface:#22262e;
+    --line:#2d3240;
+    --line-strong:#3d4455;
+    --ink:#dde3ee;
+    --muted:#8b94a8;
+    --faint:#5c6475;
+    --tok-soft:#0a2f32;
+    --tok-line:#1a5c62;
+    --vec-soft:#1a1847;
+    --vec-line:#3730a3;
+  }
+  *{box-sizing:border-box}html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:880px;margin:0 auto;padding:32px 22px 120px}
+  header{padding:18px 0 30px;border-bottom:1px solid var(--line)}
+  .kicker{font-family:var(--mono);font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--gen);font-weight:600}
+  h1{font-family:var(--disp);font-weight:700;font-size:clamp(26px,5vw,42px);line-height:1.08;margin:.35em 0 .25em;letter-spacing:-.015em}
+  .lede{color:var(--muted);max-width:62ch;font-size:17px}
+  section{margin-top:48px}
+  .eyebrow{display:flex;align-items:baseline;gap:12px;margin-bottom:8px}
+  .eyebrow .idx{font-family:var(--mono);font-size:13px;font-weight:600;color:#fff;background:var(--gen);border-radius:6px;padding:2px 8px}
+  .eyebrow .lbl{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+  h2{font-family:var(--disp);font-weight:600;font-size:24px;margin:.1em 0 .3em;letter-spacing:-.01em}
+  section>p{color:var(--muted);max-width:64ch}section>p b{color:var(--ink);font-weight:600}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px;margin-top:18px}
+  .card h3{font-family:var(--disp);font-size:14px;font-weight:600;margin:0 0 12px;color:var(--ink)}
+  label.fld{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin:0 0 6px}
+  select,input[type=range],input[type=text]{font-family:var(--body);font-size:15px;color:var(--ink);background:var(--bg);border:1px solid var(--line-strong);border-radius:9px;padding:9px 12px}
+  input[type=range]{accent-color:var(--gen);padding:0}
+  :focus-visible{outline:2px solid var(--gen);outline-offset:2px}
+  code{font-family:var(--mono);font-size:.88em;background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+  .small{font-size:13px;color:var(--muted)}
+  .note{border-left:3px solid var(--gen-line);background:var(--gen-soft);border-radius:0 10px 10px 0;padding:12px 16px;margin-top:16px;font-size:14px;color:#065f46}
+  .note b{font-weight:600}
+  details{margin-top:12px}summary{cursor:pointer;font-family:var(--mono);font-size:12px;color:var(--gen);font-weight:600}
+  .btn{font-family:var(--body);font-size:14px;font-weight:500;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);padding:9px 18px;border-radius:9px;cursor:pointer}
+  .btn:hover{border-color:var(--gen)}.btn.primary{background:var(--gen);color:#fff;border-color:var(--gen)}
+  .btn:disabled{opacity:.4;cursor:default}
+
+  /* the loop diagram */
+  .loop{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px;margin-top:8px;font-family:var(--mono);font-size:12px}
+  .loop-node{border:1px solid var(--gen-line);background:var(--gen-soft);border-radius:9px;padding:8px 12px;color:#065f46;text-align:center}
+  .loop-arrow{color:var(--gen);font-size:18px}
+  .loop-back{width:100%;text-align:center;color:var(--gen);font-family:var(--mono);font-size:11px;margin-top:4px}
+
+  /* generation output */
+  .gen-out{font-family:var(--body);font-size:18px;line-height:1.7;background:var(--bg);border:1px solid var(--line);border-radius:11px;padding:16px;min-height:80px;margin-top:6px}
+  .gen-seed{color:var(--ink);font-weight:500}
+  .gen-new{color:var(--gen);font-weight:500}
+  .gen-cursor{display:inline-block;width:8px;height:18px;background:var(--gen);vertical-align:middle;animation:blink 1s steps(2) infinite}
+  @keyframes blink{50%{opacity:0}}
+
+  /* candidate distribution during generation */
+  .cand-box{margin-top:14px;border:1px solid var(--line);border-radius:11px;padding:12px;background:var(--bg)}
+  .cand-box h4{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--faint);margin:0 0 8px}
+  .cand-row{display:grid;grid-template-columns:90px 1fr 48px;gap:8px;align-items:center;font-family:var(--mono);font-size:12px;margin:3px 0}
+  .cand-track{position:relative;height:13px;background:var(--surface);border:1px solid var(--line);border-radius:5px;overflow:hidden}
+  .cand-bar{position:absolute;top:1px;bottom:1px;left:0;background:var(--gen);border-radius:3px;opacity:.85;transition:width .25s}
+  .cand-row.picked .cand-bar{background:var(--trn);opacity:1}
+  .cand-row.picked{font-weight:600}
+  .cand-pct{text-align:right;color:var(--muted)}
+
+  .ctrl-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:6px}
+  @media(max-width:560px){.ctrl-grid{grid-template-columns:1fr}}
+  .slider-row{display:flex;align-items:center;gap:10px}
+  .slider-row .sv{font-family:var(--mono);font-size:13px;color:var(--gen);min-width:40px}
+
+  /* full pipeline recap */
+  .pipeline{display:flex;flex-direction:column;gap:3px;margin-top:8px}
+  .pl-stage{display:flex;align-items:center;gap:10px;padding:9px 14px;border-radius:9px;font-family:var(--mono);font-size:12.5px;border:1px solid var(--line)}
+  .pl-stage .num{font-weight:600;width:18px}
+  .pl-stage .nm{font-weight:600}.pl-stage .ds{color:var(--muted);font-size:11.5px}
+  .pl-arr{text-align:center;color:var(--faint);font-size:11px;line-height:.5}
+
+  .next{margin-top:56px;padding:22px;border:1px solid var(--gen-line);border-radius:14px;background:var(--gen-soft)}
+  .next h3{font-family:var(--disp);font-size:16px;margin:0 0 6px;color:#065f46}.next p{color:#047857;font-size:14px;margin:0}
+  .pill{display:inline-block;font-family:var(--mono);font-size:11px;color:var(--gen);background:var(--gen-soft);border:1px solid var(--gen-line);border-radius:20px;padding:2px 10px;margin-top:10px;text-decoration:none;cursor:pointer;}
+
+  /* ---- injected series navigator (consistent across all 8 steps) ---- */
+  .series-nav{display:flex;flex-direction:column;align-items:center;gap:7px;padding:10px 0 14px;margin-bottom:4px}
+  .sn-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center}
+  .sn-chips{display:flex;gap:5px}
+  .sn-chip{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:13px;font-weight:600;text-decoration:none;color:var(--muted);background:var(--bg);border:1px solid var(--line-strong);transition:all .12s}
+  .sn-chip:hover{border-color:var(--ink);color:var(--ink)}
+  .sn-chip.current{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .sn-navbtn{font-family:var(--mono);font-size:12px;color:var(--muted);text-decoration:none;padding:6px 11px;border:1px solid var(--line-strong);border-radius:8px;white-space:nowrap;transition:all .12s}
+  .sn-navbtn:hover{border-color:var(--ink);color:var(--ink)}
+  .sn-navbtn.disabled{opacity:.28;pointer-events:none}
+  .sn-caption{font-family:var(--mono);font-size:11.5px;color:var(--faint);letter-spacing:.03em}
+  .sn-caption b{color:var(--ink);font-weight:600}
+  @media(max-width:560px){.sn-chip{width:26px;height:26px;font-size:11px}.sn-navbtn{padding:5px 8px;font-size:11px}}
+</style>
+<script>(function(){
+  var t=localStorage.getItem('theme')||(window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
+  document.documentElement.setAttribute('data-theme',t);
+  window.addEventListener('storage',function(e){
+    if(e.key==='theme') document.documentElement.setAttribute('data-theme',e.newValue||'light');
+  });
+})()</script>
+</head>
+<body>
+<div class="wrap">
+
+
+<nav class="series-nav" aria-label="Series navigation">
+  <div class="sn-bar"><a class="sn-navbtn" href="llm-step5-training.html">‹ prev</a><div class="sn-chips"><a class="sn-chip" href="llm-step1-tokens-and-embeddings.html" title="Step 1: Tokens & Embeddings">1</a><a class="sn-chip" href="llm-step2-position-and-prediction.html" title="Step 2: Position & Prediction">2</a><a class="sn-chip" href="llm-step3-self-attention.html" title="Step 3: Self-Attention">3</a><a class="sn-chip" href="llm-step4-transformer-block.html" title="Step 4: Transformer Block">4</a><a class="sn-chip" href="llm-step5-training.html" title="Step 5: Training">5</a><span class="sn-chip current" title="Generation">6</span><a class="sn-chip" href="llm-step7-kv-cache.html" title="Step 7: KV Cache">7</a><a class="sn-chip" href="llm-step8-pagedattention-vllm.html" title="Step 8: PagedAttention & vLLM">8</a></div><a class="sn-navbtn" href="llm-step7-kv-cache.html">next ›</a></div>
+  <div class="sn-caption">Step <b>6</b> of 8 &middot; <b>Generation</b> &middot; LLM from scratch</div>
+</nav>
+
+<header>
+  <div class="kicker">Build an LLM · Step 6 of 6 — the finale</div>
+  <h1>Generation: putting it all together</h1>
+  <p class="lede">A trained model doesn't write a sentence in one shot. It predicts <b>one token</b>,
+    appends it, and feeds the whole thing back in to predict the next — over and over. That loop is all
+    "generation" is. Here's a small model that actually <b>runs it live</b>, so you can watch words appear.</p>
+</header>
+
+<!-- THE LOOP -->
+<section>
+  <div class="eyebrow"><span class="idx">01</span><span class="lbl">The Loop</span></div>
+  <h2>Autoregression: predict, append, repeat</h2>
+  <p>"Autoregressive" just means each new token depends on all the tokens before it — including the ones
+    the model just generated. The model's own output becomes its next input:</p>
+  <div class="card">
+    <div class="loop">
+      <div class="loop-node">context<br>so far</div>
+      <span class="loop-arrow">→</span>
+      <div class="loop-node">forward pass<br><span class="small">(Steps 1–4)</span></div>
+      <span class="loop-arrow">→</span>
+      <div class="loop-node">probabilities<br>for next token</div>
+      <span class="loop-arrow">→</span>
+      <div class="loop-node">sample<br>one token</div>
+      <span class="loop-arrow">→</span>
+      <div class="loop-node" style="background:var(--gen);color:#fff">append<br>to context</div>
+      <div class="loop-back">↺ &nbsp; feed the longer context back in and repeat until done</div>
+    </div>
+  </div>
+  <div class="note"><b>Every token costs a full forward pass.</b> That's why generating long text is
+    slower than reading it, and why "tokens per second" is the headline speed metric for LLMs. Real
+    systems cache past computation (the "KV cache") so they don't recompute everything each step — but
+    the loop itself is exactly what you see above.</div>
+</section>
+
+<!-- LIVE GENERATION -->
+<section>
+  <div class="eyebrow"><span class="idx">02</span><span class="lbl">Watch It Generate</span></div>
+  <h2>A working model, generating live</h2>
+  <p>This model was trained on a small set of simple sentences. Give it a starting word, set the
+    temperature and sampling controls from Step 2, and press generate. Watch each token get chosen from
+    a live probability distribution — the <b style="color:var(--trn)">orange</b> bar is the token it picked.</p>
+
+  <div class="card">
+    <div class="ctrl-grid">
+      <div>
+        <label class="fld" for="seed-sel">Start with</label>
+        <select id="seed-sel"></select>
+      </div>
+      <div>
+        <label class="fld" for="len-sel">Generate up to</label>
+        <select id="len-sel"><option>6</option><option selected>10</option><option>14</option><option>18</option></select>
+      </div>
+    </div>
+    <div class="ctrl-grid" style="margin-top:12px">
+      <div>
+        <label class="fld" for="temp-sl">Temperature <span id="temp-v" style="color:var(--gen)">0.8</span></label>
+        <div class="slider-row"><input type="range" id="temp-sl" min="10" max="200" value="80" style="flex:1"></div>
+      </div>
+      <div>
+        <label class="fld" for="samp-sel">Sampling</label>
+        <select id="samp-sel">
+          <option value="greedy">Greedy (always top)</option>
+          <option value="topk" selected>Top-k (k=3)</option>
+          <option value="full">Full sampling</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="controls" style="display:flex;gap:10px;margin-top:16px">
+      <button class="btn primary" id="gen-btn">▶ Generate</button>
+      <button class="btn" id="gen-step">Step one token</button>
+      <button class="btn" id="gen-clear">Clear</button>
+    </div>
+
+    <div class="gen-out" id="gen-out"><span class="gen-cursor"></span></div>
+
+    <div class="cand-box">
+      <h4 id="cand-title">Next-token distribution</h4>
+      <div id="cand-list"><span class="small">Press generate or step to see the model choose.</span></div>
+    </div>
+    <p class="small" style="margin-top:10px">Lower the temperature to 0.2 for repetitive, "safe" text;
+      raise it past 1.5 for chaos. Switch to greedy and it becomes fully deterministic — same start, same output every time.</p>
+  </div>
+
+  <div class="note"><b>Honesty about this demo:</b> to run entirely in your browser with no downloads,
+    this uses a small statistical (n-gram) model rather than a full neural Transformer — training a real
+    one needs far more compute. But the <i>generation loop, temperature, and sampling are identical</i> to
+    what GPT-class models do. The box that produces "probabilities for the next token" is the only part
+    swapped; everything around it is the real thing.</div>
+</section>
+
+<!-- FULL RECAP -->
+<section>
+  <div class="eyebrow"><span class="idx">03</span><span class="lbl">The Whole Picture</span></div>
+  <h2>Everything you built, in one pass</h2>
+  <p>Here's the complete journey of a single token prediction, tying all six steps together:</p>
+  <div class="card">
+    <div class="pipeline" id="pipeline"></div>
+  </div>
+  <div class="note"><b>That's a language model.</b> Scale the vocabulary to ~100k tokens, the embedding
+    width to thousands of dimensions, the blocks to dozens or hundreds, and the training data to trillions
+    of tokens — and the same six ideas become GPT-4, Claude, or Llama. Nothing new is added; everything
+    just gets bigger. The architecture you now understand <i>is</i> the architecture running the frontier.</div>
+</section>
+
+<div class="next">
+  <h3>Where this is heading</h3>
+  <p>You now have the complete end-to-end picture. But generation has a performance problem: every new
+    token re-reads all previous tokens' keys and values from scratch. The <b>KV cache</b> (Step 7) fixes
+    that by storing them — and <b>PagedAttention</b> (Step 8) solves how to manage that memory efficiently
+    in production.</p>
+  <p class="small" style="margin-top:10px;color:var(--faint)">
+    To explore temperature and top-k/p on a real model:
+    <a href="https://poloclub.github.io/transformer-explainer/" target="_blank" rel="noopener"
+       style="color:#065f46;font-weight:600">Transformer Explainer ↗</a>
+    runs GPT-2 live in the browser with the same sliders you just used above.
+  </p>
+  <a class="pill" style="opacity:.65" href="llm-step5-training.html">◂ Back · Step 5</a>
+  <a class="pill" href="llm-step7-kv-cache.html">Next ▸ Step 7 · KV Cache</a>
+</div>
+
+</div>
+<script>
+const $=s=>document.querySelector(s);
+
+/* ============================================================
+   A small but REAL trigram language model trained on toy text.
+   The generation loop, temperature, and sampling are genuine.
+   ============================================================ */
+const TRAIN_TEXT=`
+the king ruled the land . the queen ruled beside the king .
+the brave knight rode to the castle . the knight saw the dragon .
+the dragon guarded the gold . the king sent the knight to the dragon .
+the queen watched from the castle . the people loved the queen .
+the cat sat on the warm mat . the dog ran across the green field .
+the cat watched the dog run . the dog chased the cat up the tree .
+the sun rose over the hills . the rain fell on the quiet town .
+a child read a old book by the fire . the book told a story of a king .
+`;
+// tokenize to words + punctuation, lowercase
+const toks=(TRAIN_TEXT.toLowerCase().match(/[a-z]+|\./g))||[];
+const VOCAB=[...new Set(toks)].sort();
+
+// build trigram counts: (w1,w2) -> {next: count}
+const tri={}, bi={};
+for(let i=0;i<toks.length;i++){
+  if(i>=2){ const key=toks[i-2]+' '+toks[i-1]; (tri[key]=tri[key]||{}); tri[key][toks[i]]=(tri[key][toks[i]]||0)+1; }
+  if(i>=1){ const key=toks[i-1]; (bi[key]=bi[key]||{}); bi[key][toks[i]]=(bi[key][toks[i]]||0)+1; }
+}
+// distribution for the next token given context (backoff trigram->bigram->uniform)
+function nextDist(ctx){
+  let counts=null;
+  if(ctx.length>=2){ const k=ctx[ctx.length-2]+' '+ctx[ctx.length-1]; if(tri[k]) counts=tri[k]; }
+  if(!counts && ctx.length>=1){ const k=ctx[ctx.length-1]; if(bi[k]) counts=bi[k]; }
+  if(!counts){ counts={}; VOCAB.forEach(w=>counts[w]=1); }
+  return counts;
+}
+function applyTempSample(counts,T,mode){
+  // convert counts to logits, apply temperature, softmax, then sample per mode
+  let entries=Object.entries(counts).map(([w,c])=>[w,Math.log(c)]);
+  const maxL=Math.max(...entries.map(e=>e[1]));
+  let exps=entries.map(([w,l])=>[w,Math.exp((l-maxL)/T)]);
+  let sum=exps.reduce((s,[,e])=>s+e,0);
+  let probs=exps.map(([w,e])=>[w,e/sum]).sort((a,b)=>b[1]-a[1]);
+  // restrict by mode
+  if(mode==='greedy') probs=[probs[0]];
+  else if(mode==='topk') probs=probs.slice(0,3);
+  // renormalize
+  const z=probs.reduce((s,[,p])=>s+p,0);
+  probs=probs.map(([w,p])=>[w,p/z]);
+  // sample
+  let r=Math.random(), acc=0, pick=probs[0][0];
+  for(const [w,p] of probs){ acc+=p; if(r<=acc){pick=w;break;} }
+  return {pick,probs};
+}
+
+/* ---- UI ---- */
+// good seeds = words that start sentences
+const SEEDS=['the','a','king','queen','cat','dog','knight','dragon','sun','rain'];
+$('#seed-sel').innerHTML=SEEDS.map(w=>`<option>${w}</option>`).join('');
+
+let ctx=['the'], generated=[], running=false;
+function renderOut(showCursor){
+  const seedLen=1;
+  const html=ctx.map((w,i)=> i<seedLen
+    ? `<span class="gen-seed">${w}</span>`
+    : `<span class="gen-new">${w}</span>`).join(' ');
+  $('#gen-out').innerHTML=html+(showCursor?' <span class="gen-cursor"></span>':'');
+}
+function renderCands(probs,picked){
+  const maxP=probs[0][1];
+  $('#cand-list').innerHTML=probs.slice(0,8).map(([w,p])=>`
+    <div class="cand-row ${w===picked?'picked':''}"><span>${w==='.'?'. (end)':w}</span>
+      <div class="cand-track"><div class="cand-bar" style="width:${(p/maxP*100).toFixed(0)}%"></div></div>
+      <span class="cand-pct">${(p*100).toFixed(0)}%</span></div>`).join('');
+  $('#cand-title').textContent=`Next-token distribution · context: "${ctx.slice(-2).join(' ')}"`;
+}
+function stepOnce(){
+  const T=+$('#temp-sl').value/100;
+  const mode=$('#samp-sel').value;
+  const counts=nextDist(ctx);
+  const {pick,probs}=applyTempSample(counts,T,mode);
+  ctx.push(pick); generated.push(pick);
+  renderOut(true); renderCands(probs,pick);
+  return pick;
+}
+function resetCtx(){
+  ctx=[$('#seed-sel').value]; generated=[];
+  renderOut(true);
+  $('#cand-list').innerHTML='<span class="small">Press generate or step.</span>';
+}
+$('#seed-sel').addEventListener('change',resetCtx);
+$('#temp-sl').addEventListener('input',()=>$('#temp-v').textContent=(+$('#temp-sl').value/100).toFixed(1));
+$('#samp-sel').addEventListener('change',()=>{
+  const m=$('#samp-sel').value;
+  // reflect k in label for topk
+});
+
+$('#gen-step').onclick=()=>{ if(running)return; stepOnce(); };
+$('#gen-clear').onclick=()=>{ if(running)return; resetCtx(); };
+$('#gen-btn').onclick=()=>{
+  if(running)return;
+  resetCtx();
+  running=true; $('#gen-btn').disabled=true;
+  const maxLen=+$('#len-sel').value;
+  let n=0;
+  const iv=setInterval(()=>{
+    const pick=stepOnce(); n++;
+    if(pick==='.'||n>=maxLen){ clearInterval(iv); running=false; $('#gen-btn').disabled=false; renderOut(false); }
+  },420);
+};
+resetCtx();
+
+/* ---- full pipeline recap ---- */
+const STAGES=[
+  {n:'1',nm:'Tokenize',ds:'text → tokens via BPE',c:'#0E7C86',bg:'#E3F4F5'},
+  {n:'1',nm:'Embed',ds:'each token ID → a learned vector',c:'#4F46E5',bg:'#ECEBFD'},
+  {n:'2',nm:'Add position',ds:'inject where each token sits in the sequence',c:'#D9480F',bg:'#FFF0E6'},
+  {n:'3-4',nm:'Transformer blocks ×N',ds:'attention + feed-forward, stacked deep',c:'#C2255C',bg:'#FCE7F0'},
+  {n:'2',nm:'Prediction head',ds:'final vector → logits → softmax over vocab',c:'#3B82C4',bg:'#E0F0FB'},
+  {n:'6',nm:'Sample a token',ds:'temperature + top-k/top-p pick the next word',c:'#0CA678',bg:'#D1FAE5'},
+  {n:'6',nm:'Append & repeat',ds:'feed it back in — the autoregressive loop',c:'#0CA678',bg:'#D1FAE5'},
+];
+$('#pipeline').innerHTML=STAGES.map((s,i)=>`
+  <div class="pl-stage" style="border-color:${s.c}55;background:${s.bg}">
+    <span class="num" style="color:${s.c}">${s.n}</span>
+    <span><span class="nm" style="color:${s.c}">${s.nm}</span> <span class="ds">— ${s.ds}</span></span>
+  </div>${i<STAGES.length-1?'<div class="pl-arr">↓</div>':''}`).join('');
+</script>
+</body>
+</html>
