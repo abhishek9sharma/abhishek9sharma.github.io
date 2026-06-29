@@ -516,6 +516,10 @@
   <a class="pill" href="llm-step8-pagedattention-vllm.html">Next ▸ Step 8 · PagedAttention &amp; vLLM</a>
 </div>
 
+<footer style="margin-top:44px;padding-top:16px;border-top:1px solid var(--line);font-size:12px;line-height:1.55;color:var(--faint);font-style:italic">
+  ✦ This 8-part series was co-written with Claude (Anthropic). It favours intuition over rigour and may contain bugs or simplifications — corrections and feedback are very welcome.
+</footer>
+
 </div>
 <script>
 const $=s=>document.querySelector(s);
@@ -900,15 +904,15 @@ function renderCacheWE(n){
         </div>
         <div class="mat-op">×</div>
         <div class="mat-block">
-          <div class="mat-label" style="color:var(--kv)">Kᵀ (cached + new)</div>
+          <div class="mat-label" style="color:var(--kv)">Kᵀ ${n===0?'(1 col, new — nothing cached yet)':`(first ${n} col${n>1?'s':''} cached · last col new)`}</div>
           <div class="mat-shape">${DK} × ${n+1}</div>
-          ${matGrid([ctx.map(t=>({v:t.w.slice(0,3), cls:'hdr'})),
+          ${matGrid([ctx.map((t,i)=>({v:t.w.slice(0,3)+(i<n?' ·c':' ·n'), cls:'hdr'})),
                      ctx.map((t,i)=>({v:fn(t.K[0]), cls:i<n?'k dim':'k hl'})),
                      ctx.map((t,i)=>({v:fn(t.K[1]), cls:i<n?'k dim':'k hl'}))], n+1)}
         </div>
         <div class="mat-op" style="font-size:14px">and</div>
         <div class="mat-block">
-          <div class="mat-label" style="color:#0CA678">V (cached + new)</div>
+          <div class="mat-label" style="color:#0CA678">V ${n===0?'(1 row, new — nothing cached yet)':`(first ${n} row${n>1?'s':''} cached · last row new)`}</div>
           <div class="mat-shape">${n+1} × ${DK}</div>
           ${matGrid(vRows, DK)}
         </div>
@@ -989,7 +993,7 @@ function renderCacheWE(n){
         </div>
         <div class="mat-op">×</div>
         <div class="mat-block">
-          <div class="mat-label" style="color:#0CA678">V</div>
+          <div class="mat-label" style="color:#0CA678">V ${n===0?'(1 row, new — nothing cached yet)':`(first ${n} row${n>1?'s':''} cached · last row new)`}</div>
           <div class="mat-shape">${n+1} × ${DK}</div>
           ${matGrid(vRows, DK)}
         </div>
