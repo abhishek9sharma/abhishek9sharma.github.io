@@ -24,8 +24,8 @@
         <author>
             <name>Unknown</name>
         </author>
-        <link rel="alternate" href="https://abhishek9sharma.github.io/blog/llm-from-scratch/" type="text/html"/>
-        <id>https://abhishek9sharma.github.io/blog/llm-from-scratch/</id>
+        <link rel="alternate" href="https://abhishek9sharma.github.io/blog/llm-serving/" type="text/html"/>
+        <id>https://abhishek9sharma.github.io/blog/llm-serving/</id>
         <summary type="html">An 8-part interactive series building intuition for how LLMs work, from tokenisation to KV-cache and PagedAttention.</summary>
         </entry><entry xml:lang="en">
         <title>Asangati</title>
