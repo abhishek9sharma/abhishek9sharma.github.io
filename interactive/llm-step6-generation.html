@@ -258,6 +258,7 @@
     <div class="controls" style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap">
       <button class="btn primary" id="fp-play">▶ Play</button>
       <button class="btn" id="fp-stop" disabled>⏸ Stop</button>
+      <button class="btn" id="fp-prev" disabled>‹ Prev</button>
       <button class="btn" id="fp-step">Step ›</button>
       <button class="btn" id="fp-replay" disabled>↺ Replay</button>
     </div>
@@ -630,10 +631,24 @@ $('#pipeline').innerHTML=STAGES.map((s,i)=>`
     const atEnd=idx>=plan.length, run=isRunning();
     q('#fp-play').disabled  = run;
     q('#fp-stop').disabled  = !run;
+    q('#fp-prev').disabled  = idx===0 || run;            // no earlier frame / not while running
     q('#fp-step').disabled  = run;                       // stepping only while paused
     q('#fp-step').textContent = atEnd ? '↺ from start' : 'Step ›';
     q('#fp-replay').disabled = idx===0 && !run;
   }
+
+  // Frames mutate state (predictions get appended), so going back means
+  // replaying from the start up to the target frame, instantly.
+  function rebuildTo(target){
+    stopAuto();
+    context=['The','dog']; resetStages(); setCycle(1); q('#fp-detail').innerHTML=''; renderCtx(-1);
+    plan=buildPlan();
+    for(let i=0;i<target;i++){ plan[i](); }
+    idx=target;
+    if(target===0) narr.innerHTML=`Ready. Press <b>▶ Play</b> to run, or <b>Step ›</b> to advance one stage at a time.`;
+    setButtons();
+  }
+  function prevOnce(){ if(idx>0) rebuildTo(idx-1); }
 
   function reset(){
     stopAuto();
@@ -669,6 +684,7 @@ $('#pipeline').innerHTML=STAGES.map((s,i)=>`
 
   q('#fp-play').addEventListener('click',play);
   q('#fp-stop').addEventListener('click',stop);
+  q('#fp-prev').addEventListener('click',prevOnce);
   q('#fp-step').addEventListener('click',stepOnce);
   q('#fp-replay').addEventListener('click',replay);
 

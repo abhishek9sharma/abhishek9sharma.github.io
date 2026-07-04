@@ -92,6 +92,36 @@
   [data-theme="dark"] .kvm-cell.fresh{background:#06281e}
   [data-theme="dark"] .kvm-cell.cached{background:#1c1340}
   [data-theme="dark"] .kvm-cell.qcur{background:#1a1847}
+  /* prefill → decode phase player */
+  .cp-phasebar{display:flex;gap:8px;align-items:center;font-family:var(--mono);font-size:12px;color:var(--muted);margin:4px 0 10px;flex-wrap:wrap}
+  .cp-chip{padding:3px 10px;border-radius:20px;border:1px solid var(--line-strong);color:var(--muted)}
+  .cp-chip.on{background:var(--kv);color:#fff;border-color:var(--kv)}
+  .cp-seq{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px;font-family:var(--mono);font-size:13px}
+  .cp-t{padding:5px 10px;border-radius:7px;border:1px solid var(--line);background:var(--bg);color:var(--muted)}
+  .cp-t.fed{border-color:var(--good);background:#D1FAE5;color:#066;font-weight:600}
+  .cp-t.cached{border-color:var(--kv-line);background:var(--kv-soft);color:var(--kv)}
+  .cp-t.future{opacity:.4}
+  .cp-op{align-self:center;color:var(--faint);font-size:15px;padding-top:14px}
+  .cp-narr{margin-top:12px;font-size:14px;background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:11px 14px;line-height:1.5;min-height:44px}
+  .cp-narr b{color:var(--kv)}
+  [data-theme="dark"] .cp-t.fed{background:#06281e}
+  [data-theme="dark"] .cp-t.cached{background:#1c1340}
+  /* boxed matrices — rectangle around the reusable K/V rows */
+  .cp-mat{font-family:var(--mono);font-size:11px}
+  .cp-mat .cap{display:block;font-size:9.5px;color:var(--faint);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px}
+  .cp-mrow{display:flex;gap:3px;align-items:center;margin:2px 0}
+  .cp-ml{min-width:66px;text-align:right;padding-right:5px;font-size:10px;color:var(--faint);white-space:nowrap}
+  .cp-mc{min-width:38px;text-align:center;padding:3px 5px;border-radius:4px;border:1px solid var(--line);background:var(--bg);color:var(--muted)}
+  .cp-mc.fresh{border-color:var(--good);background:#D1FAE5;color:#066;font-weight:600}
+  .cp-mc.cached{border-color:var(--kv-line);background:var(--kv-soft);color:var(--kv)}
+  .cp-mc.waste{border-color:var(--waste);background:#FEF2F2;color:#b91c1c}
+  .cp-box{border:2px dashed var(--kv);border-radius:8px;padding:5px 7px 3px;margin:2px 0 4px;display:inline-block}
+  .cp-box.waste{border-color:var(--waste)}
+  .cp-box-lbl{font-size:9px;letter-spacing:.02em;color:var(--kv);margin-bottom:3px;font-weight:600}
+  .cp-box.waste .cp-box-lbl{color:var(--waste)}
+  [data-theme="dark"] .cp-mc.fresh{background:#06281e}
+  [data-theme="dark"] .cp-mc.cached{background:#1c1340}
+  [data-theme="dark"] .cp-mc.waste{background:#3a0d0d}
 
   /* compute comparison chart */
   svg{display:block;width:100%;height:auto}
@@ -284,6 +314,7 @@
     <div class="controls">
       <button class="btn primary" id="naive-play">▶ Play</button>
       <button class="btn" id="naive-stop" disabled>⏸ Stop</button>
+      <button class="btn" id="naive-prev">‹ Prev</button>
       <button class="btn" id="naive-step">Step ›</button>
       <button class="btn" id="naive-reset">Reset</button>
     </div>
@@ -303,17 +334,22 @@
     is only ever needed for the current token. Watch the cache grow by exactly one column per step:</p>
 
   <div class="card">
-    <h3>Generating token by token — with KV cache</h3>
-    <div class="gen-strip" id="cache-strip"></div>
-    <div class="kvgrid" id="cache-grid"></div>
-    <div class="kvnums" id="cache-nums"></div>
+    <h3>Two passes — watch K/V grow from 2×3 to 3×3</h3>
+    <p class="small" style="margin-top:0">Each new token needs one forward pass. <b>Pass 1</b> processes
+      <b>"The dog"</b> — its K/V is <b>2×3</b>. <b>Pass 2</b> processes <b>"The dog sat"</b> — K/V is now
+      <b>3×3</b>, but the top <b>2×3</b> is identical to Pass 1. That repeated block is exactly what the KV
+      cache stores and reuses. (Same tiny 3-d model as Step 6 — every vector is embedding + position.)</p>
+    <div class="cp-phasebar" id="cp-phasebar"></div>
+    <div class="cp-seq" id="cp-seq"></div>
+    <div class="kvnums" id="cp-detail"></div>
+    <div class="cp-narr" id="cp-narr"></div>
     <div class="controls">
-      <button class="btn primary" id="cache-play">▶ Play</button>
-      <button class="btn" id="cache-stop" disabled>⏸ Stop</button>
-      <button class="btn" id="cache-step">Step ›</button>
-      <button class="btn" id="cache-reset">Reset</button>
+      <button class="btn primary" id="cp-play">▶ Play</button>
+      <button class="btn" id="cp-stop" disabled>⏸ Stop</button>
+      <button class="btn" id="cp-prev" disabled>‹ Prev</button>
+      <button class="btn" id="cp-step">Step ›</button>
+      <button class="btn" id="cp-reset">Reset</button>
     </div>
-    <p class="small" id="cache-read" style="margin-top:10px"></p>
   </div>
   <div class="note"><b>Why only K and V — not Q?</b> A cached token never needs its Query again: it already
     "asked its question" on the step it was generated. But it remains an <i>answer source</i> for all future
@@ -1060,25 +1096,27 @@ renderNaive();
 
 /* Shared auto-play: turns a manual stepper into a slowed animation (Play/Stop). */
 const KVA_SPEED=1500;
-function attachPlayer(prefix, advance, atEnd, reset){
+function attachPlayer(prefix, advance, atEnd, reset, back){
   let t=null;
   const play=$('#'+prefix+'-play'), stop=$('#'+prefix+'-stop'),
-        step=$('#'+prefix+'-step'), resetBtn=$('#'+prefix+'-reset');
-  const halt=()=>{ if(t){clearInterval(t);t=null;} play.disabled=false; stop.disabled=true; step.disabled=false; };
+        step=$('#'+prefix+'-step'), prev=$('#'+prefix+'-prev'), resetBtn=$('#'+prefix+'-reset');
+  const halt=()=>{ if(t){clearInterval(t);t=null;} play.disabled=false; stop.disabled=true; step.disabled=false; if(prev)prev.disabled=false; };
   play.onclick=()=>{
     if(atEnd()) reset();
-    play.disabled=true; stop.disabled=false; step.disabled=true;
+    play.disabled=true; stop.disabled=false; step.disabled=true; if(prev)prev.disabled=true;
     advance();                                   // first move immediately
     t=setInterval(()=>{ if(atEnd()){ halt(); return; } advance(); }, KVA_SPEED);
   };
   stop.onclick=halt;
+  if(prev) prev.onclick=()=>{ halt(); back(); }; // step backward one token
   resetBtn.onclick=()=>{ halt(); reset(); };     // reset also stops auto-play
   return halt;
 }
 const naiveHalt=attachPlayer('naive',
   ()=>{ naiveN=Math.min(TOKENS.length,naiveN+1); renderNaive(); },
   ()=>naiveN>=TOKENS.length,
-  ()=>{ naiveN=1; renderNaive(); });
+  ()=>{ naiveN=1; renderNaive(); },
+  ()=>{ naiveN=Math.max(1,naiveN-1); renderNaive(); });
 
 /* ========== 2. WITH CACHE ========== */
 // tiny 3-d model (same idea as Step 6) so we can show real K/V/Q numbers
@@ -1096,44 +1134,96 @@ function kvmMat(cap,rowLabs,data,rowCls){
   }).join('');
   return `<div class="kvm"><span class="cap">${cap}</span><div class="kvm-grid" style="grid-template-columns:auto repeat(${cols},auto)">${body}</div></div>`;
 }
-function renderCacheNums(n){
-  const toks=TOKENS.slice(0,n);
-  const X=toks.map((t,i)=>kvVadd(KVEMB[t]||[0,0,0], KVPOS[i]||[0,0,0]));
+/* Two full passes, then a rectangle around the K/V that could have been cached. */
+const CPSEQ=['The','dog','sat','on'];   // The,dog = prompt · sat,on = generated
+const CP=[
+  {pass:1, sub:'embed', ctx:2, fed:[0,1]},
+  {pass:1, sub:'kv',    ctx:2, fed:[0,1]},
+  {pass:2, sub:'naive', ctx:3, fed:[0,1,2]},          // recompute everything
+  {pass:2, sub:'cache', ctx:3, fed:[2], cached:[0,1]},// reuse the boxed rows
+];
+let cpI=0, cpTimer=null;
+
+// a matrix with the first nBoxed rows wrapped in a dashed rectangle
+function matBoxed(cap, toks, data, nBoxed, boxLabel, boxCls, boxedRowCls){
+  const row=(t,vals,cls)=>`<div class="cp-mrow"><span class="cp-ml">${t}</span>`
+    + vals.map(v=>`<span class="cp-mc ${cls}">${v.toFixed(1)}</span>`).join('') + `</div>`;
+  let boxed=''; for(let i=0;i<nBoxed;i++) boxed+=row(toks[i], data[i], boxedRowCls);
+  let rest='';  for(let i=nBoxed;i<data.length;i++) rest+=row(toks[i], data[i], 'fresh');
+  const box = nBoxed>0 ? `<div class="cp-box ${boxCls}"><div class="cp-box-lbl">${boxLabel}</div>${boxed}</div>` : '';
+  return `<div class="cp-mat"><span class="cap">${cap}</span>${box}${rest}</div>`;
+}
+
+function cpSeq(st){
+  return CPSEQ.map((t,i)=>{
+    let cls='cp-t', tag='';
+    if(st.fed.includes(i)){ cls+=' fed'; tag=' ·in'; }
+    else if((st.cached||[]).includes(i)){ cls+=' cached'; tag=' ·cached'; }
+    else if(i>=st.ctx){ cls+=' future'; }
+    else { cls+=' cached'; tag=' ·done'; }
+    return `<span class="${cls}">${t}${tag}</span>`;
+  }).join('');
+}
+function cpButtons(){
+  const run=!!cpTimer;
+  $('#cp-play').disabled=run; $('#cp-stop').disabled=!run;
+  $('#cp-prev').disabled=cpI===0||run; $('#cp-step').disabled=run;
+  $('#cp-step').textContent = cpI>=CP.length-1 ? '↺ from start' : 'Step ›';
+}
+function renderCP(){
+  const st=CP[cpI];
+  $('#cp-phasebar').innerHTML=`<span>Pass:</span>`
+    +`<span class="cp-chip ${st.pass===1?'on':''}">Pass 1 · K/V is 2×3</span>`
+    +`<span class="cp-chip ${st.pass===2?'on':''}">Pass 2 · K/V is 3×3</span>`
+    +`<span style="margin-left:auto">step ${cpI+1} / ${CP.length}</span>`;
+  $('#cp-seq').innerHTML=cpSeq(st);
+
+  const toks=CPSEQ.slice(0,st.ctx);
+  const X=toks.map((t,i)=>kvVadd(KVEMB[t],KVPOS[i]));
   const K=X.map(x=>kvVmul(x,KVWK)), V=X.map(x=>kvVmul(x,KVWV));
-  const Qcur=kvVmul(X[n-1],KVWQ);
-  const fresh=ri=>ri===n-1?'fresh':'cached';
-  // each row says explicitly whether it was just computed or reused from cache
-  const labs=toks.map((t,i)=> i===n-1 ? `${t} (new)` : `${t} (cached)`);
-  $('#cache-nums').innerHTML=
-      kvmMat('K cache',labs,K,fresh)
-    + kvmMat('V cache',labs,V,fresh)
-    + kvmMat('Q',[`${toks[n-1]} (current)`],[Qcur],()=> 'qcur');
-}
-let cacheN=1;
-function renderCache(){
-  const n=cacheN;
-  $('#cache-strip').innerHTML=TOKENS.slice(0,n).map((t,i)=>
-    `<span class="gtok ${i===n-1?'cur':''}">${t}</span>`).join('')+
-    (n<TOKENS.length?'<span class="gtok" style="opacity:.3">…</span>':'');
-  let kRow='<div class="kvline"><span class="tag">Keys</span>';
-  let vRow='<div class="kvline"><span class="tag">Values</span>';
-  let qRow='<div class="kvline"><span class="tag">Query</span>';
-  for(let i=0;i<n;i++){
-    const fresh=i===n-1;
-    kRow+=cell(fresh?'fresh':'cached','K'+i);
-    vRow+=cell(fresh?'fresh':'cached','V'+i);
+  const last=st.ctx-1, Qlast=kvVmul(X[last],KVWQ);
+
+  let detail='', narr='';
+  if(st.sub==='embed'){
+    const ft=st.fed.map(i=>CPSEQ[i]);
+    detail=kvmMat('embedding E', ft, st.fed.map(i=>KVEMB[CPSEQ[i]]), ()=> '')
+      +`<div class="cp-op">+</div>`+kvmMat('position P', st.fed.map(i=>'pos'+i), st.fed.map(i=>KVPOS[i]), ()=> '')
+      +`<div class="cp-op">=</div>`+kvmMat('X = emb + pos', ft, st.fed.map(i=>kvVadd(KVEMB[CPSEQ[i]],KVPOS[i])), ()=> 'fresh');
+    narr=`<b>Pass 1 · embed:</b> the prompt "The dog" becomes vectors — <b>embedding + position</b>, the same as Step 6.`;
+  } else if(st.sub==='kv'){
+    detail=kvmMat('K · 2×3',toks,K,()=> 'fresh')
+      +kvmMat('V · 2×3',toks,V,()=> 'fresh')
+      +kvmMat('Q · 1×3',[toks[last]],[Qlast],()=> 'qcur');
+    narr=`<b>Pass 1 · K/V:</b> compute K and V for both prompt tokens — a <b>2×3</b> matrix each. The last token predicts <b style="color:var(--good)">"sat"</b>. Keep these rows in mind — Pass 2 needs the exact same 2×3.`;
+  } else if(st.sub==='naive'){
+    detail=matBoxed('K · now 3×3 (no cache)', toks, K, 2, '↑ the 2×3 from Pass 1 — recomputed, identical → wasted', 'waste', 'waste')
+      +matBoxed('V · now 3×3 (no cache)', toks, V, 2, '↑ the 2×3 from Pass 1 — recomputed, identical → wasted', 'waste', 'waste');
+    narr=`<b>Pass 2 · no cache:</b> K/V grew from <b>2×3 to 3×3</b>, so a naive pass recomputes all 3 rows. But the <b style="color:var(--waste)">boxed 2×3 is byte-for-byte identical to Pass 1</b> — recomputing it is pure waste. Only the "sat" row is genuinely new.`;
+  } else {
+    detail=matBoxed('K · now 3×3 (with cache)', toks, K, 2, '↑ the 2×3 from Pass 1 — read from cache, not recomputed', 'cache', 'cached')
+      +matBoxed('V · now 3×3 (with cache)', toks, V, 2, '↑ the 2×3 from Pass 1 — read from cache, not recomputed', 'cache', 'cached')
+      +kvmMat('Q · 1×3 (current token only)',[toks[last]],[Qlast],()=> 'qcur');
+    narr=`<b>Pass 2 · with cache:</b> the <b>boxed 2×3 is read straight from the cache</b> instead of recomputed; only the new "sat" row is computed. That is how a 3×3 pass costs the same as adding one row. And Q is only ever the current token — so we cache K and V, never Q. Predicts <b style="color:var(--good)">"on"</b>.`;
   }
-  for(let i=0;i<n;i++){ qRow+= i===n-1?cell('q','Q'+i):cell('empty',''); }
-  $('#cache-grid').innerHTML=kRow+'</div>'+vRow+'</div>'+qRow+'</div>';
-  renderCacheNums(n);
-  $('#cache-read').innerHTML=`Step ${n}: <b style="color:var(--kv)">1 new Key + 1 new Value</b> computed (bright), the other ${n-1} <b>reused from cache</b> (faded). Constant work per step, no matter how long the history.`;
+  $('#cp-detail').innerHTML=detail;
+  $('#cp-narr').innerHTML=narr;
+  cpButtons();
 }
-$('#cache-step').onclick=()=>{ cacheN=Math.min(TOKENS.length,cacheN+1); renderCache(); };
-renderCache();
-const cacheHalt=attachPlayer('cache',
-  ()=>{ cacheN=Math.min(TOKENS.length,cacheN+1); renderCache(); },
-  ()=>cacheN>=TOKENS.length,
-  ()=>{ cacheN=1; renderCache(); });
+function cpStop(){ if(cpTimer){clearInterval(cpTimer);cpTimer=null;} cpButtons(); }
+function cpStep(){ cpStop(); cpI = cpI>=CP.length-1 ? 0 : cpI+1; renderCP(); }
+function cpPrev(){ cpStop(); if(cpI>0){ cpI--; renderCP(); } }
+function cpPlay(){
+  if(cpI>=CP.length-1) cpI=0;
+  renderCP();
+  cpTimer=setInterval(()=>{ if(cpI>=CP.length-1){ cpStop(); return; } cpI++; renderCP(); }, 2400);
+  cpButtons();
+}
+$('#cp-play').onclick=cpPlay;
+$('#cp-stop').onclick=cpStop;
+$('#cp-prev').onclick=cpPrev;
+$('#cp-step').onclick=cpStep;
+$('#cp-reset').onclick=()=>{ cpStop(); cpI=0; renderCP(); };
+renderCP();
 
 /* ========== 3. COMPUTE CHART ========== */
 function renderCompute(){
