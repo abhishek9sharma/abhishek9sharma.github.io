@@ -144,7 +144,7 @@
   .next h3{font-family:var(--disp);font-size:16px;margin:0 0 6px}.next p{color:var(--muted);font-size:14px;margin:0}
   .pill{display:inline-block;font-family:var(--mono);font-size:11px;color:var(--kv);background:var(--kv-soft);border:1px solid var(--kv-line);border-radius:20px;padding:2px 10px;margin-top:10px;text-decoration:none;cursor:pointer;}
 
-  /* ---- injected series navigator (consistent across all 8 steps) ---- */
+  /* ---- injected series navigator (consistent across all 9 steps) ---- */
   .series-nav{display:flex;flex-direction:column;align-items:center;gap:7px;padding:10px 0 14px;margin-bottom:4px}
   .sn-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center}
   .sn-chips{display:flex;gap:5px}
@@ -230,12 +230,12 @@
 
 
 <nav class="series-nav" aria-label="Series navigation">
-  <div class="sn-bar"><a class="sn-navbtn" href="llm-step6-generation.html">‹ prev</a><div class="sn-chips"><a class="sn-chip" href="llm-step1-tokens-and-embeddings.html" title="Step 1: Tokens & Embeddings">1</a><a class="sn-chip" href="llm-step2-position-and-prediction.html" title="Step 2: Position & Prediction">2</a><a class="sn-chip" href="llm-step3-self-attention.html" title="Step 3: Self-Attention">3</a><a class="sn-chip" href="llm-step4-transformer-block.html" title="Step 4: Transformer Block">4</a><a class="sn-chip" href="llm-step5-training.html" title="Step 5: Training">5</a><a class="sn-chip" href="llm-step6-generation.html" title="Step 6: Generation">6</a><span class="sn-chip current" title="KV Cache">7</span><a class="sn-chip" href="llm-step8-pagedattention-vllm.html" title="Step 8: PagedAttention & vLLM">8</a></div><a class="sn-navbtn" href="llm-step8-pagedattention-vllm.html">next ›</a></div>
-  <div class="sn-caption">Step <b>7</b> of 8 &middot; <b>KV Cache</b> &middot; LLM from scratch</div>
+  <div class="sn-bar"><a class="sn-navbtn" href="llm-step6-generation.html">‹ prev</a><div class="sn-chips"><a class="sn-chip" href="llm-step1-tokens-and-embeddings.html" title="Step 1: Tokens & Embeddings">1</a><a class="sn-chip" href="llm-step2-position-and-prediction.html" title="Step 2: Position & Prediction">2</a><a class="sn-chip" href="llm-step3-self-attention.html" title="Step 3: Self-Attention">3</a><a class="sn-chip" href="llm-step4-transformer-block.html" title="Step 4: Transformer Block">4</a><a class="sn-chip" href="llm-step5-training.html" title="Step 5: Training">5</a><a class="sn-chip" href="llm-step6-generation.html" title="Step 6: Generation">6</a><span class="sn-chip current" title="KV Cache">7</span><a class="sn-chip" href="llm-step8-memory-wall.html" title="Step 8: The Memory Wall">8</a><a class="sn-chip" href="llm-step9-pagedattention-vllm.html" title="Step 9: PagedAttention & vLLM">9</a></div><a class="sn-navbtn" href="llm-step8-memory-wall.html">next ›</a></div>
+  <div class="sn-caption">Step <b>7</b> of 9 &middot; <b>KV Cache</b> &middot; LLM from scratch</div>
 </nav>
 
 <header>
-  <div class="kicker">Intuition-first LLMs · Step 7 of 8 — Serving</div>
+  <div class="kicker">Intuition-first LLMs · Step 7 of 9 — Serving</div>
   <h1>The KV cache: why generation isn't quadratically slow</h1>
   <p class="lede">In Step 6 you saw generation is a loop — predict one token, append, repeat. Done naively,
     every step would recompute attention over the entire history from scratch. The <b>KV cache</b> is the
@@ -351,10 +351,11 @@
       <button class="btn" id="cp-reset">Reset</button>
     </div>
   </div>
-  <div class="note"><b>Why only K and V — not Q?</b> A cached token never needs its Query again: it already
-    "asked its question" on the step it was generated. But it remains an <i>answer source</i> for all future
-    tokens, so its Key (how it's matched) and Value (what it contributes) must stick around. Hence
-    <b>KV</b> cache, not QKV cache.</div>
+  <div class="note"><b>Why only K and V — not Q?</b> Recall the roles from Step 3: <b>Q asks · K offers · V delivers · O writes back</b>.
+    A cached token never needs its Query again — it already "asked its question" on the step it was generated.
+    But it stays an <i>answer source</i> for every future token, so its Key (how it's matched) and Value (what it
+    contributes) must stick around. Hence <b>KV</b> cache, not QKV cache. (O runs fresh on each step's blend, so
+    there's nothing to cache there either.)</div>
 
   <div class="card">
     <h3>The full picture — two passes, spelled out</h3>
@@ -549,11 +550,11 @@
     to fragmentation. The fix borrows a 1960s operating-systems idea — paging — and is what makes vLLM
     fast. That's Step 8.</p>
   <a class="pill" style="opacity:.65" href="llm-step6-generation.html">◂ Back · Step 6</a>
-  <a class="pill" href="llm-step8-pagedattention-vllm.html">Next ▸ Step 8 · PagedAttention &amp; vLLM</a>
+  <a class="pill" href="llm-step8-memory-wall.html">Next ▸ Step 8 · The Memory Wall</a>
 </div>
 
 <footer style="margin-top:44px;padding-top:16px;border-top:1px solid var(--line);font-size:12px;line-height:1.55;color:var(--faint);font-style:italic">
-  ✦ This 8-part series was co-written with Claude (Anthropic). It favours intuition over rigour and may contain bugs or simplifications — corrections and feedback are very welcome.
+  ✦ This 9-part series was co-written with Claude (Anthropic). It favours intuition over rigour and may contain bugs or simplifications — corrections and feedback are very welcome.
 </footer>
 
 </div>

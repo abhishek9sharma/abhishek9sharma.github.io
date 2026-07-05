@@ -1,0 +1,440 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>LLM serving · Step 8 — The Memory Wall</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F7F8FA;--surface:#FFFFFF;--line:#E3E7EE;--line-strong:#CBD3DF;
+    --ink:#1B2433;--muted:#5C6675;--faint:#8B94A3;
+    --acc:#C2410C;--acc-soft:#FFF1E6;--acc-line:#F1C09A;--acc-ink:#9A3412;  /* memory wall = burnt orange */
+    --sram:#EA580C;--hbm:#0CA678;--dram:#2563EB;                            /* hierarchy tiers */
+    --waste:#E03131;--good:#0CA678;--kv:#7C3AED;
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+    --disp:'Space Grotesk',system-ui,sans-serif;--body:'Inter',system-ui,sans-serif;
+  }
+  [data-theme="dark"]{
+    --bg:#18191f;--surface:#22262e;--line:#2d3240;--line-strong:#3d4455;
+    --ink:#dde3ee;--muted:#8b94a8;--faint:#5c6475;
+    --acc:#F97316;--acc-soft:#2a1a10;--acc-line:#7c3a12;--acc-ink:#fdba74;
+  }
+  *{box-sizing:border-box}html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:880px;margin:0 auto;padding:32px 22px 120px}
+  header{padding:18px 0 30px;border-bottom:1px solid var(--line)}
+  .kicker{font-family:var(--mono);font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--acc);font-weight:600}
+  h1{font-family:var(--disp);font-weight:700;font-size:clamp(26px,5vw,42px);line-height:1.08;margin:.35em 0 .25em;letter-spacing:-.015em}
+  .lede{color:var(--muted);max-width:62ch;font-size:17px}
+  .recap{font-family:var(--mono);font-size:12px;color:var(--faint);margin-top:14px}
+  .recap b{color:var(--acc)}
+  section{margin-top:48px}
+  .eyebrow{display:flex;align-items:baseline;gap:12px;margin-bottom:8px}
+  .eyebrow .idx{font-family:var(--mono);font-size:13px;font-weight:600;color:#fff;background:var(--acc);border-radius:6px;padding:2px 8px}
+  .eyebrow .lbl{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+  h2{font-family:var(--disp);font-weight:600;font-size:24px;margin:.1em 0 .3em;letter-spacing:-.01em}
+  section>p{color:var(--muted);max-width:64ch}section>p b{color:var(--ink);font-weight:600}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px;margin-top:18px}
+  .card h3{font-family:var(--disp);font-size:14px;font-weight:600;margin:0 0 12px;color:var(--ink)}
+  label.fld{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin:0 0 6px}
+  select{font-family:var(--body);font-size:15px;color:var(--ink);background:var(--bg);border:1px solid var(--line-strong);border-radius:9px;padding:8px 12px;cursor:pointer}
+  :focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+  code{font-family:var(--mono);font-size:.88em;background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+  .small{font-size:13px;color:var(--muted)}
+  .note{border-left:3px solid var(--acc-line);background:var(--acc-soft);border-radius:0 10px 10px 0;padding:12px 16px;margin-top:16px;font-size:14px;color:var(--acc-ink)}
+  .note b{font-weight:600}
+  details{margin-top:12px}summary{cursor:pointer;font-family:var(--mono);font-size:12px;color:var(--acc);font-weight:600}
+  .btn{font-family:var(--body);font-size:14px;font-weight:500;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);padding:9px 16px;border-radius:9px;cursor:pointer}
+  .btn:hover{border-color:var(--acc)}
+  .controls{display:flex;gap:14px;flex-wrap:wrap;margin-top:14px;align-items:flex-end}
+
+  /* ── memory pyramid ── */
+  .pyr{display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:6px}
+  .tier{color:#fff;border-radius:10px;padding:14px 16px;cursor:pointer;text-align:center;transition:transform .12s,box-shadow .12s;position:relative;border:2px solid transparent}
+  .tier:hover{transform:translateY(-2px)}
+  .tier.sel{border-color:var(--ink);box-shadow:0 4px 16px rgba(0,0,0,.14)}
+  .tier .tn{font-family:var(--disp);font-weight:700;font-size:15px}
+  .tier .td{font-family:var(--mono);font-size:11px;opacity:.92;margin-top:2px}
+  .tier .tq{font-family:var(--mono);font-size:10.5px;opacity:.8}
+  .t-sram{background:var(--sram)}.t-hbm{background:var(--hbm)}.t-dram{background:var(--dram)}
+  .pyr-detail{margin-top:14px;border:1px dashed var(--line-strong);border-radius:11px;padding:14px 16px;font-size:13.5px;min-height:64px}
+  .pyr-detail b{color:var(--ink)}
+  .pd-badge{display:inline-block;font-family:var(--mono);font-size:11px;font-weight:600;color:#fff;border-radius:6px;padding:2px 8px;margin-right:6px}
+
+  /* ── KV calculator ── */
+  .kvcalc-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:4px}
+  @media(max-width:560px){.kvcalc-grid{grid-template-columns:1fr}.controls{gap:10px}}
+  .formula{font-family:var(--mono);font-size:12.5px;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-top:16px;line-height:2;overflow-x:auto;white-space:nowrap}
+  .formula .hl{color:var(--acc);font-weight:600}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}
+  @media(max-width:560px){.stats{grid-template-columns:1fr}}
+  .statcard{border:1px solid var(--acc-line);background:var(--acc-soft);border-radius:11px;padding:14px;text-align:center}
+  .statcard .v{font-family:var(--disp);font-size:26px;font-weight:700;color:var(--acc)}
+  .statcard .l{font-size:11px;color:var(--acc-ink);margin-top:2px}
+  .fitbar{margin-top:18px}
+  .fitbar .track{display:flex;height:34px;border-radius:8px;overflow:hidden;background:var(--bg);border:1px solid var(--line-strong);position:relative}
+  .fitbar .seg{display:flex;align-items:center;justify-content:center;color:#fff;font-family:var(--mono);font-size:10px;min-width:0;white-space:nowrap;overflow:hidden}
+  .fitbar .seg.params{background:var(--faint)}
+  .fitbar .seg.kv{background:var(--kv)}
+  .fitbar .gpuline{position:absolute;top:-6px;bottom:-6px;width:2px;background:var(--ink)}
+  .fitbar .gpulbl{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:8px}
+  .verdict{margin-top:12px;font-size:14px;font-weight:500}
+  .verdict.ok{color:var(--good)}.verdict.bad{color:var(--waste)}
+
+  /* ── FlashAttention toggle ── */
+  .seg-toggle{display:inline-flex;border:1px solid var(--line-strong);border-radius:9px;overflow:hidden;margin-bottom:14px}
+  .seg-toggle button{font-family:var(--body);font-size:13.5px;border:0;background:var(--bg);color:var(--muted);padding:8px 16px;cursor:pointer}
+  .seg-toggle button.active{background:var(--acc);color:#fff}
+  .fa-stage{display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:center;margin:6px 0}
+  .fa-blk{border-radius:9px;padding:10px 12px;text-align:center;font-family:var(--mono);font-size:11px;color:#fff}
+  .fa-arrow{color:var(--faint);font-size:18px}
+  .fa-hbm{border:1px dashed var(--line-strong);border-radius:11px;padding:14px;margin-top:6px}
+  .fa-hbm .lbl{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin-bottom:8px}
+  .fa-huge{background:repeating-linear-gradient(45deg,#f3b0b0,#f3b0b0 6px,#fadbdb 6px,#fadbdb 12px);color:#a01;border:1px solid #e88}
+  .fa-tile{background:var(--good)}
+  .fa-narr{font-size:13.5px;margin-top:14px;color:var(--muted)}
+  .fa-narr b{color:var(--ink)}
+
+  /* ── further opts ── */
+  .opt-row{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-top:1px solid var(--line)}
+  .opt-row:first-child{border-top:0}
+  .opt-tag{font-family:var(--mono);font-size:11px;font-weight:600;color:#fff;background:var(--acc);border-radius:6px;padding:3px 9px;white-space:nowrap;margin-top:2px}
+  .opt-row .txt{font-size:14px;color:var(--muted)}
+  .opt-row .txt b{color:var(--ink)}
+
+  .next{margin-top:56px;padding:22px;border:1px solid var(--acc-line);border-radius:14px;background:var(--acc-soft)}
+  .next h3{font-family:var(--disp);font-size:16px;margin:0 0 6px;color:var(--acc-ink)}.next p{color:var(--acc-ink);font-size:14px;margin:0;opacity:.9}
+  .pill{display:inline-block;font-family:var(--mono);font-size:11px;color:var(--acc-ink);background:var(--acc-soft);border:1px solid var(--acc-line);border-radius:20px;padding:2px 10px;margin-top:10px;text-decoration:none;cursor:pointer}
+  .src{font-size:11px;color:var(--faint);margin-top:8px;font-family:var(--mono)}
+
+  /* ---- injected series navigator (consistent across all 9 steps) ---- */
+  .series-nav{display:flex;flex-direction:column;align-items:center;gap:7px;padding:10px 0 14px;margin-bottom:4px}
+  .sn-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center}
+  .sn-chips{display:flex;gap:5px}
+  .sn-chip{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:13px;font-weight:600;text-decoration:none;color:var(--muted);background:var(--bg);border:1px solid var(--line-strong);transition:all .12s}
+  .sn-chip:hover{border-color:var(--ink);color:var(--ink)}
+  .sn-chip.current{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .sn-navbtn{font-family:var(--mono);font-size:12px;color:var(--muted);text-decoration:none;padding:6px 11px;border:1px solid var(--line-strong);border-radius:8px;white-space:nowrap;transition:all .12s}
+  .sn-navbtn:hover{border-color:var(--ink);color:var(--ink)}
+  .sn-navbtn.disabled{opacity:.28;pointer-events:none}
+  .sn-caption{font-family:var(--mono);font-size:11.5px;color:var(--faint);letter-spacing:.03em}
+  .sn-caption b{color:var(--ink);font-weight:600}
+  @media(max-width:560px){.sn-chip{width:26px;height:26px;font-size:11px}.sn-navbtn{padding:5px 8px;font-size:11px}}
+</style>
+<script>(function(){
+  var t=localStorage.getItem('theme')||(window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
+  document.documentElement.setAttribute('data-theme',t);
+  window.addEventListener('storage',function(e){
+    if(e.key==='theme') document.documentElement.setAttribute('data-theme',e.newValue||'light');
+  });
+})()</script>
+</head>
+<body>
+<div class="wrap">
+
+
+<nav class="series-nav" aria-label="Series navigation">
+  <div class="sn-bar"><a class="sn-navbtn" href="llm-step7-kv-cache.html">‹ prev</a><div class="sn-chips"><a class="sn-chip" href="llm-step1-tokens-and-embeddings.html" title="Step 1: Tokens & Embeddings">1</a><a class="sn-chip" href="llm-step2-position-and-prediction.html" title="Step 2: Position & Prediction">2</a><a class="sn-chip" href="llm-step3-self-attention.html" title="Step 3: Self-Attention">3</a><a class="sn-chip" href="llm-step4-transformer-block.html" title="Step 4: Transformer Block">4</a><a class="sn-chip" href="llm-step5-training.html" title="Step 5: Training">5</a><a class="sn-chip" href="llm-step6-generation.html" title="Step 6: Generation">6</a><a class="sn-chip" href="llm-step7-kv-cache.html" title="Step 7: KV Cache">7</a><span class="sn-chip current" title="The Memory Wall">8</span><a class="sn-chip" href="llm-step9-pagedattention-vllm.html" title="Step 9: PagedAttention & vLLM">9</a></div><a class="sn-navbtn" href="llm-step9-pagedattention-vllm.html">next ›</a></div>
+  <div class="sn-caption">Step <b>8</b> of 9 &middot; <b>The Memory Wall</b> &middot; LLM from scratch</div>
+</nav>
+
+<header>
+  <div class="kicker">Intuition-first LLMs · Step 8 of 9 — Serving</div>
+  <h1>The Memory Wall: why inference is memory-bound</h1>
+  <p class="lede">Step 7 showed the KV cache is essential. This step is the reality check: <b>how big</b> does it
+    actually get, and <b>where</b> does it live? GPU memory is a strict hierarchy, and the KV cache eats it
+    alive. This — not raw math — is what makes serving hard, and what the next tricks are built to fight.</p>
+  <div class="recap">Builds on <b>Step 7 (the KV cache)</b>. Self-contained — the key facts are recapped as we go.</div>
+</header>
+
+<!-- 01 INTUITION -->
+<section>
+  <div class="eyebrow"><span class="idx">01</span><span class="lbl">The Intuition</span></div>
+  <h2>Not short on math — short on memory</h2>
+  <p>It's tempting to think a big model is slow because it does <i>so much arithmetic</i>. During generation,
+    the opposite is usually true. Producing one token touches every weight <b>exactly once</b> and does very
+    little compute per byte read. The GPU's math units sit half-idle, <b>waiting for data to arrive from
+    memory</b>. That's what "memory-bound" means: the bottleneck is moving bytes, not multiplying them.</p>
+  <p style="margin-top:10px">Two things dominate that memory traffic: the <b>model weights</b> (read once per
+    token) and the <b>KV cache</b> (read in full, every token, for every request in flight). To see why the
+    KV cache is the villain, we need to look at where memory physically lives — and how much of it the cache
+    demands.</p>
+  <div class="note"><b>The one-line version:</b> a serving GPU rarely runs out of <i>compute</i>. It runs out
+    of <i>memory</i> — and memory <i>bandwidth</i>. Every optimization in this step and the next is really a
+    fight over those two.</div>
+</section>
+
+<!-- 02 HIERARCHY -->
+<section>
+  <div class="eyebrow"><span class="idx">02</span><span class="lbl">Where Memory Lives</span></div>
+  <h2>The GPU memory hierarchy</h2>
+  <p>GPU memory isn't one thing — it's a pyramid. As you go up it gets <b>dramatically faster but smaller</b>.
+    The art of a fast kernel is keeping the data you're actively using as high up as possible.
+    <b>Click a tier</b> to see what it's for.</p>
+
+  <div class="card">
+    <div class="pyr" id="pyr"></div>
+    <div class="pyr-detail" id="pyr-detail"></div>
+    <p class="small" style="margin-top:12px">Widths are scaled to relative <i>capacity</i> — SRAM is tiny, DRAM is
+      vast. Numbers are rough, for an NVIDIA H100-class GPU; exact figures vary by chip.</p>
+  </div>
+
+  <div class="note"><b>Why this matters for attention:</b> the KV cache lives in <b>HBM</b> (the green tier).
+    Every attention step streams all of it up into <b>SRAM</b> to do the math. The bigger the cache, the more
+    bytes cross that gap — every single token. Keep this picture in mind for FlashAttention below.</div>
+</section>
+
+<!-- 03 KV MATH -->
+<section>
+  <div class="eyebrow"><span class="idx">03</span><span class="lbl">The Numbers</span></div>
+  <h2>How big is the KV cache, really?</h2>
+  <p>Every token you keep in context stores a Key and a Value <b>in every layer, for every KV head</b>. Multiply
+    it out and the cache dwarfs the model itself at long context. Pick a model and a context length — the
+    calculator plugs your choices into the formula live.</p>
+
+  <div class="card">
+    <div class="kvcalc-grid">
+      <div>
+        <label class="fld" for="kv-model">Model</label>
+        <select id="kv-model" style="width:100%"></select>
+      </div>
+      <div>
+        <label class="fld" for="kv-ctx">Context length</label>
+        <select id="kv-ctx" style="width:100%"></select>
+      </div>
+    </div>
+    <div class="controls">
+      <div>
+        <label class="fld" for="kv-conc">Concurrent requests</label>
+        <select id="kv-conc"></select>
+      </div>
+    </div>
+
+    <div class="formula" id="kv-formula"></div>
+
+    <div class="stats">
+      <div class="statcard"><div class="v" id="kv-pertok">–</div><div class="l">per token</div></div>
+      <div class="statcard"><div class="v" id="kv-total">–</div><div class="l">KV cache total</div></div>
+      <div class="statcard"><div class="v" id="kv-params">–</div><div class="l">model weights</div></div>
+    </div>
+
+    <div class="fitbar">
+      <div class="track" id="kv-track"></div>
+      <div class="gpulbl" id="kv-gpulbl"></div>
+      <div class="verdict" id="kv-verdict"></div>
+    </div>
+  </div>
+
+  <div class="note"><b>Spot the optimization already baked in:</b> Llama-3-70B has 64 query heads but only
+    <b>8 KV heads</b> — that's <b>Grouped-Query Attention (GQA)</b>, and it's why its cache is 8× smaller than
+    if every head kept its own K/V. Switch to GPT-3 175B (which has none) to feel the difference.</div>
+</section>
+
+<!-- 04 TWO FIXES -->
+<section>
+  <div class="eyebrow"><span class="idx">04</span><span class="lbl">Fighting Back</span></div>
+  <h2>Two ways to beat the wall</h2>
+  <p>The memory wall has two faces — <b>bandwidth</b> (moving the cache around) and <b>capacity</b> (fitting it
+    at all). There's a landmark technique for each.</p>
+
+  <div class="card">
+    <h3>FlashAttention — the bandwidth fix</h3>
+    <p class="small" style="margin:0 0 8px">Naive attention builds the full <code>N×N</code> score matrix in
+      HBM, then reads it back. FlashAttention never writes it down — it streams tiles through SRAM and computes
+      softmax <i>online</i>. Same answer, a fraction of the memory traffic.</p>
+    <div class="seg-toggle" id="fa-toggle">
+      <button data-fa="naive" class="active">Naive attention</button>
+      <button data-fa="flash">FlashAttention</button>
+    </div>
+    <div id="fa-body"></div>
+  </div>
+
+  <div class="card">
+    <h3>PagedAttention — the capacity fix (next step)</h3>
+    <p class="small" style="margin:0">Even with FlashAttention, the cache still has to <i>fit</i>. Store each
+      request's cache as one contiguous block and you waste <b>60–80%</b> of it to fragmentation and
+      over-reservation. <b>PagedAttention</b> — the idea behind <b>vLLM</b> — borrows virtual memory from
+      operating systems: chop the cache into small fixed pages and hand them out on demand. That's Step 9.</p>
+  </div>
+</section>
+
+<!-- 05 FURTHER -->
+<section>
+  <div class="eyebrow"><span class="idx">05</span><span class="lbl">The Wider Toolbox</span></div>
+  <h2>Other ways people shrink the wall</h2>
+  <p>FlashAttention and PagedAttention are the headline acts, but production stacks pile on more. A quick tour
+    of what else is out there — each deserves its own deep dive:</p>
+
+  <div class="card">
+    <div class="opt-row"><span class="opt-tag">GQA / MQA</span><div class="txt"><b>Grouped / Multi-Query Attention.</b>
+      Share one set of K/V across many query heads. Fewer KV heads → a directly smaller cache. You just saw
+      this: Llama-3's 8 KV heads instead of 64.</div></div>
+    <div class="opt-row"><span class="opt-tag">Quantization</span><div class="txt"><b>Store fewer bits.</b>
+      Weights and the KV cache don't need 16-bit floats — <b>FP8</b> or <b>INT8</b> halve the memory (and the
+      bandwidth) for a small quality cost. That 320 KB/token becomes 160 KB.</div></div>
+    <div class="opt-row"><span class="opt-tag">Speculative</span><div class="txt"><b>Speculative decoding.</b>
+      A small "draft" model proposes several tokens at once; the big model verifies them in a single pass.
+      More tokens per expensive memory read — attacking the bandwidth bound from another angle.</div></div>
+    <div class="opt-row"><span class="opt-tag">Prefix cache</span><div class="txt"><b>Prefix / prompt caching.</b>
+      Many requests share a long system prompt. Compute its KV once and reuse it across requests instead of
+      re-prefilling every time.</div></div>
+  </div>
+
+  <p class="src">Sources: FlashAttention — Dao et al., "FlashAttention: Fast and Memory-Efficient Exact Attention
+    with IO-Awareness", NeurIPS 2022 (arXiv:2205.14135). GQA — Ainslie et al., 2023 (arXiv:2305.13245).
+    KV-cache sizing figures follow Llama-3 / GPT-3 published architectures.</p>
+</section>
+
+<div class="next">
+  <h3>Where this is heading</h3>
+  <p>We've measured the wall: the KV cache is huge and it lives in scarce, fast memory. FlashAttention cut the
+    <b>bandwidth</b> cost of using it. Step 9 tackles the <b>capacity</b> cost — how vLLM's PagedAttention packs
+    many requests' caches into GPU memory without waste.</p>
+  <a class="pill" style="opacity:.65" href="llm-step7-kv-cache.html">◂ Back · Step 7 · KV Cache</a>
+  <a class="pill" href="llm-step9-pagedattention-vllm.html">Next ▸ Step 9 · PagedAttention &amp; vLLM</a>
+</div>
+
+<footer style="margin-top:44px;padding-top:16px;border-top:1px solid var(--line);font-size:12px;line-height:1.55;color:var(--faint);font-style:italic">
+  ✦ This 9-part series was co-written with Claude (Anthropic). It favours intuition over rigour and may contain bugs or simplifications — corrections and feedback are very welcome.
+</footer>
+
+</div>
+
+<script>
+const $=s=>document.querySelector(s);
+
+/* ─────────── 02 · memory hierarchy pyramid ─────────── */
+const TIERS=[
+  {id:'sram',cls:'t-sram',name:'GPU SRAM',w:34,size:'~30 MB total',qual:'on-chip · next to the tensor cores',
+   badge:'#EA580C',bw:'~20–30 TB/s',lat:'~1 ns',
+   role:'The smallest, fastest memory — right beside the units that do matrix multiplication. Whatever a kernel is <b>actively computing on</b> has to be here. FlashAttention’s whole trick is doing as much attention work as possible inside this tier before spilling out.'},
+  {id:'hbm',cls:'t-hbm',name:'GPU HBM / VRAM',w:64,size:'~80 GB',qual:'on the GPU board',
+   badge:'#0CA678',bw:'~3.35 TB/s',lat:'~0.5 µs',
+   role:'The GPU’s main memory. This is where the <b>model weights and the KV cache actually live</b>. Big, but not infinite — and every attention step has to haul the KV cache from here up into SRAM. When people say "the model doesn’t fit," they mean it doesn’t fit <i>here</i>.'},
+  {id:'dram',cls:'t-dram',name:'Host CPU DRAM',w:100,size:'~1–2 TB',qual:'on the motherboard, across PCIe',
+   badge:'#2563EB',bw:'~50–100 GB/s',lat:'~10+ µs',
+   role:'The host machine’s ordinary RAM — huge and cheap, but <b>far away</b>. Reaching it means crossing the PCIe bus, ~30–60× slower than HBM. Offloading weights or cache here is a last resort when nothing else fits.'},
+];
+function renderPyr(sel){
+  $('#pyr').innerHTML=TIERS.map(t=>`
+    <div class="tier ${t.cls} ${t.id===sel?'sel':''}" data-id="${t.id}" style="width:${t.w}%">
+      <div class="tn">${t.name}</div>
+      <div class="td">${t.size} · ${t.bw}</div>
+      <div class="tq">${t.qual}</div>
+    </div>`).join('');
+  const t=TIERS.find(x=>x.id===sel);
+  $('#pyr-detail').innerHTML=t?
+    `<span class="pd-badge" style="background:${t.badge}">${t.name}</span>
+     <span class="small"><b>capacity</b> ${t.size} &nbsp;·&nbsp; <b>bandwidth</b> ${t.bw} &nbsp;·&nbsp; <b>latency</b> ${t.lat}</span>
+     <div style="margin-top:8px">${t.role}</div>`
+    :'<span class="small">Click a tier above to see its role.</span>';
+  $('#pyr').querySelectorAll('.tier').forEach(el=>el.addEventListener('click',()=>renderPyr(el.dataset.id)));
+}
+renderPyr('sram');
+
+/* ─────────── 03 · KV cache calculator ─────────── */
+const MODELS=[
+  {id:'l70',  name:'Llama-3 70B',   layers:80, kvh:8,  hd:128, bytes:2, params:70e9,  gqa:'8 KV heads (GQA)'},
+  {id:'l8',   name:'Llama-3 8B',    layers:32, kvh:8,  hd:128, bytes:2, params:8e9,   gqa:'8 KV heads (GQA)'},
+  {id:'gpt3', name:'GPT-3 175B',    layers:96, kvh:96, hd:128, bytes:2, params:175e9, gqa:'96 KV heads (no GQA)'},
+];
+const CTX=[{n:2048,l:'2K · a chat turn'},{n:8192,l:'8K · standard'},{n:32768,l:'32K · long doc'},{n:131072,l:'128K · max'}];
+const CONC=[1,10,50];
+const GPU_GB=80; // one H100
+
+$('#kv-model').innerHTML=MODELS.map((m,i)=>`<option value="${i}">${m.name}</option>`).join('');
+$('#kv-ctx').innerHTML=CTX.map((c,i)=>`<option value="${i}" ${i===3?'selected':''}>${c.l}</option>`).join('');
+$('#kv-conc').innerHTML=CONC.map(c=>`<option value="${c}">${c} request${c>1?'s':''}</option>`).join('');
+
+function gb(bytes){return bytes/1073741824;}
+function fmtGB(g){return g>=1?g.toFixed(g<10?1:0)+' GB':(g*1024).toFixed(0)+' MB';}
+
+function renderKV(){
+  const m=MODELS[+$('#kv-model').value], c=CTX[+$('#kv-ctx').value], conc=+$('#kv-conc').value;
+  const perTok=2*m.layers*m.kvh*m.hd*m.bytes;               // bytes/token
+  const totalKV=perTok*c.n*conc;                            // bytes
+  const paramsB=m.params*m.bytes;                           // bytes
+  const perKB=perTok/1024, totalG=gb(totalKV), paramsG=paramsB/1e9;  // KV in GiB (→320KB/40GB); weights in the commonly-quoted decimal GB (70B×2B=140GB)
+
+  $('#kv-formula').innerHTML=
+    `per token = 2 · layers · KV-heads · head-dim · bytes<br>`+
+    `= 2 · <span class="hl">${m.layers}</span> · <span class="hl">${m.kvh}</span> · <span class="hl">${m.hd}</span> · <span class="hl">${m.bytes}</span> = <b>${perKB.toLocaleString(undefined,{maximumFractionDigits:0})} KB</b> &nbsp;→&nbsp; × ${c.n.toLocaleString()} tokens × ${conc} = <b>${fmtGB(totalG)}</b>`;
+
+  $('#kv-pertok').textContent=perKB>=1024?(perKB/1024).toFixed(1)+' MB':Math.round(perKB)+' KB';
+  $('#kv-total').textContent=fmtGB(totalG);
+  $('#kv-params').textContent=fmtGB(paramsG);
+
+  // fit bar: params + KV vs GPU capacity; scale so max(total, 1.15*GPU) fills the track
+  const combined=paramsG+totalG;
+  const scaleMax=Math.max(combined, GPU_GB*1.15);
+  const pw=paramsG/scaleMax*100, kw=totalG/scaleMax*100, gpuPos=GPU_GB/scaleMax*100;
+  $('#kv-track').innerHTML=
+    `<div class="seg params" style="width:${pw}%">weights ${fmtGB(paramsG)}</div>`+
+    `<div class="seg kv" style="width:${kw}%">KV ${fmtGB(totalG)}</div>`+
+    `<div class="gpuline" style="left:${gpuPos}%"></div>`;
+  $('#kv-gpulbl').innerHTML=`▲ the black line = one 80 GB H100. Everything left of it fits on a single GPU.`;
+
+  const nGpu=Math.ceil(combined/GPU_GB);
+  if(combined<=GPU_GB){
+    $('#kv-verdict').className='verdict ok';
+    $('#kv-verdict').innerHTML=`✓ Fits on a single 80 GB GPU (${fmtGB(combined)} used).`;
+  }else{
+    $('#kv-verdict').className='verdict bad';
+    $('#kv-verdict').innerHTML=`✗ ${fmtGB(combined)} needed — <b>${nGpu}× H100</b> just to hold weights + cache in memory.`;
+  }
+}
+['#kv-model','#kv-ctx','#kv-conc'].forEach(s=>$(s).addEventListener('change',renderKV));
+renderKV();
+
+/* ─────────── 04 · FlashAttention toggle ─────────── */
+function renderFA(mode){
+  document.querySelectorAll('#fa-toggle button').forEach(b=>b.classList.toggle('active',b.dataset.fa===mode));
+  const body=$('#fa-body');
+  if(mode==='naive'){
+    body.innerHTML=`
+      <div class="fa-stage">
+        <div class="fa-blk" style="background:var(--kv)">Q<br><span style="opacity:.8">N×d</span></div>
+        <span class="fa-arrow">×</span>
+        <div class="fa-blk" style="background:var(--sram)">Kᵀ<br><span style="opacity:.8">d×N</span></div>
+        <span class="fa-arrow">=</span>
+        <div class="fa-blk fa-huge" style="padding:16px 22px">S = QKᵀ<br><b>N × N</b></div>
+      </div>
+      <div class="fa-hbm">
+        <div class="lbl">written to HBM ↓</div>
+        <div class="fa-stage" style="margin:0">
+          <div class="fa-blk fa-huge" style="padding:14px 28px">the full N×N score matrix<br><b>O(N²) memory</b></div>
+        </div>
+      </div>
+      <div class="fa-narr"><b>The problem:</b> that score matrix is materialized in slow HBM, then read back
+        for softmax and again for ×V. For a 128K context that's a <b>128,000 × 128,000</b> matrix — ~16 billion
+        numbers <i>per head</i>. The math is cheap; the memory traffic is crushing.</div>`;
+  }else{
+    body.innerHTML=`
+      <div class="fa-hbm" style="border-style:solid;border-color:var(--good)">
+        <div class="lbl" style="color:var(--good)">stays in SRAM — streamed in tiles ↓</div>
+        <div class="fa-stage" style="margin:0">
+          <div class="fa-blk fa-tile">Q&nbsp;tile</div>
+          <span class="fa-arrow">×</span>
+          <div class="fa-blk fa-tile">K&nbsp;tile</div>
+          <span class="fa-arrow">→</span>
+          <div class="fa-blk fa-tile">online<br>softmax</div>
+          <span class="fa-arrow">→</span>
+          <div class="fa-blk fa-tile">×&nbsp;V&nbsp;tile</div>
+          <span class="fa-arrow">→</span>
+          <div class="fa-blk" style="background:var(--acc)">running<br>output</div>
+        </div>
+      </div>
+      <div class="fa-narr"><b>The fix:</b> never build the full matrix. Walk over K/V in small blocks that fit in
+        SRAM, keep a running softmax as you go, and accumulate the output tile by tile. The N×N matrix
+        <b>never touches HBM</b> — memory traffic drops from <b>O(N²) to O(N)</b>, and the result is
+        <i>bit-for-bit the same</i> as naive attention.</div>`;
+  }
+}
+document.querySelectorAll('#fa-toggle button').forEach(b=>b.addEventListener('click',()=>renderFA(b.dataset.fa)));
+renderFA('naive');
+</script>
+</body>
+</html>

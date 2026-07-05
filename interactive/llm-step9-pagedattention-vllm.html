@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>LLM serving · Step 8 — PagedAttention &amp; vLLM</title>
+<title>LLM serving · Step 9 — PagedAttention &amp; vLLM</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -110,7 +110,7 @@
   .pill{display:inline-block;font-family:var(--mono);font-size:11px;color:#075985;background:var(--sky-soft);border:1px solid var(--sky-line);border-radius:20px;padding:2px 10px;margin-top:10px;text-decoration:none;cursor:pointer;}
   .src{font-size:11px;color:var(--faint);margin-top:8px;font-family:var(--mono)}
 
-  /* ---- injected series navigator (consistent across all 8 steps) ---- */
+  /* ---- injected series navigator (consistent across all 9 steps) ---- */
   .series-nav{display:flex;flex-direction:column;align-items:center;gap:7px;padding:10px 0 14px;margin-bottom:4px}
   .sn-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center}
   .sn-chips{display:flex;gap:5px}
@@ -137,12 +137,12 @@
 
 
 <nav class="series-nav" aria-label="Series navigation">
-  <div class="sn-bar"><a class="sn-navbtn" href="llm-step7-kv-cache.html">‹ prev</a><div class="sn-chips"><a class="sn-chip" href="llm-step1-tokens-and-embeddings.html" title="Step 1: Tokens & Embeddings">1</a><a class="sn-chip" href="llm-step2-position-and-prediction.html" title="Step 2: Position & Prediction">2</a><a class="sn-chip" href="llm-step3-self-attention.html" title="Step 3: Self-Attention">3</a><a class="sn-chip" href="llm-step4-transformer-block.html" title="Step 4: Transformer Block">4</a><a class="sn-chip" href="llm-step5-training.html" title="Step 5: Training">5</a><a class="sn-chip" href="llm-step6-generation.html" title="Step 6: Generation">6</a><a class="sn-chip" href="llm-step7-kv-cache.html" title="Step 7: KV Cache">7</a><span class="sn-chip current" title="PagedAttention & vLLM">8</span></div><span class="sn-navbtn disabled">next ›</span></div>
-  <div class="sn-caption">Step <b>8</b> of 8 &middot; <b>PagedAttention & vLLM</b> &middot; LLM from scratch</div>
+  <div class="sn-bar"><a class="sn-navbtn" href="llm-step8-memory-wall.html">‹ prev</a><div class="sn-chips"><a class="sn-chip" href="llm-step1-tokens-and-embeddings.html" title="Step 1: Tokens & Embeddings">1</a><a class="sn-chip" href="llm-step2-position-and-prediction.html" title="Step 2: Position & Prediction">2</a><a class="sn-chip" href="llm-step3-self-attention.html" title="Step 3: Self-Attention">3</a><a class="sn-chip" href="llm-step4-transformer-block.html" title="Step 4: Transformer Block">4</a><a class="sn-chip" href="llm-step5-training.html" title="Step 5: Training">5</a><a class="sn-chip" href="llm-step6-generation.html" title="Step 6: Generation">6</a><a class="sn-chip" href="llm-step7-kv-cache.html" title="Step 7: KV Cache">7</a><a class="sn-chip" href="llm-step8-memory-wall.html" title="Step 8: The Memory Wall">8</a><span class="sn-chip current" title="PagedAttention & vLLM">9</span></div><span class="sn-navbtn disabled">next ›</span></div>
+  <div class="sn-caption">Step <b>9</b> of 9 &middot; <b>PagedAttention & vLLM</b> &middot; LLM from scratch</div>
 </nav>
 
 <header>
-  <div class="kicker">Intuition-first LLMs · Step 8 of 8 — Serving</div>
+  <div class="kicker">Intuition-first LLMs · Step 9 of 9 — Serving</div>
   <h1>PagedAttention &amp; vLLM: managing the cache</h1>
   <p class="lede">Step 7 showed the KV cache is essential but enormous — and its size per request grows and
     shrinks unpredictably. Store it naively and you waste <b>60–80%</b> of GPU memory. PagedAttention fixes
@@ -312,11 +312,11 @@
     Natural next topics if you want them: speculative decoding (predict several tokens at once),
     quantization (FP8/INT4 weights and KV), tensor/pipeline parallelism across GPUs, and disaggregated
     prefill vs. decode. Ask whenever you'd like to go further.</p>
-  <a class="pill" style="opacity:.65" href="llm-step7-kv-cache.html">◂ Back · Step 7</a>
+  <a class="pill" style="opacity:.65" href="llm-step8-memory-wall.html">◂ Back · Step 8 · The Memory Wall</a>
 </div>
 
 <footer style="margin-top:44px;padding-top:16px;border-top:1px solid var(--line);font-size:12px;line-height:1.55;color:var(--faint);font-style:italic">
-  ✦ This 8-part series was co-written with Claude (Anthropic). It favours intuition over rigour and may contain bugs or simplifications — corrections and feedback are very welcome.
+  ✦ This 9-part series was co-written with Claude (Anthropic). It favours intuition over rigour and may contain bugs or simplifications — corrections and feedback are very welcome.
 </footer>
 
 </div>

@@ -26,7 +26,7 @@
         </author>
         <link rel="alternate" href="https://abhishek9sharma.github.io/blog/llm-serving/" type="text/html"/>
         <id>https://abhishek9sharma.github.io/blog/llm-serving/</id>
-        <summary type="html">An 8-part interactive series building intuition for how LLMs work, from tokenisation to KV-cache and PagedAttention.</summary>
+        <summary type="html">A 9-part interactive series building intuition for how LLMs work, from tokenisation to the KV-cache memory wall and PagedAttention.</summary>
         </entry><entry xml:lang="en">
         <title>Asangati</title>
         <published>2026-04-29T00:00:00+00:00</published>

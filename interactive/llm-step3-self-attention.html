@@ -110,7 +110,7 @@
   .next h3{font-family:var(--disp);font-size:16px;margin:0 0 6px}.next p{color:var(--muted);font-size:14px;margin:0}
   .pill{display:inline-block;font-family:var(--mono);font-size:11px;color:var(--att);background:var(--att-soft);border:1px solid var(--att-line);border-radius:20px;padding:2px 10px;margin-top:10px;text-decoration:none;cursor:pointer;}
 
-  /* ---- injected series navigator (consistent across all 8 steps) ---- */
+  /* ---- injected series navigator (consistent across all 9 steps) ---- */
   .series-nav{display:flex;flex-direction:column;align-items:center;gap:7px;padding:10px 0 14px;margin-bottom:4px}
   .sn-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center}
   .sn-chips{display:flex;gap:5px}
@@ -137,12 +137,12 @@
 
 
 <nav class="series-nav" aria-label="Series navigation">
-  <div class="sn-bar"><a class="sn-navbtn" href="llm-step2-position-and-prediction.html">‹ prev</a><div class="sn-chips"><a class="sn-chip" href="llm-step1-tokens-and-embeddings.html" title="Step 1: Tokens & Embeddings">1</a><a class="sn-chip" href="llm-step2-position-and-prediction.html" title="Step 2: Position & Prediction">2</a><span class="sn-chip current" title="Self-Attention">3</span><a class="sn-chip" href="llm-step4-transformer-block.html" title="Step 4: Transformer Block">4</a><a class="sn-chip" href="llm-step5-training.html" title="Step 5: Training">5</a><a class="sn-chip" href="llm-step6-generation.html" title="Step 6: Generation">6</a><a class="sn-chip" href="llm-step7-kv-cache.html" title="Step 7: KV Cache">7</a><a class="sn-chip" href="llm-step8-pagedattention-vllm.html" title="Step 8: PagedAttention & vLLM">8</a></div><a class="sn-navbtn" href="llm-step4-transformer-block.html">next ›</a></div>
-  <div class="sn-caption">Step <b>3</b> of 8 &middot; <b>Self-Attention</b> &middot; LLM from scratch</div>
+  <div class="sn-bar"><a class="sn-navbtn" href="llm-step2-position-and-prediction.html">‹ prev</a><div class="sn-chips"><a class="sn-chip" href="llm-step1-tokens-and-embeddings.html" title="Step 1: Tokens & Embeddings">1</a><a class="sn-chip" href="llm-step2-position-and-prediction.html" title="Step 2: Position & Prediction">2</a><span class="sn-chip current" title="Self-Attention">3</span><a class="sn-chip" href="llm-step4-transformer-block.html" title="Step 4: Transformer Block">4</a><a class="sn-chip" href="llm-step5-training.html" title="Step 5: Training">5</a><a class="sn-chip" href="llm-step6-generation.html" title="Step 6: Generation">6</a><a class="sn-chip" href="llm-step7-kv-cache.html" title="Step 7: KV Cache">7</a><a class="sn-chip" href="llm-step8-memory-wall.html" title="Step 8: The Memory Wall">8</a><a class="sn-chip" href="llm-step9-pagedattention-vllm.html" title="Step 9: PagedAttention & vLLM">9</a></div><a class="sn-navbtn" href="llm-step4-transformer-block.html">next ›</a></div>
+  <div class="sn-caption">Step <b>3</b> of 9 &middot; <b>Self-Attention</b> &middot; LLM from scratch</div>
 </nav>
 
 <header>
-  <div class="kicker">Intuition-first LLMs · Step 3 of 8</div>
+  <div class="kicker">Intuition-first LLMs · Step 3 of 9</div>
   <h1>Self-attention: letting tokens look at each other</h1>
   <p class="lede">This is the mechanism that made Transformers work. Each token asks a
     <b>question</b> (Query), every token advertises what it <b>has</b> (Key), and the matches decide
@@ -182,7 +182,8 @@
       <span><b style="color:var(--v)">Value</b> — the actual content that flows when matched<br>
         <span style="color:var(--faint)">e.g. the meaning payload "itself" receives from "dog"</span></span>
     </div>
-    <p class="small" style="margin-top:12px;border-top:1px solid var(--line);padding-top:10px">Score (Q·K) decides <i>how much</i> to attend. Value is <i>what</i> actually flows. You never receive the Key — it's just the index.</p>
+    <p class="small" style="margin-top:12px;border-top:1px solid var(--line);padding-top:10px"><b>Q asks · K offers · V delivers.</b> Score (<span style="color:var(--q)">Q</span>·<span style="color:var(--k)">K</span>) decides <i>how much</i> to attend; <span style="color:var(--v)">V</span> is <i>what</i> actually flows. You never receive the Key — it's just the index.</p>
+    <p class="small" style="margin-top:8px;color:var(--faint)"><b>One common trip-up:</b> V is <i>not</i> the token's original embedding. Q, K, and V are three <i>separate</i> learned projections of the same input vector — V is a dedicated "here's what I hand over if you attend to me" copy, kept apart from the routing done by Q and K.</p>
   </div>
 
   <div class="note att" style="margin-top:16px"><b>In the model:</b> Q, K, and V are each the token's
@@ -230,11 +231,11 @@
     training stalls. Dividing by the square root of the key dimension keeps scores in a sane range.</div>
 </section>
 
-<!-- THE 4 STAGES -->
+<!-- THE PIPELINE (4 stages + write-back) -->
 <section>
-  <div class="eyebrow"><span class="idx">03</span><span class="lbl">The Four Stages</span></div>
-  <h2>Score → Scale → Soften → Blend</h2>
-  <p>Every attention output runs through exactly four operations. You already saw them in the step-by-step calc above — here they are named and explained:</p>
+  <div class="eyebrow"><span class="idx">03</span><span class="lbl">The Pipeline</span></div>
+  <h2>Score → Scale → Soften → Blend <span style="color:var(--faint)">→ Write back</span></h2>
+  <p>Attention proper is <b>four</b> operations — the ones inside the <code>softmax(QK<sup>T</sup>/√d<sub>k</sub>)V</code> formula. You already saw them in the step-by-step calc above. A <b>fifth</b> step, the output projection, runs just after — it lives in the multi-head wrapper, not the formula itself, so we show it set apart:</p>
 
   <div class="card">
     <div class="stage-flow">
@@ -292,6 +293,20 @@
         </div>
       </div>
 
+      <div class="stage-arrow" style="opacity:.5">⋮</div>
+
+      <div class="stage-row" style="border-top:1px dashed var(--line);padding-top:14px;margin-top:2px">
+        <div class="stage-n" style="color:#4F46E5">5</div>
+        <div>
+          <div class="stage-hd">
+            <span class="stage-label" style="color:#4F46E5">Write back</span>
+            <code>· W<sub>O</sub> → +&nbsp;residual</code>
+            <span class="small" style="color:var(--faint);font-style:italic">the wrapper step — outside the formula</span>
+          </div>
+          <div class="stage-txt">The blended vector isn't the output yet. With multiple heads, each head's blend is concatenated, then a final learned matrix <code>W<sub>O</sub></code> mixes them and projects the result back into the model's working dimension. That result is <b>added onto the token's own representation</b> — the residual connection you'll meet in Step 4. In the mnemonic: <b>O writes back</b>.</div>
+        </div>
+      </div>
+
     </div>
   </div>
 </section>
@@ -313,6 +328,10 @@
       <code>× <span style="color:var(--v)">V</span></code> = blend values
     </div>
   </div>
+  <div class="note att" style="margin-top:16px"><b>The formula stops at <span style="color:var(--v)">V</span>.</b> That's the four stages above — but remember the fifth, write-back (<code>W<sub>O</sub></code>), runs just after and merges the result into the token's residual stream. The whole mechanic in one line:
+    <div style="font-family:var(--mono);font-size:13px;margin:10px 0 2px;text-align:center;color:var(--ink)"><b>Q</b> asks · <b>K</b> offers · <b>V</b> delivers · <b>O</b> writes back</div>
+  </div>
+
   <div class="note"><b>This is self-attention</b> because Q, K, and V all come from the <i>same</i> sequence — tokens attend to each other.
     <details style="margin-top:8px"><summary>cross-attention (used in translation models)</summary>
       <p class="small" style="margin-top:6px">In encoder-decoder models like the original Transformer, the decoder draws Q from its own tokens but K and V from the encoder's output. The math is identical — only the source of K/V changes.</p>
@@ -331,7 +350,7 @@
 </div>
 
 <footer style="margin-top:44px;padding-top:16px;border-top:1px solid var(--line);font-size:12px;line-height:1.55;color:var(--faint);font-style:italic">
-  ✦ This 8-part series was co-written with Claude (Anthropic). It favours intuition over rigour and may contain bugs or simplifications — corrections and feedback are very welcome.
+  ✦ This 9-part series was co-written with Claude (Anthropic). It favours intuition over rigour and may contain bugs or simplifications — corrections and feedback are very welcome.
 </footer>
 
 </div>
