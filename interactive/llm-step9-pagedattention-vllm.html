@@ -82,6 +82,21 @@
   .pageblk{aspect-ratio:1;border-radius:5px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:9px;color:#fff;background:var(--bg);border:1px solid var(--line)}
   .pageblk.free{background:var(--bg);color:var(--line-strong);border:1px dashed var(--line-strong)}
   .pageblk.partial{opacity:.55}
+  .reqstat{display:flex;flex-direction:column;gap:4px;font-family:var(--mono);font-size:11.5px}
+  .reqstat .rs-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .reqstat .rs-tag{width:28px;height:19px;border-radius:5px;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:9px;flex:0 0 28px}
+  .reqstat .rs-note{color:var(--muted)}
+  .reqstat .rs-boxed{color:var(--waste);font-weight:600}
+  .reqstat .rs-grow{color:var(--good);font-weight:600}
+  /* side-by-side naive vs paged */
+  .sbs{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:620px){.sbs{grid-template-columns:1fr}}
+  .sbs-panel{border:1px solid var(--line);border-radius:11px;padding:12px;background:var(--bg)}
+  .sbs-head{font-family:var(--disp);font-weight:700;font-size:13px;margin-bottom:8px;text-align:center}
+  .sbs-grid{grid-template-columns:repeat(8,1fr)!important;gap:3px}
+  .sbs-panel .util-meter{margin-top:8px}
+  .sbs-panel .util-meter .big{font-size:22px}
+  .sbs-panel .util-meter .lbl{font-size:10.5px}
 
   /* block table */
   .blocktable{font-family:var(--mono);font-size:12px;margin-top:8px}
@@ -104,6 +119,80 @@
   .statcard{border:1px solid var(--sky-line);background:var(--sky-soft);border-radius:11px;padding:14px;text-align:center}
   .statcard .v{font-family:var(--disp);font-size:26px;font-weight:700;color:var(--sky)}
   .statcard .l{font-size:11px;color:#075985;margin-top:2px}
+
+  /* block anatomy + VRAM budget (sizing the block pool) */
+  .formula{font-family:var(--mono);font-size:12.5px;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-top:14px;line-height:1.9;overflow-x:auto;white-space:nowrap}
+  .formula .hl{color:var(--sky);font-weight:600}
+  .blockviz{display:flex;gap:22px;justify-content:center;flex-wrap:wrap;margin-top:10px;padding:6px 0}
+  .blk-col{display:flex;flex-direction:column;align-items:center;gap:3px}
+  .blk-col .hdr{font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:4px;font-weight:600}
+  .blk-cell{width:20px;height:14px;border-radius:3px}
+  .blk-cell.k{background:var(--kv);opacity:.85}
+  .blk-cell.v{background:var(--good);opacity:.85}
+  .blk-brace{display:flex;align-items:center;font-family:var(--mono);font-size:10.5px;color:var(--faint)}
+  .vram-track{display:flex;height:38px;border-radius:8px;overflow:hidden;background:var(--bg);border:1px solid var(--line-strong);margin-top:10px}
+  .vram-seg{display:flex;align-items:center;justify-content:center;color:#fff;font-family:var(--mono);font-size:10px;white-space:nowrap;overflow:hidden}
+  .vram-seg.weights{background:var(--faint)}
+  .vram-seg.overhead{background:var(--waste);opacity:.75}
+  .vram-seg.pool{background:var(--sky)}
+  .vram-legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:8px;font-size:11px;color:var(--muted);font-family:var(--mono)}
+  .vram-legend span{display:inline-flex;align-items:center;gap:5px}
+  .vram-legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
+
+  /* block anatomy — grouped K / V panels */
+  .blk-group{display:flex;flex-direction:column;align-items:center;gap:5px}
+  .blk-group .glabel{font-family:var(--disp);font-weight:600;font-size:12px}
+  .blk-heads{display:flex;gap:8px}
+  .blk-axis{display:flex;flex-direction:column;align-items:flex-end;justify-content:center;font-family:var(--mono);font-size:10px;color:var(--faint);line-height:1.2;text-align:right}
+
+  /* per-layer stacking visual */
+  .layerstack{display:flex;flex-direction:column;gap:4px;margin-top:6px}
+  .layer-row{display:flex;align-items:center;gap:10px}
+  .layer-tag{font-family:var(--mono);font-size:10px;color:var(--muted);width:70px;flex:0 0 70px;text-align:right}
+  .layer-blocks{display:flex;gap:4px}
+  .layer-blk{min-width:30px;height:20px;padding:0 4px;border-radius:4px;background:var(--sky);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:9px;color:#fff;font-weight:600}
+  .layer-blk.partial{background:repeating-linear-gradient(45deg,var(--sky),var(--sky) 4px,#7dc4e8 4px,#7dc4e8 8px)}
+  .layer-ellipsis{font-family:var(--mono);color:var(--faint);font-size:13px;padding-left:80px;letter-spacing:.15em}
+  .mult{font-family:var(--mono);font-size:14px;text-align:center;margin-top:14px;padding:12px;background:var(--bg);border:1px solid var(--line);border-radius:10px}
+  .mult b{color:var(--sky);font-weight:700}
+  .mult .big{font-size:20px}
+
+  /* real tokens filling 16-slot blocks */
+  .tokfill{display:flex;gap:14px;flex-wrap:wrap;margin-top:12px}
+  .tblock{border:1.5px solid var(--sky-line);border-radius:10px;padding:9px;background:var(--surface)}
+  .tblock .th{font-family:var(--mono);font-size:10px;color:var(--sky);margin-bottom:7px;font-weight:600}
+  .tblock .th .part{color:var(--waste)}
+  .tgrid{display:grid;grid-template-columns:repeat(4,minmax(38px,1fr));gap:3px}
+  .tslot{height:24px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:10px;background:var(--bg);border:1px solid var(--line-strong);color:var(--ink);overflow:hidden;padding:0 3px;white-space:nowrap}
+  .tslot.empty{background:transparent;border:1px dashed var(--line-strong);color:var(--faint)}
+  .tflow{font-family:var(--mono);font-size:11px;color:var(--faint);text-align:center;margin:6px 0 0}
+
+  /* scattered physical pool + block-table linking */
+  .physstrip{display:grid;grid-template-columns:repeat(12,1fr);gap:4px;margin:8px 0}
+  .pcell{aspect-ratio:1;border-radius:5px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:9px;border:1px solid var(--line);color:var(--faint)}
+  .pcell.free{border:1px dashed var(--line-strong);background:transparent}
+  .pcell.other{background:var(--line);color:var(--faint)}
+  .pcell.mine{background:var(--sky);color:#fff;font-weight:700;border-color:var(--sky)}
+  .readbox{font-family:var(--mono);font-size:12px;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:11px 13px;margin-top:12px;line-height:1.7}
+  .readbox b{color:var(--sky)}
+
+  /* block sharing across requests */
+  .share-tables{display:flex;gap:22px;flex-wrap:wrap;margin-top:6px}
+  .share-col{flex:1;min-width:220px}
+  .share-col .ct{font-family:var(--disp);font-weight:600;font-size:13px;margin-bottom:8px}
+  .share-bt{display:flex;flex-direction:column;gap:4px;font-family:var(--mono);font-size:11.5px}
+  .sbt-row{display:flex;align-items:center;gap:6px}
+  .sbt-log{color:var(--muted);white-space:nowrap}
+  .sbt-phys{border-radius:6px;padding:2px 8px;color:#fff;font-weight:600;white-space:nowrap}
+  .sbt-phys.shared{background:var(--kv)}
+  .sbt-phys.uniq{background:var(--sky)}
+  .sbt-phys.cow{background:var(--good)}
+  .sbt-tag{font-size:9.5px;color:var(--kv);font-weight:600}
+  .poolrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .poolbox{position:relative;border-radius:8px;padding:9px 12px;color:#fff;font-family:var(--mono);font-size:11px;font-weight:600;text-align:center}
+  .poolbox .rc{position:absolute;top:-8px;right:-8px;background:var(--ink);color:#fff;border-radius:10px;font-size:9px;padding:1px 6px;font-weight:700}
+  .poolbox.shared{background:var(--kv)}.poolbox.uniq{background:var(--sky)}.poolbox.cow{background:var(--good)}
+  .poolbox.freeb{background:transparent;border:1px dashed var(--line-strong);color:var(--faint)}
 
   .next{margin-top:56px;padding:22px;border:1px solid var(--sky-line);border-radius:14px;background:var(--sky-soft)}
   .next h3{font-family:var(--disp);font-size:16px;margin:0 0 6px;color:#075985}.next p{color:#0369a1;font-size:14px;margin:0}
@@ -144,10 +233,11 @@
 <header>
   <div class="kicker">Intuition-first LLMs · Step 9 of 9 — Serving</div>
   <h1>PagedAttention &amp; vLLM: managing the cache</h1>
-  <p class="lede">Step 7 showed the KV cache is essential but enormous — and its size per request grows and
-    shrinks unpredictably. Store it naively and you waste <b>60–80%</b> of GPU memory. PagedAttention fixes
-    this by borrowing the oldest trick in operating systems: <b>paging</b>. It's the core idea behind vLLM.</p>
-  <div class="recap">Builds on <b>Step 7 (the KV cache and its memory cost)</b>. Self-contained — the key facts are recapped as we go.</div>
+  <p class="lede">Step 7 introduced the KV cache; Step 8 showed it's <b>enormous</b> and hits a memory wall.
+    Worse, its size per request grows and shrinks unpredictably — store it naively and you waste
+    <b>60–80%</b> of GPU memory. PagedAttention fixes this by borrowing the oldest trick in operating
+    systems: <b>paging</b>. It's the core idea behind vLLM.</p>
+  <div class="recap">Builds on <b>Step 7 (the KV cache)</b> and <b>Step 8 (its memory cost)</b>. Self-contained — the key facts are recapped as we go.</div>
 </header>
 
 <!-- THE PROBLEM -->
@@ -198,61 +288,198 @@
   <h2>Paging: store the cache in small blocks, anywhere</h2>
   <p>Operating systems solved this for RAM decades ago. Don't demand one big contiguous chunk — split
     memory into fixed-size <b>blocks</b> (vLLM uses 16 tokens each) and let a sequence's blocks live
-    <b>anywhere</b>, in any order. A <b>block table</b> remembers where each one is. Toggle the two schemes
-    and watch utilization jump:</p>
+    <b>anywhere</b>, in any order. A <b>block table</b> remembers where each one is. Here are the <b>same three
+    requests</b> under both schemes at once — click a <b>generate</b> button and watch them react:</p>
 
   <div class="card">
-    <div class="seg-toggle" id="paged-toggle" style="margin-bottom:14px">
-      <button data-mode="naive">Naive contiguous</button>
-      <button data-mode="paged" class="active">PagedAttention</button>
+    <div class="sbs">
+      <div class="sbs-panel">
+        <div class="sbs-head" style="color:var(--waste)">Naive contiguous</div>
+        <div class="pagegrid sbs-grid" id="nv-grid"></div>
+        <div class="util-meter"><span class="big" id="nv-util">—</span><span class="lbl" id="nv-util-lbl"></span></div>
+      </div>
+      <div class="sbs-panel">
+        <div class="sbs-head" style="color:var(--sky)">PagedAttention</div>
+        <div class="pagegrid sbs-grid" id="pg-grid"></div>
+        <div class="util-meter"><span class="big" id="pg-util">—</span><span class="lbl" id="pg-util-lbl"></span></div>
+      </div>
     </div>
-    <div class="pagegrid" id="page-grid"></div>
-    <div class="util-meter">
-      <span class="big" id="paged-util">—</span>
-      <span class="lbl" id="paged-util-lbl"></span>
-    </div>
+    <div class="controls" id="gen-buttons" style="margin:14px 0 6px"></div>
     <div class="controls">
-      <button class="btn primary" id="paged-gen">▸ R1 generates a token</button>
       <button class="btn" id="paged-add">+ Add request</button>
       <button class="btn" id="paged-finish">− Finish a request</button>
       <button class="btn" id="paged-reset3">Reset</button>
     </div>
     <p class="small" id="paged-read" style="margin-top:8px"></p>
-    <p class="small" id="paged-gen-read" style="margin-top:4px;min-height:18px"></p>
+    <div id="req-status" style="margin-top:6px"></div>
+    <p class="small" id="paged-gen-read" style="margin-top:6px;min-height:18px"></p>
+    <div id="naive-frag" style="margin-top:8px"></div>
   </div>
 
   <div class="note"><b>New tokens are the whole reason paging wins.</b> During generation the model appends
     <b>one token at a time</b> to a request's KV cache (Step 7). With paging, a request holds only the blocks
     it has filled so far; when its last block fills up (every 16th token) it grabs <b>one</b> fresh block from
-    the free pool — <i>on demand</i>. The naive scheme, by contrast, reserves all 2048 tokens up front on token 1.
-    Hit <b>“R1 generates a token”</b> above and watch a new block appear exactly when R1 crosses a 16-token boundary.</div>
+    the free pool — <i>on demand</i>. The naive scheme, by contrast, reserves a fixed slab up front. Hit a
+    <b>generate</b> button and compare the panels: the paged side adds a block only at each 16-token boundary,
+    while the naive side just fills (or overflows) its pre-reserved slab — try growing a <b>boxed</b> request
+    (R1/R2) versus the <b>last</b> one (R3).</div>
 
+  <div class="note"><b>Waste is now bounded, not proportional.</b> The only unused space is the
+    partially-filled <i>last</i> block of each sequence — at most <b>15 tokens</b>, no matter how long the
+    sequence is. For this toy example (a handful of short requests), that bound is a real chunk of the total:
+    <b id="paged-wastenote">–</b>. But the bound stays <i>fixed</i> while real sequences run to hundreds or
+    thousands of tokens — so in production the same 15-token cap shrinks to a couple of percent, versus the
+    60–80% naive contiguous allocation loses regardless of sequence length.</div>
+</section>
+
+<!-- BLOCK ANATOMY + VRAM BUDGET -->
+<section>
+  <div class="eyebrow"><span class="idx">03</span><span class="lbl">Sizing The Pool</span></div>
+  <h2>What's actually inside a block — and how many do you get?</h2>
+  <p>You just saw paging beat fragmentation. Now let's dissect a block — what one actually <i>is</i> — in five moves:
+    <b>(1)</b> open up a single block, <b>(2)</b> watch real tokens fill blocks, <b>(3)</b> see how scattered
+    blocks are linked back together, <b>(4)</b> see every layer keep its own copy, then <b>(5)</b> weigh it
+    and count how many fit in a GPU. Each step feeds the next.</p>
+
+  <!-- MOVE 1 -->
   <div class="card">
-    <h3>The block table — logical tokens → physical blocks</h3>
-    <p class="small" style="margin-top:0">Just like an OS page table. The sequence <i>thinks</i> its tokens
-      are contiguous (positions 0–47); physically they're scattered wherever there was a free block.</p>
-    <div class="blocktable" id="block-table"></div>
+    <h3>① Open up one block — Keys &amp; Values for 16 tokens</h3>
+    <p class="small" style="margin:0 0 12px">A block is real memory in <b>one attention layer</b>: it holds the
+      Key and Value vectors for a fixed run of <b>16 tokens</b>, split across the layer's KV heads.</p>
+    <div class="blockviz" style="align-items:flex-start">
+      <div class="blk-axis" style="height:224px">16<br>tokens<br>↕</div>
+      <div class="blk-group">
+        <span class="glabel" style="color:var(--kv)">Keys (K)</span>
+        <div class="blk-heads"><div class="blk-col"><div class="hdr">Head 1</div><div id="blk-k1"></div></div><div class="blk-col"><div class="hdr">Head 2</div><div id="blk-k2"></div></div></div>
+      </div>
+      <div class="blk-group">
+        <span class="glabel" style="color:var(--good)">Values (V)</span>
+        <div class="blk-heads"><div class="blk-col"><div class="hdr">Head 1</div><div id="blk-v1"></div></div><div class="blk-col"><div class="hdr">Head 2</div><div id="blk-v2"></div></div></div>
+      </div>
+    </div>
+    <p class="small" style="margin-top:12px;text-align:center">2 heads shown for readability — Llama-3-70B has
+      <b>8</b> KV heads, each <b>128</b>-dimensional. More heads = more columns; the 16-token height is fixed.</p>
   </div>
 
-  <div class="note"><b>The waste collapses to almost nothing.</b> The only unused space is the partially-filled
-    <i>last</i> block of each sequence — at most 15 tokens with a block size of 16. That brings total waste
-    to <b>under 4%</b>, versus 60–80% before.</div>
+  <!-- MOVE 2 — real tokens filling blocks, then per-layer stacking -->
+  <div class="card">
+    <h3>② Watch real tokens fill blocks — 16 per block</h3>
+    <p class="small" style="margin:0 0 6px">A block holds <b>16 tokens</b>. As a prompt is processed, its
+      tokens drop into slots left to right; when a block fills, the next token opens a fresh one. The last
+      block is usually only <i>partly</i> full. Pick a prompt and watch its tokens land:</p>
+    <label class="fld" for="alloc-prompt" style="margin-top:8px">Prompt</label>
+    <select id="alloc-prompt" style="width:100%;max-width:460px"></select>
+    <p class="small" id="alloc-calc" style="margin:12px 0 2px"></p>
+    <div class="tokfill" id="alloc-tokfill"></div>
+    <p class="tflow" id="alloc-tflow"></p>
+    <p class="small" style="margin-top:10px;color:var(--faint)">Tokens are shown roughly one-per-word for
+      readability — real tokenizers split finer (Step 1), and long words become several tokens (e.g.
+      <code>Sum·mar·ize</code>). The 16-per-block rule is exactly what vLLM uses.</p>
+  </div>
+
+  <!-- MOVE 3 — the block table links scattered blocks -->
+  <div class="card">
+    <h3>③ How the blocks are linked — the block table</h3>
+    <p class="small" style="margin:0 0 6px">Here's the catch: those blocks <b>don't sit next to each other</b>.
+      vLLM drops each one into whatever slot is free, so a sequence's blocks scatter across the pool
+      (<b style="color:var(--sky)">blue</b> = this prompt's blocks, grey = other requests', dashed = free —
+      a small window into the pool):</p>
+    <div class="physstrip" id="alloc-phys"></div>
+    <p class="small" style="margin:12px 0 6px">So what stitches them back into one sequence? Each sequence keeps
+      a tiny <b>block table</b> — an <i>ordered</i> list of the physical blocks it owns: logical block 0 first,
+      then 1, and so on. It's exactly an OS page table.</p>
+    <div class="blocktable" id="alloc-bt"></div>
+    <div class="readbox" id="alloc-read"></div>
+  </div>
+
+  <!-- MOVE 4 — the video's signature: per-layer stacking -->
+  <div class="card">
+    <h3>④ …and every layer keeps its own copy</h3>
+    <p class="small" style="margin:0 0 6px">Those blocks lived in <i>one</i> attention layer. But attention
+      runs in <b>every</b> layer, each with separate K/V — so the same blocks are duplicated down the whole
+      stack:</p>
+    <p class="small" id="alloc-calc2" style="margin:8px 0 4px"></p>
+    <div class="layerstack" id="alloc-stack"></div>
+    <div class="mult" id="alloc-mult"></div>
+  </div>
+
+  <!-- MOVE 3 — weigh & count -->
+  <div class="card">
+    <h3>⑤ Weigh one block, then count how many fit</h3>
+    <label class="fld" for="blk-model">Model</label>
+    <select id="blk-model"></select>
+    <div class="formula" id="blk-formula"></div>
+    <div class="stats">
+      <div class="statcard"><div class="v" id="blk-size">–</div><div class="l">memory per block (all layers)</div></div>
+      <div class="statcard"><div class="v" id="blk-count">–</div><div class="l">blocks that fit in 80GB</div></div>
+      <div class="statcard"><div class="v" id="blk-conc">–</div><div class="l">max 2048-token requests</div></div>
+    </div>
+    <div class="vram-track" id="vram-track" style="margin-top:18px"></div>
+    <div class="vram-legend">
+      <span><i style="background:var(--faint)"></i>model weights</span>
+      <span><i style="background:var(--waste);opacity:.75"></i>activation &amp; overhead</span>
+      <span><i style="background:var(--sky)"></i>KV block pool</span>
+    </div>
+    <p class="small" id="vram-read" style="margin-top:10px"></p>
+  </div>
+
+  <div class="note"><b>Why "×layers" and "all layers" keep showing up.</b> A block covers 16 tokens in
+    <i>one</i> layer, but the same span exists in every layer — so its true memory is the per-layer size
+    <b>× the layer count</b>. That's exactly the <code>layers</code> factor in Step 7 &amp; 8's per-token
+    formula. vLLM tracks one <b>block ID</b> that reserves the matching slice in all layers at once, so the
+    "blocks that fit" count above is the real number vLLM would report.</div>
 </section>
 
 <!-- PREFIX SHARING -->
 <section>
-  <div class="eyebrow"><span class="idx">03</span><span class="lbl">Bonus Win</span></div>
+  <div class="eyebrow"><span class="idx">04</span><span class="lbl">Bonus Win</span></div>
   <h2>Sharing blocks across requests</h2>
-  <p>Once the cache lives in blocks with a lookup table, identical blocks can be <b>shared</b> instead of
-    duplicated — exactly like copy-on-write pages in an OS. Two big cases:</p>
+  <p><b>Yes — and it falls straight out of the block table.</b> A table is just a list of pointers, so two
+    requests that begin with the <i>same</i> tokens can point their first few entries at the <b>same physical
+    blocks</b> instead of each storing a copy. That's <b>prefix sharing</b>.</p>
+
   <div class="card">
-    <h3>Shared system prompt → one copy, many requests</h3>
-    <div id="prefix-viz"></div>
-    <p class="small" style="margin-top:10px">When many requests share a long system prompt (or a RAG
-      document, or few-shot examples), vLLM's <b>automatic prefix caching</b> stores those blocks
-      <b>once</b> and points every request at them. Parallel samples from one prompt share the prompt's
-      blocks until they diverge, then copy-on-write only the block that changes.</p>
+    <h3>Two requests, one shared prompt — pointing at the same blocks</h3>
+    <p class="small" style="margin:0 0 10px">R1 and R2 both start with the same 32-token system prompt
+      (2 blocks), then continue differently. Watch their block tables — the first two entries are
+      <b style="color:var(--kv)">identical physical blocks</b>, shared, not copied:</p>
+    <div class="share-tables" id="share-tables"></div>
+    <p class="small" style="margin:16px 0 4px">Physical blocks actually allocated
+      (<b style="color:var(--kv)">purple = shared</b>, <b style="color:var(--sky)">blue = unique</b>,
+      <b style="color:var(--good)">green = a fresh copy</b>). The badge is the <b>reference count</b> — how
+      many sequences point at it:</p>
+    <div class="poolrow" id="share-pool"></div>
+    <div class="readbox" id="share-read"></div>
+    <div class="controls">
+      <button class="btn primary" id="share-cow">▸ R2 edits the shared block — copy-on-write</button>
+      <button class="btn" id="share-reset">Reset to shared</button>
+    </div>
   </div>
+  <div class="card" style="border-color:var(--waste)">
+    <h3>But can one block mix two <i>different</i> requests' tokens? — No.</h3>
+    <p class="small" style="margin:0 0 10px">Sharing means two tables point at a block of <b>identical</b>
+      content. A block is <b>never split</b> between two requests' <i>different</i> tokens. If a request fills
+      only part of a block, the rest stays <b>empty</b> (that's the ≤15-token internal fragmentation) — those
+      slots are <b>not</b> handed to another request:</p>
+    <div style="display:flex;flex-direction:column;gap:9px;font-family:var(--mono);font-size:11px">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <span style="color:var(--good);width:64px;flex:0 0 64px">✓ real</span>
+        <span id="comingle-ok"></span>
+        <span class="small">one sequence · unused slots stay empty</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <span style="color:var(--waste);width:64px;flex:0 0 64px">✗ never</span>
+        <span id="comingle-no"></span>
+        <span class="small">mixing R1+R2 would make R1 attend to R2's tokens</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="note"><b>Copy-on-write, exactly like an OS.</b> As long as everyone only <i>reads</i> a shared
+    block (a fixed system prompt, a RAG document, few-shot examples), it stays shared forever — pure savings.
+    The moment one sequence needs to <i>write</i> a token into a shared block, vLLM copies just that one block
+    first (refcount drops, a fresh block is allocated), so the others are unaffected. Prompts are read-only,
+    so their blocks are typically never copied at all.</div>
   <div class="note"><b>Why it compounds.</b> Less memory per request → more requests fit at once → bigger
     batches → the GPU's tensor cores stay busy → higher throughput. Memory efficiency and speed are the
     same lever here.</div>
@@ -260,7 +487,7 @@
 
 <!-- CONTINUOUS BATCHING -->
 <section>
-  <div class="eyebrow"><span class="idx">04</span><span class="lbl">The Scheduler</span></div>
+  <div class="eyebrow"><span class="idx">05</span><span class="lbl">The Scheduler</span></div>
   <h2>Continuous batching keeps the GPU full</h2>
   <p>Flexible block memory unlocks one more win. <b>Static batching</b> groups N requests, runs them
     together, and waits for the <i>slowest</i> to finish before starting the next batch — so finished
@@ -281,7 +508,7 @@
 
 <!-- PAYOFF -->
 <section>
-  <div class="eyebrow"><span class="idx">05</span><span class="lbl">The Result</span></div>
+  <div class="eyebrow"><span class="idx">06</span><span class="lbl">The Result</span></div>
   <h2>What it adds up to</h2>
   <div class="card">
     <div class="stats">
@@ -345,120 +572,221 @@ $('#naive-grow').onclick=()=>{ naiveReqs=naiveReqs.map(r=>({...r,used:Math.min(r
 $('#naive-reset2').onclick=()=>{ naiveReqs=[{used:8,max:40},{used:5,max:30},{used:14,max:50},{used:3,max:24}]; renderNaiveMem(); };
 renderNaiveMem();
 
-/* ========== 2. PAGED GRID ========== */
-const TOTAL_BLOCKS=48, BLOCK=16;
-let pagedMode='paged';
-// requests: each has a token count; blocks needed = ceil(tokens/BLOCK)
+/* ========== 2. NAIVE vs PAGED — side by side ========== */
+const TOTAL_BLOCKS=24, BLOCK=16, NAIVE_RESERVE=4;
+let lastGenRi=0; // request that most recently generated (drives the external-frag explainer)
 let reqs=[{tokens:40},{tokens:18},{tokens:55}];
-let physical=new Array(TOTAL_BLOCKS).fill(null); // which request owns each physical block
-function allocatePaged(){
-  physical=new Array(TOTAL_BLOCKS).fill(null);
-  if(pagedMode==='paged'){
-    // fill any free block, scattered — simulate non-contiguous by interleaving
-    let order=[...Array(TOTAL_BLOCKS).keys()];
-    // deterministic shuffle for scattered look
-    order.sort((a,b)=>((a*7+3)%TOTAL_BLOCKS)-((b*7+3)%TOTAL_BLOCKS));
-    let oi=0;
-    reqs.forEach((r,ri)=>{
-      const need=Math.ceil(r.tokens/BLOCK);
-      for(let b=0;b<need;b++){ if(oi<order.length){ physical[order[oi++]]={ri,partial:b===need-1 && r.tokens%BLOCK!==0}; } }
-    });
-  } else {
-    // naive contiguous: each request reserves max (say 4 blocks) contiguously
-    let ptr=0;
-    reqs.forEach((r,ri)=>{
-      const reserve=4; // reserves 4 blocks (64 tokens) regardless of use
-      const used=Math.ceil(r.tokens/BLOCK);
-      for(let b=0;b<reserve;b++){ if(ptr<TOTAL_BLOCKS){ physical[ptr]={ri,wasted:b>=used}; ptr++; } }
-    });
-  }
+let pagedBlocks=[]; // pagedBlocks[ri] = the physical slots request ri owns (stable — blocks don't move once placed)
+let naiveStart=[0,4,8]; // fixed contiguous start block per request (stable — existing requests never relocate)
+
+function naiveCap(ri){ // contiguous blocks request ri can occupy before hitting the next request's fixed slab (or the pool end)
+  const isLast=ri===reqs.length-1;
+  const nextStart=isLast?TOTAL_BLOCKS:(naiveStart[ri+1]??TOTAL_BLOCKS);
+  return Math.max(0, nextStart-(naiveStart[ri]??0));
 }
-function renderPaged(){
-  allocatePaged();
-  const grid=$('#page-grid'); grid.innerHTML='';
-  let usedReal=0, occupied=0;
-  physical.forEach(cell=>{
-    if(cell===null){ grid.innerHTML+=`<div class="pageblk free">·</div>`; }
-    else{
-      occupied++;
-      if(cell.wasted){ grid.innerHTML+=`<div class="pageblk" style="background:repeating-linear-gradient(45deg,#f3b0b0,#f3b0b0 4px,#fadbdb 4px,#fadbdb 8px);color:#a01">×</div>`; }
-      else{ usedReal++; grid.innerHTML+=`<div class="pageblk ${cell.partial?'partial':''}" style="background:${RC[cell.ri]}">R${cell.ri+1}</div>`; }
-    }
+function computeNaive(){
+  const phys=new Array(TOTAL_BLOCKS).fill(null);
+  reqs.forEach((r,ri)=>{
+    const start=naiveStart[ri]??0, used=Math.ceil(r.tokens/BLOCK), isLast=ri===reqs.length-1, cap=naiveCap(ri);
+    // last request grows up to the pool end; a non-last request holds its whole fixed slab (its reservation)
+    const regionSize=isLast?Math.min(Math.max(NAIVE_RESERVE,used),cap):cap;
+    for(let b=0;b<regionSize;b++){ const idx=start+b; if(idx>=0 && idx<TOTAL_BLOCKS){ phys[idx]={ri,fill:Math.min(BLOCK,Math.max(0,r.tokens-b*BLOCK))/BLOCK}; } }
   });
-  // utilization = real-token blocks / occupied blocks
-  const util=occupied?Math.round(usedReal/occupied*100):100;
-  $('#paged-util').textContent=util+'%';
-  $('#paged-util').style.color=util>85?'var(--good)':'var(--waste)';
-  if(pagedMode==='paged'){
-    $('#paged-util-lbl').innerHTML='of occupied blocks hold real tokens. Blocks are scattered across physical memory — order doesn\'t matter, the block table tracks them. Only each sequence\'s last block is partly empty.';
-  } else {
-    $('#paged-util-lbl').innerHTML='of occupied blocks hold real tokens. Each request pre-reserves 4 contiguous blocks (64 tokens) up front; the unused tail (<span style="color:var(--waste)">striped</span>) is dead memory.';
-  }
-  $('#paged-read').innerHTML=`${reqs.length} active request(s) · ${occupied}/${TOTAL_BLOCKS} blocks occupied · block size = ${BLOCK} tokens.`;
-  renderBlockTable();
+  return phys;
 }
-function renderBlockTable(){
-  // show block table for request 1 (paged) — logical positions -> physical indices
-  const r0Blocks=[];
-  physical.forEach((cell,idx)=>{ if(cell&&cell.ri===0&&!cell.wasted) r0Blocks.push(idx); });
-  let html='';
-  r0Blocks.forEach((phys,logical)=>{
-    const lo=logical*BLOCK, hi=lo+BLOCK-1;
-    html+=`<div class="bt-row">
-      <span class="bt-logical">tokens ${lo}–${hi}</span>
-      <span class="bt-arrow">→ physical block</span>
-      <span class="bt-physical" style="background:${RC[0]}">#${phys}</span></div>`;
+function reconcilePaged(){
+  // keep each request's block list; grow/shrink it to match its current token count — without moving existing blocks
+  pagedBlocks.length=reqs.length;
+  for(let ri=0;ri<reqs.length;ri++){ if(!pagedBlocks[ri]) pagedBlocks[ri]=[]; }
+  const occupied=new Set();
+  pagedBlocks.forEach(list=>list.forEach(s=>occupied.add(s)));
+  const order=[...Array(TOTAL_BLOCKS).keys()].sort((a,b)=>((a*7+3)%TOTAL_BLOCKS)-((b*7+3)%TOTAL_BLOCKS));
+  const nextFree=()=>{ for(const s of order){ if(!occupied.has(s)){ occupied.add(s); return s; } } return -1; };
+  reqs.forEach((r,ri)=>{
+    const need=Math.ceil(r.tokens/BLOCK), list=pagedBlocks[ri];
+    while(list.length<need){ const s=nextFree(); if(s<0) break; list.push(s); }  // grab a fresh free block on demand
+    while(list.length>need){ occupied.delete(list.pop()); }                       // release on shrink / finish
   });
-  if(!r0Blocks.length) html='<span class="small">No active blocks for R1.</span>';
-  $('#block-table').innerHTML=`<div class="small" style="margin-bottom:6px">Block table for <b style="color:${RC[0]}">Request 1</b>:</div>`+html;
 }
-document.querySelectorAll('#paged-toggle button').forEach(b=>b.addEventListener('click',()=>{
-  pagedMode=b.dataset.mode;
-  document.querySelectorAll('#paged-toggle button').forEach(x=>x.classList.toggle('active',x===b));
-  renderPaged();
-}));
-$('#paged-add').onclick=()=>{ if(reqs.length<4) reqs.push({tokens:10+Math.floor(Math.random()*45)}); renderPaged(); $('#paged-gen-read').textContent=''; };
-$('#paged-finish').onclick=()=>{ reqs.pop(); renderPaged(); $('#paged-gen-read').textContent=''; };
-$('#paged-reset3').onclick=()=>{ reqs=[{tokens:40},{tokens:18},{tokens:55}]; renderPaged(); $('#paged-gen-read').textContent=''; };
-$('#paged-gen').onclick=()=>{
-  if(pagedMode!=='paged'){ document.querySelector('#paged-toggle button[data-mode="paged"]').click(); }
-  if(!reqs.length){ reqs=[{tokens:0}]; }
-  const before=Math.ceil(reqs[0].tokens/BLOCK);
-  reqs[0].tokens+=1;
-  const after=Math.ceil(reqs[0].tokens/BLOCK);
-  renderPaged();
-  const t=reqs[0].tokens, used=t%BLOCK||BLOCK;
-  if(after>before){
-    $('#paged-gen-read').innerHTML=`<b style="color:var(--r1)">R1</b> reached token ${t} → last block was full, so a <b style="color:var(--good)">new block was allocated on demand</b>. R1 now uses ${after} block(s).`;
-  } else if(used===BLOCK){
-    $('#paged-gen-read').innerHTML=`<b style="color:var(--r1)">R1</b> now has ${t} tokens — its last block is <b>exactly full (${BLOCK}/${BLOCK})</b>. The next token will trigger a fresh block.`;
+function computePaged(){
+  reconcilePaged();
+  const phys=new Array(TOTAL_BLOCKS).fill(null);
+  reqs.forEach((r,ri)=>{
+    pagedBlocks[ri].forEach((slot,b)=>{ phys[slot]={ri,fill:Math.min(BLOCK,Math.max(0,r.tokens-b*BLOCK))/BLOCK}; });
+  });
+  return phys;
+}
+function renderGrid(el, phys){
+  // three visually distinct states, shared by both panels:
+  //   full (16/16) = solid · partly-filled = a left-to-right fill bar showing exactly how full · reserved-empty (0 tokens, naive only) = hatched
+  const SOLID=ri=>`background:${RC[ri]};color:#fff`;
+  const FILLBAR=(ri,f)=>`background:linear-gradient(90deg,${RC[ri]} 0 ${Math.round(f*100)}%,var(--bg) ${Math.round(f*100)}% 100%);border:1px solid ${RC[ri]};color:#1B2433;font-size:8px;font-weight:700`;
+  const EMPTY=ri=>`background:repeating-linear-gradient(45deg,${RC[ri]} 0 3px,rgba(255,255,255,.6) 3px 6px);color:#1B2433;font-size:8px;font-weight:700`;
+  let usedReal=0, occupied=0, out='';
+  phys.forEach(cell=>{
+    if(cell===null){ out+=`<div class="pageblk free">·</div>`; return; }
+    occupied++;
+    const tok=Math.round(cell.fill*BLOCK);
+    if(cell.fill>=1){ usedReal++; out+=`<div class="pageblk" title="R${cell.ri+1} — full (16/16)" style="${SOLID(cell.ri)}">R${cell.ri+1}</div>`; }
+    else if(cell.fill>0){ usedReal++; out+=`<div class="pageblk" title="R${cell.ri+1} — ${tok}/16 tokens" style="${FILLBAR(cell.ri,cell.fill)}">R${cell.ri+1}</div>`; }
+    else { out+=`<div class="pageblk" title="R${cell.ri+1} reserved-but-empty" style="${EMPTY(cell.ri)}">R${cell.ri+1}</div>`; }
+  });
+  el.innerHTML=out;
+  return {usedReal, occupied};
+}
+function setUtil(sel,v){ const e=$(sel); if(!e)return; e.textContent=v+'%'; e.style.color=v>85?'var(--good)':'var(--waste)'; }
+function renderAll(){
+  const n=renderGrid($('#nv-grid'), computeNaive());
+  const p=renderGrid($('#pg-grid'), computePaged());
+  setUtil('#nv-util', n.occupied?Math.round(n.usedReal/n.occupied*100):100);
+  setUtil('#pg-util', p.occupied?Math.round(p.usedReal/p.occupied*100):100);
+  $('#nv-util-lbl').innerHTML='of reserved blocks hold real tokens. Each request grabs 4 <b>contiguous</b> blocks up front. Solid = full, a <b>fill bar</b> = partly-filled, <b>hatched</b> = reserved-but-empty. Only the <b>last</b> request can grow into adjacent free space.';
+  $('#pg-util-lbl').innerHTML='of blocks hold real tokens. Blocks sit <b>anywhere</b> and are added one at a time on demand; the <b>fill bar</b> on the last block shows exactly how full it is.';
+  const wn=$('#paged-wastenote');
+  if(wn){ const real=reqs.reduce((s,r)=>s+r.tokens,0), cap=p.occupied*BLOCK; wn.textContent=`${cap?Math.round((1-real/cap)*100):0}% here (${cap-real} unused of ${cap} allocated, across ${reqs.length} short sequence${reqs.length===1?'':'s'})`; }
+  $('#paged-read').innerHTML=`${reqs.length} active request(s) · pool = ${TOTAL_BLOCKS} blocks · block size = ${BLOCK} tokens.`;
+  renderGenButtons(); renderReqStatus(); renderNaiveFrag();
+}
+function renderGenButtons(){
+  const c=$('#gen-buttons'); if(!c) return;
+  c.innerHTML=reqs.map((r,ri)=>`<button class="btn" data-gen="${ri}" style="background:${RC[ri]};border-color:${RC[ri]};color:#fff">▸ R${ri+1} +1 token</button>`).join('');
+  c.querySelectorAll('button[data-gen]').forEach(b=>b.onclick=()=>generate(+b.dataset.gen));
+}
+function renderReqStatus(){
+  const c=$('#req-status'); if(!c) return;
+  let html='<div class="reqstat">';
+  reqs.forEach((r,ri)=>{
+    const need=Math.ceil(r.tokens/BLOCK), isLast=ri===reqs.length-1, cap=naiveCap(ri);
+    let naive;
+    if(!isLast && need>cap) naive=`<span class="rs-boxed">naive ⛔ boxed at ${cap} (needs ${need})</span>`;
+    else if(isLast && need>NAIVE_RESERVE) naive=`<span class="rs-grow">naive ${need} blk (grew into free)</span>`;
+    else naive=`<span class="rs-note">naive ${isLast?Math.max(NAIVE_RESERVE,need):cap} reserved · ${need} used</span>`;
+    html+=`<div class="rs-row"><span class="rs-tag" style="background:${RC[ri]}">R${ri+1}</span><b>${r.tokens} tok</b> · ${naive} · <span class="rs-note" style="color:var(--sky)">paged ${need} blk on demand</span></div>`;
+  });
+  c.innerHTML=html+'</div>';
+}
+function generate(ri){
+  if(!reqs[ri]) return;
+  lastGenRi=ri;
+  const before=Math.ceil(reqs[ri].tokens/BLOCK);
+  reqs[ri].tokens+=1;
+  const after=Math.ceil(reqs[ri].tokens/BLOCK);
+  renderAll();
+  setGenMessage(ri,before,after);
+}
+function setGenMessage(ri,before,after){
+  const r=reqs[ri], t=r.tokens, isLast=ri===reqs.length-1;
+  const tag=`<b style="color:${RC[ri]}">R${ri+1}</b>`, el=$('#paged-gen-read');
+  const pagedPart = after>before
+    ? `<b style="color:var(--sky)">Paged</b>: last block was full → grabbed a <b style="color:var(--good)">new block on demand</b> (now ${after}).`
+    : `<b style="color:var(--sky)">Paged</b>: fills the current block, no new block yet.`;
+  const crossed = after>before;                       // did this token open a new block?
+  let naivePart;
+  if(!isLast && after>naiveCap(ri)){
+    // stuck: every token past the 4-block reservation is over capacity, boundary or not
+    naivePart = `<b style="color:var(--waste)">Naive</b>: <b>boxed in</b> — R${ri+2} owns the next slot, so R${ri+1} can't grow without being copied elsewhere (see below).`;
+  } else if(!crossed){
+    // no boundary this click — mirrors paged
+    naivePart = `<b style="color:var(--waste)">Naive</b>: fills the current block, no new block yet${after<=NAIVE_RESERVE?` (${NAIVE_RESERVE-after} still reserved-empty)`:''}.`;
+  } else if(isLast && after>NAIVE_RESERVE){
+    // last request grew past its reservation → grabs the adjacent free block, just like paging
+    naivePart = `<b style="color:var(--waste)">Naive</b>: it's the <b>last</b> request, so it grabs the <b>next adjacent free block</b> — nothing boxes it in.`;
   } else {
-    $('#paged-gen-read').innerHTML=`<b style="color:var(--r1)">R1</b> now has ${t} tokens — its last block holds ${used}/${BLOCK}, room to spare, so <b>no new block needed</b> yet.`;
+    // crossed a boundary inside the reservation → a reserved-empty block flips to used
+    naivePart = `<b style="color:var(--waste)">Naive</b>: crosses into an <b>already-reserved</b> block — no new memory, just reserved→used.`;
   }
+  el.innerHTML=`${tag} → token ${t}. &nbsp; ${pagedPart} &nbsp; ${naivePart}`;
+}
+function renderNaiveFrag(){
+  const nf=$('#naive-frag'); if(!nf) return;
+  const ri=lastGenRi, r=reqs[ri], isLast=ri===reqs.length-1, cap=naiveCap(ri);
+  const need=r?Math.ceil(r.tokens/BLOCK):0, nextRi=ri+1;
+  if(!r || isLast || need<=cap || !reqs[nextRi]){ nf.innerHTML=''; return; }
+  const cell=(bg,txt,extra='')=>`<span style="display:inline-flex;align-items:center;justify-content:center;width:30px;height:24px;border-radius:5px;background:${bg};color:#fff;font-family:var(--mono);font-size:9px;font-weight:700;${extra}">${txt}</span>`;
+  const freeCell=`<span style="display:inline-flex;align-items:center;justify-content:center;width:30px;height:24px;border-radius:5px;border:1px dashed var(--line-strong);color:var(--good);font-family:var(--mono);font-size:9px">free</span>`;
+  let strip='';
+  for(let i=0;i<Math.min(cap,5);i++) strip+=cell(RC[ri],'R'+(ri+1));
+  if(cap>5) strip+=`<span style="color:var(--faint);font-family:var(--mono);font-size:11px">+${cap-5}</span>`;
+  strip+=`<span style="color:var(--waste);font-size:14px;margin:0 2px">⛔</span>`;
+  strip+=cell(RC[nextRi],'R'+(nextRi+1),'outline:2px solid var(--waste);outline-offset:1px');
+  strip+=`<span style="color:var(--faint);font-family:var(--mono);font-size:11px;margin:0 4px">… far away …</span>`;
+  strip+=freeCell+freeCell+freeCell;
+  nf.innerHTML=
+    `<div style="border:1px solid var(--waste);border-radius:11px;padding:13px;background:var(--surface)">`+
+    `<b style="color:var(--waste)">Why can't R${ri+1} use the free blocks (naive)?</b>`+
+    `<div style="display:flex;align-items:center;gap:3px;flex-wrap:wrap;margin:11px 0">${strip}</div>`+
+    `<p class="small" style="margin:0">R${ri+1}'s ${cap} blocks are <b>contiguous</b>, but <b style="color:${RC[nextRi]}">R${nextRi+1}</b> sits in the <b>very next slot</b>. Contiguous memory forbids gaps, so R${ri+1} can't jump over R${nextRi+1} to the free tail — those blocks aren't <i>adjacent</i>. It must be <b style="color:var(--waste)">copied</b> to a fresh run of ${need}+ free blocks, leaving a hole. <b>That's external fragmentation</b> — and the paged panel never has this problem.</p>`+
+    `</div>`;
+}
+$('#paged-add').onclick=()=>{
+  if(reqs.length<4){
+    const li=reqs.length-1;                                                     // current last request
+    naiveStart[reqs.length]=(naiveStart[li]??0)+Math.max(NAIVE_RESERVE,Math.ceil(reqs[li].tokens/BLOCK)); // place the newcomer AFTER the last's frozen extent
+    reqs.push({tokens:10+Math.floor(Math.random()*45)});
+  }
+  renderAll(); $('#paged-gen-read').textContent='';
 };
-renderPaged();
+$('#paged-finish').onclick=()=>{ if(reqs.length>1){ reqs.pop(); naiveStart.pop(); } lastGenRi=Math.min(lastGenRi,reqs.length-1); renderAll(); $('#paged-gen-read').textContent=''; };
+$('#paged-reset3').onclick=()=>{ reqs=[{tokens:40},{tokens:18},{tokens:55}]; pagedBlocks=[]; naiveStart=[0,4,8]; lastGenRi=0; renderAll(); $('#paged-gen-read').textContent=''; };
+renderAll();
 
 /* ========== 3. PREFIX SHARING ========== */
-function renderPrefix(){
-  const promptBlocks=3, // shared system prompt
-        tails=[2,3,1];   // per-request unique continuation
-  let html='<div style="display:flex;flex-direction:column;gap:10px">';
-  // shared prompt row
-  html+='<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span class="small" style="width:120px;flex:0 0 120px">Shared prompt:</span>';
-  for(let i=0;i<promptBlocks;i++) html+=`<div class="pageblk" style="aspect-ratio:auto;width:42px;height:30px;background:var(--kv)">P${i}</div>`;
-  html+='<span class="small" style="color:var(--good)">← stored once</span></div>';
-  // each request
-  tails.forEach((t,ri)=>{
-    html+=`<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span class="small" style="width:120px;flex:0 0 120px">Request ${ri+1}:</span>`;
-    for(let i=0;i<promptBlocks;i++) html+=`<div class="pageblk" style="aspect-ratio:auto;width:42px;height:30px;background:var(--kv);opacity:.4">P${i}</div>`;
-    for(let i=0;i<t;i++) html+=`<div class="pageblk" style="aspect-ratio:auto;width:42px;height:30px;background:${RC[ri]}">${i}</div>`;
-    html+='</div>';
-  });
-  html+='</div>';
-  html+='<p class="small" style="margin-top:10px"><span style="color:var(--kv)">■</span> faded prompt blocks are <b>pointers to the same 3 physical blocks</b>, not copies. Only the colored tails are unique per request.</p>';
-  $('#prefix-viz').innerHTML=html;
+let shareCoW=false; // false = fully shared prefix; true = R2 has copied-on-write its 2nd block
+function renderShare(){
+  // physical block IDs: prompt #40,#41 (shared) · R1 tail #12 · R2 tail #57 · CoW copy #58
+  const P0=40, P1=41, R1T=12, R2T=57, COPY=58;
+  // R2's logical block 1 points to P1 when shared, or to its own copy after CoW
+  const r2b1 = shareCoW ? COPY : P1;
+
+  const row=(log,phys,cls,tag)=>`<div class="sbt-row"><span class="sbt-log">logical ${log} →</span>`+
+      `<span class="sbt-phys ${cls}">#${phys}</span>${tag?`<span class="sbt-tag">${tag}</span>`:''}</div>`;
+
+  const r1 = `<div class="share-col"><div class="ct" style="color:var(--sky)">R1 &mdash; block table</div><div class="share-bt">`+
+    row(0,P0,'shared','shared')+row(1,P1,'shared','shared')+row(2,R1T,'uniq','unique')+`</div></div>`;
+  const r2 = `<div class="share-col"><div class="ct" style="color:var(--sky)">R2 &mdash; block table</div><div class="share-bt">`+
+    row(0,P0,'shared','shared')+
+    (shareCoW? row(1,COPY,'cow','own copy') : row(1,P1,'shared','shared'))+
+    row(2,R2T,'uniq','unique')+`</div></div>`;
+  $('#share-tables').innerHTML=r1+r2;
+
+  // physical pool: which blocks exist and their refcounts
+  const p1rc = shareCoW?1:2;
+  let pool=`<div class="poolbox shared">#${P0} · prompt<span class="rc">×2</span></div>`+
+    `<div class="poolbox ${shareCoW?'shared':'shared'}">#${P1} · prompt<span class="rc">×${p1rc}</span></div>`+
+    (shareCoW?`<div class="poolbox cow">#${COPY} · R2's copy<span class="rc">×1</span></div>`:'')+
+    `<div class="poolbox uniq">#${R1T} · R1<span class="rc">×1</span></div>`+
+    `<div class="poolbox uniq">#${R2T} · R2<span class="rc">×1</span></div>`+
+    `<div class="poolbox freeb">free…</div>`;
+  $('#share-pool').innerHTML=pool;
+
+  const blocksUsed = shareCoW?6:5;
+  if(!shareCoW){
+    $('#share-read').innerHTML=`Two requests, 3 logical blocks each = <b>6 blocks' worth</b> of tokens — but only `+
+      `<b>5 physical blocks</b> are allocated. The 2 prompt blocks are shared (refcount <b>×2</b>), so the `+
+      `duplicate copy is <b style="color:var(--good)">saved</b>. Ten requests sharing this prompt would save `+
+      `<b>18 blocks</b>, not 2.`;
+  } else {
+    $('#share-read').innerHTML=`R2 needed to <b>write</b> into shared block #${P1}, so vLLM <b>copied it first</b> `+
+      `→ new block <b style="color:var(--good)">#${COPY}</b> (refcount ×1), and #${P1}'s refcount dropped to <b>×1</b> `+
+      `(only R1 now). R1 was <b>untouched</b>. Now <b>6 physical blocks</b> are used — the copy cost one block, `+
+      `paid only when a shared block was actually modified.`;
+  }
+  $('#share-cow').disabled=shareCoW;
 }
-renderPrefix();
+$('#share-cow').onclick=()=>{ shareCoW=true; renderShare(); };
+$('#share-reset').onclick=()=>{ shareCoW=false; renderShare(); };
+renderShare();
+
+// one-block-one-sequence contrast (never co-mingle two requests)
+(function(){
+  const c=bg=>`<span style="display:inline-block;width:17px;height:15px;border-radius:3px;background:${bg};margin-right:2px;vertical-align:middle"></span>`;
+  const e=()=>`<span style="display:inline-block;width:17px;height:15px;border-radius:3px;border:1px dashed var(--line-strong);margin-right:2px;vertical-align:middle"></span>`;
+  let ok='',no='';
+  for(let i=0;i<16;i++){ ok+= i<5?c('var(--sky)'):e(); no+= i<5?c('var(--sky)'):c('var(--kv)'); }
+  const okEl=$('#comingle-ok'), noEl=$('#comingle-no');
+  if(okEl) okEl.innerHTML=ok;
+  if(noEl) noEl.innerHTML=no;
+})();
 
 /* ========== 4. BATCHING TIMELINE ========== */
 let batchMode='continuous';
@@ -522,6 +850,176 @@ document.querySelectorAll('#batch-toggle button').forEach(b=>b.addEventListener(
   renderBatching();
 }));
 renderBatching();
+
+/* ========== 0. SIZING THE POOL — anatomy · per-layer stacking · weigh & count ========== */
+(function(){
+  const BSZ=16; // vLLM's default block = 16 tokens
+  const GPU_VRAM_GB=80; // one H100, decimal GB
+  const OVERHEAD_GB=4;  // activation peak + non-torch framework memory (rough, real value varies by batch)
+  const BMODELS=[
+    {name:'Llama-3 8B',   layers:32, kvh:8,  hd:128, bytes:2, params:8e9},
+    {name:'Llama-3 70B',  layers:80, kvh:8,  hd:128, bytes:2, params:70e9},
+    {name:'GPT-3 175B',   layers:96, kvh:96, hd:128, bytes:2, params:175e9},
+  ];
+  // real token sequences (≈ one per word; a few subword splits for realism, echoing Step 1)
+  const PROMPTS=[
+    {label:'“Hi, my name is Alice”',
+     toks:['Hi',',','my','name','is','Alice']},
+    {label:'“Write a haiku about the ocean at dawn, then say why”',
+     toks:['Write','a','ha','iku','about','the','ocean','at','dawn',',','then','say','why','you','chose','each','word','in','it']},
+    {label:'“Summarize the five-page quarterly earnings report in plain language…”',
+     toks:['Sum','mar','ize','the','attached','five','-','page','quarterly','earnings','report',',','focus','on','revenue','growth',',','operating','margins',',','and','the','out','look','the','C','EO','gave','for','next','year',',','in','plain','language','.']},
+  ];
+
+  function fmtBytes(b){ // block sizes are powers of two → show in binary units so the explicit formula lands exactly
+    if(b>=1073741824) return (b/1073741824).toFixed(2)+' GiB';
+    if(b>=1048576) return (b/1048576).toFixed(b<10485760?2:0)+' MiB';
+    if(b>=1024) return (b/1024).toFixed(0)+' KiB';
+    return b+' B';
+  }
+  function fmtGBnum(g){ return g<0?'0 GB':(g>=1?g.toFixed(1)+' GB':(g*1000).toFixed(0)+' MB'); }
+
+  // ── MOVE 1: anatomy grid (16 rows × cells, 2 heads shown) ──
+  function cellCol(cls){ return Array.from({length:BSZ}).map(()=>`<div class="blk-cell ${cls}"></div>`).join(''); }
+  $('#blk-k1').innerHTML=cellCol('k'); $('#blk-k2').innerHTML=cellCol('k');
+  $('#blk-v1').innerHTML=cellCol('v'); $('#blk-v2').innerHTML=cellCol('v');
+
+  $('#blk-model').innerHTML=BMODELS.map((m,i)=>`<option value="${i}" ${i===0?'selected':''}>${m.name}</option>`).join('');
+  $('#alloc-prompt').innerHTML=PROMPTS.map((p,i)=>`<option value="${i}">${p.label} — ${p.toks.length} tokens</option>`).join('');
+  const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+  // ── MOVE 2a: real tokens filling 16-slot blocks ──
+  function renderTokFill(toks){
+    const k=Math.ceil(toks.length/BSZ);
+    let html='';
+    for(let bi=0;bi<k;bi++){
+      const start=bi*BSZ, end=Math.min(start+BSZ,toks.length), filled=end-start;
+      let slots='';
+      for(let s=0;s<BSZ;s++){
+        const idx=start+s;
+        slots+= idx<toks.length
+          ? `<div class="tslot" title="token ${idx}">${esc(toks[idx])}</div>`
+          : `<div class="tslot empty">·</div>`;
+      }
+      const hdr=filled<BSZ
+        ? `Block ${bi+1} · tokens ${start}–${end-1} · <span class="part">${filled}/16 (partial)</span>`
+        : `Block ${bi+1} · tokens ${start}–${end-1} · 16/16 full`;
+      html+=`<div class="tblock"><div class="th">${hdr}</div><div class="tgrid">${slots}</div></div>`;
+    }
+    return html;
+  }
+
+  // ── MOVE 3: scattered physical placement + block table ──
+  const POOL_WIN=24;                       // a small visible window into the block pool
+  const SCATTER=[5,18,11,2,21,14];         // physical slots this prompt's blocks land in (logical order)
+  const OTHERS=[0,3,7,9,16,20,23];         // other requests' occupied slots
+  function renderLink(k,T){
+    const mine={}; SCATTER.slice(0,k).forEach((slot,li)=>mine[slot]=li);
+    const others=new Set(OTHERS.filter(o=>!(o in mine)));
+    let strip='';
+    for(let i=0;i<POOL_WIN;i++){
+      if(i in mine)          strip+=`<div class="pcell mine" title="physical block #${i}">${mine[i]}</div>`;
+      else if(others.has(i)) strip+=`<div class="pcell other" title="another request">•</div>`;
+      else                   strip+=`<div class="pcell free">·</div>`;
+    }
+    $('#alloc-phys').innerHTML=strip;
+
+    let bt='<div class="small" style="margin-bottom:6px">Block table for this sequence — an ordered list:</div>';
+    for(let b=0;b<k;b++){
+      const lo=b*BSZ, hi=Math.min(lo+BSZ,T)-1;
+      bt+=`<div class="bt-row"><span class="bt-logical">logical block ${b} · tokens ${lo}–${hi}</span>`+
+          `<span class="bt-arrow">→ lives at</span>`+
+          `<span class="bt-physical" style="background:var(--sky)">physical #${SCATTER[b]}</span></div>`;
+    }
+    $('#alloc-bt').innerHTML=bt;
+
+    const s=Math.min(T-1, BSZ+Math.floor(BSZ/2)); // a token to look up (in block 1 when it exists)
+    const bi=Math.floor(s/BSZ);
+    $('#alloc-read').innerHTML=
+      `<b>Reading token ${s}:</b><br>`+
+      `logical block = ⌊${s} ÷ 16⌋ = <b>${bi}</b> &nbsp;→&nbsp; block-table entry ${bi} &nbsp;→&nbsp; `+
+      `<b>physical #${SCATTER[bi]}</b> &nbsp;→&nbsp; slot ${s%BSZ} inside it.<br>`+
+      `<span class="small">That ordered table is the <i>only</i> thing linking the scattered blocks — change it and the same physical memory becomes a different sequence.</span>`;
+  }
+
+  // ── MOVE 4: per-layer stacking ──
+  function layerRow(tag,k,toks){
+    let cells='';
+    for(let b=0;b<k;b++){
+      const partial=(b===k-1 && toks.length%BSZ!==0);
+      cells+=`<div class="layer-blk ${partial?'partial':''}">B${b+1}</div>`;
+    }
+    return `<div class="layer-row"><span class="layer-tag">${tag}</span><div class="layer-blocks">${cells}</div></div>`;
+  }
+  function renderAlloc(){
+    const m=BMODELS[+$('#blk-model').value], p=PROMPTS[+$('#alloc-prompt').value];
+    const T=p.toks.length, L=m.layers, k=Math.ceil(T/BSZ), lastFill=T%BSZ||BSZ;
+
+    // 2a — token fill
+    $('#alloc-calc').innerHTML=`<b>${T} tokens</b> &nbsp;·&nbsp; ⌈${T} ÷ 16⌉ = <b>${k}</b> block${k>1?'s':''}, the last one ${lastFill}/16 full:`;
+    $('#alloc-tokfill').innerHTML=renderTokFill(p.toks);
+    $('#alloc-tflow').textContent = k>1
+      ? `token 0 → Block 1 · token 16 → Block 2${k>2?' · token 32 → Block 3':''} … the ${16-lastFill} empty slots in the last block are the only waste.`
+      : `all ${T} tokens fit in one block — ${16-lastFill} slots left empty at the end.`;
+
+    // 3 — scattered placement + block table
+    renderLink(k,T);
+
+    // 4 — per-layer stacking
+    $('#alloc-calc2').innerHTML=`This prompt = <b>${k}</b> block${k>1?'s':''} per layer, replicated across every layer:`;
+    const show=Math.min(3,L);
+    let html='';
+    for(let li=1;li<=show;li++) html+=layerRow('Layer '+li,k,p.toks);
+    if(L>show){
+      html+=`<div class="layer-ellipsis">⋮ &nbsp;${L-show} more identical layers</div>`;
+      html+=layerRow('Layer '+L,k,p.toks);
+    }
+    $('#alloc-stack').innerHTML=html;
+    $('#alloc-mult').innerHTML=
+      `<b>${k}</b> block/layer × <b>${L}</b> layers = <b class="big">${(k*L).toLocaleString()}</b> per-layer K/V slices<br>`+
+      `<span class="small">vLLM bundles the matching slices across all layers under <b>${k} block ID${k>1?'s':''}</b> — so this prompt takes <b>${k}</b> of the pool's blocks (${m.name}, ${L} layers).</span>`;
+  }
+
+  // ── MOVE 3: weigh one block, count the pool ──
+  function renderBlockSizing(){
+    const m=BMODELS[+$('#blk-model').value];
+    const perLayerBytes=2*m.kvh*m.hd*BSZ*m.bytes; // K&V, one layer, 16 tokens
+    const blockBytes=perLayerBytes*m.layers;      // one block ID = all layers
+
+    $('#blk-formula').innerHTML=
+      `one block, per layer = 2 · KV-heads · head-dim · 16 · bytes<br>`+
+      `= 2 · <span class="hl">${m.kvh}</span> · <span class="hl">${m.hd}</span> · 16 · <span class="hl">${m.bytes}</span> = <b>${fmtBytes(perLayerBytes)}</b>`+
+      ` &nbsp;→&nbsp; × <span class="hl">${m.layers}</span> layers = <b>${fmtBytes(blockBytes)}</b> per block ID`;
+    $('#blk-size').textContent=fmtBytes(blockBytes);
+
+    const paramsGB=(m.params*m.bytes)/1e9; // param count × bytes/param → decimal GB, matches Step 8
+    const leftoverGB=GPU_VRAM_GB-paramsGB-OVERHEAD_GB;
+    const numBlocks=Math.floor(Math.max(0,leftoverGB)*1e9/blockBytes);
+    const maxReqs2048=Math.floor(numBlocks*BSZ/2048);
+
+    $('#blk-count').textContent=leftoverGB>0?numBlocks.toLocaleString():'0';
+    $('#blk-conc').textContent=leftoverGB>0?maxReqs2048.toLocaleString()+'×':'—';
+
+    const wPct=Math.min(100,paramsGB/GPU_VRAM_GB*100);
+    const oPct=Math.min(100-wPct,OVERHEAD_GB/GPU_VRAM_GB*100);
+    const poolPct=Math.max(0,100-wPct-oPct);
+    $('#vram-track').innerHTML=
+      `<div class="vram-seg weights" style="width:${wPct}%">${fmtGBnum(paramsGB)}</div>`+
+      `<div class="vram-seg overhead" style="width:${oPct}%">${fmtGBnum(OVERHEAD_GB)}</div>`+
+      (poolPct>0?`<div class="vram-seg pool" style="width:${poolPct}%">${fmtGBnum(Math.max(0,leftoverGB))} for KV</div>`:'');
+
+    if(leftoverGB<=0){
+      $('#vram-read').innerHTML=`<b style="color:var(--waste)">Doesn't fit on one 80GB GPU</b> — the weights alone (${fmtGBnum(paramsGB)}) leave no room for a KV block pool. This model must be split across multiple GPUs before any KV math applies.`;
+    } else {
+      $('#vram-read').innerHTML=`After weights and overhead, <b style="color:var(--sky)">${fmtGBnum(leftoverGB)}</b> is left → <b>${numBlocks.toLocaleString()} block IDs</b> × 16 tokens = room for about <b>${maxReqs2048.toLocaleString()}</b> concurrent 2048-token requests (fewer if requests run longer, more if shorter — same pool, different slicing).`;
+    }
+  }
+
+  function renderAll(){ renderAlloc(); renderBlockSizing(); }
+  $('#blk-model').addEventListener('change',renderAll);
+  $('#alloc-prompt').addEventListener('change',renderAlloc);
+  renderAll();
+})();
 </script>
 </body>
 </html>
