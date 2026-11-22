@@ -1,0 +1,435 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>LLM serving · Step 10 — llm-d: many vLLMs as a team</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F7F8FA;--surface:#FFFFFF;--line:#E3E7EE;--line-strong:#CBD3DF;
+    --ink:#1B2433;--muted:#5C6675;--faint:#8B94A3;
+    --kv:#7C3AED;--sky:#0284C7;--sky-soft:#E0F2FE;--sky-line:#A5D8F0;  /* paged = sky */
+    --waste:#E03131;--good:#0CA678;--amber:#D9480F;
+    --r1:#0284C7;--r2:#7C3AED;--r3:#0CA678;--r4:#D9480F;  /* request colors */
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+    --disp:'Space Grotesk',system-ui,sans-serif;--body:'Inter',system-ui,sans-serif;
+  }
+
+  /* ── dark mode ── */
+  [data-theme="dark"]{
+    --bg:#18191f;
+    --surface:#22262e;
+    --line:#2d3240;
+    --line-strong:#3d4455;
+    --ink:#dde3ee;
+    --muted:#8b94a8;
+    --faint:#5c6475;
+    --tok-soft:#0a2f32;
+    --tok-line:#1a5c62;
+    --vec-soft:#1a1847;
+    --vec-line:#3730a3;
+  }
+  *{box-sizing:border-box}html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:880px;margin:0 auto;padding:32px 22px 120px}
+  header{padding:18px 0 30px;border-bottom:1px solid var(--line)}
+  .kicker{font-family:var(--mono);font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--sky);font-weight:600}
+  h1{font-family:var(--disp);font-weight:700;font-size:clamp(26px,5vw,42px);line-height:1.08;margin:.35em 0 .25em;letter-spacing:-.015em}
+  .lede{color:var(--muted);max-width:62ch;font-size:17px}
+  .recap{font-family:var(--mono);font-size:12px;color:var(--faint);margin-top:14px}
+  .recap b{color:var(--sky)}
+  section{margin-top:48px}
+  .eyebrow{display:flex;align-items:baseline;gap:12px;margin-bottom:8px}
+  .eyebrow .idx{font-family:var(--mono);font-size:13px;font-weight:600;color:#fff;background:var(--sky);border-radius:6px;padding:2px 8px}
+  .eyebrow .lbl{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+  h2{font-family:var(--disp);font-weight:600;font-size:24px;margin:.1em 0 .3em;letter-spacing:-.01em}
+  section>p{color:var(--muted);max-width:64ch}section>p b{color:var(--ink);font-weight:600}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px;margin-top:18px}
+  .card h3{font-family:var(--disp);font-size:14px;font-weight:600;margin:0 0 12px;color:var(--ink)}
+  label.fld{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin:0 0 6px}
+  select{font-family:var(--body);font-size:15px;color:var(--ink);background:var(--bg);border:1px solid var(--line-strong);border-radius:9px;padding:8px 12px;cursor:pointer}
+  :focus-visible{outline:2px solid var(--sky);outline-offset:2px}
+  code{font-family:var(--mono);font-size:.88em;background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+  .small{font-size:13px;color:var(--muted)}
+  .note{border-left:3px solid var(--sky-line);background:var(--sky-soft);border-radius:0 10px 10px 0;padding:12px 16px;margin-top:16px;font-size:14px;color:#075985}
+  .note b{font-weight:600}
+  details{margin-top:12px}summary{cursor:pointer;font-family:var(--mono);font-size:12px;color:var(--sky);font-weight:600}
+  .btn{font-family:var(--body);font-size:14px;font-weight:500;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);padding:9px 16px;border-radius:9px;cursor:pointer}
+  .btn:hover{border-color:var(--sky)}.btn.primary{background:var(--sky);color:#fff;border-color:var(--sky)}
+  .btn:disabled{opacity:.4;cursor:default}
+  .controls{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;align-items:center}
+
+  /* toggle */
+  .seg-toggle{display:inline-flex;border:1px solid var(--line-strong);border-radius:9px;overflow:hidden}
+  .seg-toggle button{font-family:var(--body);font-size:13.5px;border:0;background:var(--bg);color:var(--muted);padding:8px 16px;cursor:pointer}
+  .seg-toggle button.active{background:var(--sky);color:#fff}
+
+  /* memory bar (naive contiguous) */
+  .memwrap{margin-top:8px}
+  .memrow{display:flex;height:38px;border:1px solid var(--line-strong);border-radius:8px;overflow:hidden;background:var(--bg)}
+  .memrow .blk{display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:10px;color:#fff;border-right:1px solid rgba(255,255,255,.5);position:relative}
+  .memrow .blk.wasted{background:repeating-linear-gradient(45deg,#f3b0b0,#f3b0b0 5px,#fadbdb 5px,#fadbdb 10px);color:#a01;}
+  .memrow .blk.free{background:var(--bg);color:var(--faint)}
+  .util-meter{display:flex;align-items:center;gap:12px;margin-top:12px}
+  .util-meter .big{font-family:var(--disp);font-size:30px;font-weight:700}
+  .util-meter .lbl{font-size:12px;color:var(--muted)}
+
+  /* paged grid */
+  .pagegrid{display:grid;grid-template-columns:repeat(12,1fr);gap:4px;margin-top:8px}
+  .pageblk{aspect-ratio:1;border-radius:5px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:9px;color:#fff;background:var(--bg);border:1px solid var(--line)}
+  .pageblk.free{background:var(--bg);color:var(--line-strong);border:1px dashed var(--line-strong)}
+  .pageblk.partial{opacity:.55}
+  .reqstat{display:flex;flex-direction:column;gap:4px;font-family:var(--mono);font-size:11.5px}
+  .reqstat .rs-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .reqstat .rs-tag{width:28px;height:19px;border-radius:5px;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:9px;flex:0 0 28px}
+  .reqstat .rs-note{color:var(--muted)}
+  .reqstat .rs-boxed{color:var(--waste);font-weight:600}
+  .reqstat .rs-grow{color:var(--good);font-weight:600}
+  /* side-by-side naive vs paged */
+  .sbs{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:620px){.sbs{grid-template-columns:1fr}}
+  .sbs-panel{border:1px solid var(--line);border-radius:11px;padding:12px;background:var(--bg)}
+  .sbs-head{font-family:var(--disp);font-weight:700;font-size:13px;margin-bottom:8px;text-align:center}
+  .sbs-grid{grid-template-columns:repeat(8,1fr)!important;gap:3px}
+  .sbs-panel .util-meter{margin-top:8px}
+  .sbs-panel .util-meter .big{font-size:22px}
+  .sbs-panel .util-meter .lbl{font-size:10.5px}
+
+  /* block table */
+  .blocktable{font-family:var(--mono);font-size:12px;margin-top:8px}
+  .bt-row{display:flex;align-items:center;gap:8px;margin:3px 0}
+  .bt-logical{background:var(--sky-soft);border:1px solid var(--sky-line);color:#075985;border-radius:6px;padding:3px 9px;min-width:120px}
+  .bt-arrow{color:var(--faint)}
+  .bt-physical{border-radius:6px;padding:3px 9px;color:#fff;font-weight:500}
+
+  /* batching timeline */
+  .timeline{margin-top:8px}
+  .tl-row{display:flex;align-items:center;gap:8px;margin:5px 0;font-family:var(--mono);font-size:11px}
+  .tl-label{width:54px;color:var(--muted);flex:0 0 54px}
+  .tl-track{flex:1;display:flex;height:24px;border-radius:5px;overflow:hidden;background:var(--bg);border:1px solid var(--line)}
+  .tl-seg{display:flex;align-items:center;justify-content:center;color:#fff;font-size:9px}
+  .tl-seg.idle{background:repeating-linear-gradient(45deg,#e3e7ee,#e3e7ee 4px,#f0f2f5 4px,#f0f2f5 8px);color:var(--faint)}
+
+  /* result stat cards */
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:6px}
+  @media(max-width:560px){.stats{grid-template-columns:1fr}}
+  .statcard{border:1px solid var(--sky-line);background:var(--sky-soft);border-radius:11px;padding:14px;text-align:center}
+  .statcard .v{font-family:var(--disp);font-size:26px;font-weight:700;color:var(--sky)}
+  .statcard .l{font-size:11px;color:#075985;margin-top:2px}
+
+  /* block anatomy + VRAM budget (sizing the block pool) */
+  .formula{font-family:var(--mono);font-size:12.5px;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-top:14px;line-height:1.9;overflow-x:auto;white-space:nowrap}
+  .formula .hl{color:var(--sky);font-weight:600}
+  .blockviz{display:flex;gap:22px;justify-content:center;flex-wrap:wrap;margin-top:10px;padding:6px 0}
+  .blk-col{display:flex;flex-direction:column;align-items:center;gap:3px}
+  .blk-col .hdr{font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:4px;font-weight:600}
+  .blk-cell{width:20px;height:14px;border-radius:3px}
+  .blk-cell.k{background:var(--kv);opacity:.85}
+  .blk-cell.v{background:var(--good);opacity:.85}
+  .blk-brace{display:flex;align-items:center;font-family:var(--mono);font-size:10.5px;color:var(--faint)}
+  .vram-track{display:flex;height:38px;border-radius:8px;overflow:hidden;background:var(--bg);border:1px solid var(--line-strong);margin-top:10px}
+  .vram-seg{display:flex;align-items:center;justify-content:center;color:#fff;font-family:var(--mono);font-size:10px;white-space:nowrap;overflow:hidden}
+  .vram-seg.weights{background:var(--faint)}
+  .vram-seg.overhead{background:var(--waste);opacity:.75}
+  .vram-seg.pool{background:var(--sky)}
+  .vram-legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:8px;font-size:11px;color:var(--muted);font-family:var(--mono)}
+  .vram-legend span{display:inline-flex;align-items:center;gap:5px}
+  .vram-legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
+
+  /* block anatomy — grouped K / V panels */
+  .blk-group{display:flex;flex-direction:column;align-items:center;gap:5px}
+  .blk-group .glabel{font-family:var(--disp);font-weight:600;font-size:12px}
+  .blk-heads{display:flex;gap:8px}
+  .blk-axis{display:flex;flex-direction:column;align-items:flex-end;justify-content:center;font-family:var(--mono);font-size:10px;color:var(--faint);line-height:1.2;text-align:right}
+
+  /* per-layer stacking visual */
+  .layerstack{display:flex;flex-direction:column;gap:4px;margin-top:6px}
+  .layer-row{display:flex;align-items:center;gap:10px}
+  .layer-tag{font-family:var(--mono);font-size:10px;color:var(--muted);width:70px;flex:0 0 70px;text-align:right}
+  .layer-blocks{display:flex;gap:4px}
+  .layer-blk{min-width:30px;height:20px;padding:0 4px;border-radius:4px;background:var(--sky);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:9px;color:#fff;font-weight:600}
+  .layer-blk.partial{background:repeating-linear-gradient(45deg,var(--sky),var(--sky) 4px,#7dc4e8 4px,#7dc4e8 8px)}
+  .layer-ellipsis{font-family:var(--mono);color:var(--faint);font-size:13px;padding-left:80px;letter-spacing:.15em}
+  .mult{font-family:var(--mono);font-size:14px;text-align:center;margin-top:14px;padding:12px;background:var(--bg);border:1px solid var(--line);border-radius:10px}
+  .mult b{color:var(--sky);font-weight:700}
+  .mult .big{font-size:20px}
+
+  /* real tokens filling 16-slot blocks */
+  .tokfill{display:flex;gap:14px;flex-wrap:wrap;margin-top:12px}
+  .tblock{border:1.5px solid var(--sky-line);border-radius:10px;padding:9px;background:var(--surface)}
+  .tblock .th{font-family:var(--mono);font-size:10px;color:var(--sky);margin-bottom:7px;font-weight:600}
+  .tblock .th .part{color:var(--waste)}
+  .tgrid{display:grid;grid-template-columns:repeat(4,minmax(38px,1fr));gap:3px}
+  .tslot{height:24px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:10px;background:var(--bg);border:1px solid var(--line-strong);color:var(--ink);overflow:hidden;padding:0 3px;white-space:nowrap}
+  .tslot.empty{background:transparent;border:1px dashed var(--line-strong);color:var(--faint)}
+  .tflow{font-family:var(--mono);font-size:11px;color:var(--faint);text-align:center;margin:6px 0 0}
+
+  /* scattered physical pool + block-table linking */
+  .physstrip{display:grid;grid-template-columns:repeat(12,1fr);gap:4px;margin:8px 0}
+  .pcell{aspect-ratio:1;border-radius:5px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:9px;border:1px solid var(--line);color:var(--faint)}
+  .pcell.free{border:1px dashed var(--line-strong);background:transparent}
+  .pcell.other{background:var(--line);color:var(--faint)}
+  .pcell.mine{background:var(--sky);color:#fff;font-weight:700;border-color:var(--sky)}
+  .readbox{font-family:var(--mono);font-size:12px;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:11px 13px;margin-top:12px;line-height:1.7}
+  .readbox b{color:var(--sky)}
+
+  /* block sharing across requests */
+  .share-tables{display:flex;gap:22px;flex-wrap:wrap;margin-top:6px}
+  .share-col{flex:1;min-width:220px}
+  .share-col .ct{font-family:var(--disp);font-weight:600;font-size:13px;margin-bottom:8px}
+  .share-bt{display:flex;flex-direction:column;gap:4px;font-family:var(--mono);font-size:11.5px}
+  .sbt-row{display:flex;align-items:center;gap:6px}
+  .sbt-log{color:var(--muted);white-space:nowrap}
+  .sbt-phys{border-radius:6px;padding:2px 8px;color:#fff;font-weight:600;white-space:nowrap}
+  .sbt-phys.shared{background:var(--kv)}
+  .sbt-phys.uniq{background:var(--sky)}
+  .sbt-phys.cow{background:var(--good)}
+  .sbt-tag{font-size:9.5px;color:var(--kv);font-weight:600}
+  .poolrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .poolbox{position:relative;border-radius:8px;padding:9px 12px;color:#fff;font-family:var(--mono);font-size:11px;font-weight:600;text-align:center}
+  .poolbox .rc{position:absolute;top:-8px;right:-8px;background:var(--ink);color:#fff;border-radius:10px;font-size:9px;padding:1px 6px;font-weight:700}
+  .poolbox.shared{background:var(--kv)}.poolbox.uniq{background:var(--sky)}.poolbox.cow{background:var(--good)}
+  .poolbox.freeb{background:transparent;border:1px dashed var(--line-strong);color:var(--faint)}
+
+  .next{margin-top:56px;padding:22px;border:1px solid var(--sky-line);border-radius:14px;background:var(--sky-soft)}
+  .next h3{font-family:var(--disp);font-size:16px;margin:0 0 6px;color:#075985}.next p{color:#0369a1;font-size:14px;margin:0}
+  .pill{display:inline-block;font-family:var(--mono);font-size:11px;color:#075985;background:var(--sky-soft);border:1px solid var(--sky-line);border-radius:20px;padding:2px 10px;margin-top:10px;text-decoration:none;cursor:pointer;}
+  .src{font-size:11px;color:var(--faint);margin-top:8px;font-family:var(--mono)}
+
+  /* ---- injected series navigator (consistent across all 11 steps) ---- */
+  .series-nav{display:flex;flex-direction:column;align-items:center;gap:7px;padding:10px 0 14px;margin-bottom:4px}
+  .sn-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center}
+  .sn-chips{display:flex;gap:5px}
+  .sn-chip{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:13px;font-weight:600;text-decoration:none;color:var(--muted);background:var(--bg);border:1px solid var(--line-strong);transition:all .12s}
+  .sn-chip:hover{border-color:var(--ink);color:var(--ink)}
+  .sn-chip.current{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+  .sn-navbtn{font-family:var(--mono);font-size:12px;color:var(--muted);text-decoration:none;padding:6px 11px;border:1px solid var(--line-strong);border-radius:8px;white-space:nowrap;transition:all .12s}
+  .sn-navbtn:hover{border-color:var(--ink);color:var(--ink)}
+  .sn-navbtn.disabled{opacity:.28;pointer-events:none}
+  .sn-caption{font-family:var(--mono);font-size:11.5px;color:var(--faint);letter-spacing:.03em}
+  .sn-caption b{color:var(--ink);font-weight:600}
+  @media(max-width:560px){.sn-chip{width:26px;height:26px;font-size:11px}.sn-navbtn{padding:5px 8px;font-size:11px}}
+</style>
+<script>(function(){
+  var t=localStorage.getItem('theme')||(window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
+  document.documentElement.setAttribute('data-theme',t);
+  window.addEventListener('storage',function(e){
+    if(e.key==='theme') document.documentElement.setAttribute('data-theme',e.newValue||'light');
+  });
+})()</script>
+</head>
+<body>
+<div class="wrap">
+
+<nav class="series-nav" aria-label="Series navigation">
+  <div class="sn-bar"><a class="sn-navbtn" href="llm-step9-pagedattention-vllm.html">‹ prev</a><div class="sn-chips"><a class="sn-chip" href="llm-step1-tokens-and-embeddings.html" title="Step 1: Tokens & Embeddings">1</a><a class="sn-chip" href="llm-step2-position-and-prediction.html" title="Step 2: Position & Prediction">2</a><a class="sn-chip" href="llm-step3-self-attention.html" title="Step 3: Self-Attention">3</a><a class="sn-chip" href="llm-step4-transformer-block.html" title="Step 4: Transformer Block">4</a><a class="sn-chip" href="llm-step5-training.html" title="Step 5: Training">5</a><a class="sn-chip" href="llm-step6-generation.html" title="Step 6: Generation">6</a><a class="sn-chip" href="llm-step7-kv-cache.html" title="Step 7: KV Cache">7</a><a class="sn-chip" href="llm-step8-memory-wall.html" title="Step 8: The Memory Wall">8</a><a class="sn-chip" href="llm-step9-pagedattention-vllm.html" title="Step 9: PagedAttention & vLLM">9</a><span class="sn-chip current" title="llm-d">10</span><a class="sn-chip" href="llm-step11-alternatives-whole-picture.html" title="Step 11: SGLang, Ray Serve & the Whole Picture">11</a></div><a class="sn-navbtn" href="llm-step11-alternatives-whole-picture.html">next ›</a></div>
+  <div class="sn-caption">Step <b>10</b> of 11 &middot; <b>llm-d</b> &middot; LLM from scratch</div>
+</nav>
+
+<header>
+  <div class="kicker">Intuition-first LLMs · Step 10 of 11 — Serving at scale</div>
+  <h1>llm-d: many vLLMs working as a team</h1>
+  <p class="lede">vLLM (Step 9) runs one model well on one machine. A real service runs many copies on a cluster, and then two new
+    questions appear: <b>which copy should get this request?</b> and <b>should every copy do both phases of the job?</b>
+    <b>llm-d</b> is an open-source project, led by Red Hat with partners, that answers them <i>on top of</i> vLLM. We keep following
+    <b>"The king sat on the ___"</b>.</p>
+  <div class="recap">Builds on <b>Step 7 (prefill vs. decode)</b> and <b>Step 9 (blocks, prefix sharing)</b>. Some details of llm-d change quickly; where I could not verify a point it is marked as such.</div>
+</header>
+
+<!-- THE PROBLEM -->
+<section>
+  <div class="eyebrow"><span class="idx">01</span><span class="lbl">The Problem First</span></div>
+  <h2>One vLLM per box is not a service</h2>
+  <p>Picture three vLLM pods (a <b>pod</b> is Kubernetes' unit of running software; here, typically a vLLM server with one or more GPUs).
+    A request arrives: a long shared system prompt followed by our question <b>"The king sat on the"</b>. Two things go wrong with a naive setup:</p>
+  <div class="card">
+    <div style="display:flex;flex-direction:column;gap:10px;font-size:14px">
+      <div><b>1 · A plain load balancer ignores the cache.</b> Step 9 showed prefix caching saves the work of re-reading a shared prompt — but each pod has its <i>own</i> cache.
+        Send the request to a pod that has never seen the system prompt and you prefill it all again, even though another pod already holds it.</div>
+      <div><b>2 · Prefill and decode fight each other.</b> Step 7: prefill pushes a whole prompt through at once (compute-bound); decode makes one token per step and
+        waits on memory (memory-bound). On one GPU, a long prefill stalls everybody else's tokens.</div>
+    </div>
+  </div>
+  <p style="margin-top:12px">llm-d keeps <b>vLLM as the engine inside each pod</b> (blocks, PagedAttention, continuous batching, prefix caching) and adds a coordinator around the engines:</p>
+  <div class="card">
+    <div style="display:grid;grid-template-columns:auto 1fr;gap:8px 16px;font-size:13px;align-items:start">
+      <b style="color:var(--amber)">Kubernetes / OpenShift</b><span>runs the pods</span>
+      <b style="color:var(--sky)">llm-d</b><span>routes requests, can split prefill from decode, keeps track of which pod holds which blocks</span>
+      <b style="color:var(--kv)">vLLM (in each pod)</b><span>blocks, PagedAttention, continuous batching, prefix caching</span>
+      <b style="color:var(--good)">GPU</b><span>holds the model weights and the KV blocks</span>
+    </div>
+    <p class="small" style="margin-bottom:0;margin-top:10px;color:var(--faint)">A pod may also hold helper containers; I did not verify llm-d's exact pod layout. llm-d is reported to run both vLLM and SGLang as model servers.</p>
+  </div>
+</section>
+
+<!-- SMART ROUTING -->
+<section>
+  <div class="eyebrow"><span class="idx">02</span><span class="lbl">Smart Routing</span></div>
+  <h2>Send it where the blocks already are</h2>
+  <p>Each pod reports to the router when it stores or drops a block, so the router keeps a global index of who holds what. For a new request it scores every pod by
+    <b>how many leading blocks the pod already has</b> (cache) combined with <b>how busy it is</b> (load). Remember from Step 9: blocks are matched from the start and only
+    <i>full</i> 16-token blocks count. Try it — the request is a 32-token system prompt (2 full blocks) plus our 5-token question (a partial block that cannot be matched yet):</p>
+  <div class="card">
+    <div style="max-width:380px;margin-bottom:10px">
+      <label class="fld" for="rt-w" style="display:block;font-size:12px;color:var(--muted)">Router weighs: <b id="rt-wv">cache 50% · load 50%</b></label>
+      <input type="range" id="rt-w" min="0" max="100" step="5" value="50" style="width:100%">
+    </div>
+    <div style="overflow-x:auto"><table id="rt-table" style="border-collapse:collapse;font-size:13px;width:100%"></table></div>
+    <p class="small" id="rt-read" style="margin-top:10px;margin-bottom:0"></p>
+  </div>
+  <div class="note"><b>Score(pod) = matching leading blocks (cache) + free capacity (load).</b> Routing only on cache would pile everything onto one pod, so load is blended in.
+    Events from pods can arrive a moment late, so now and then the router's picture is slightly out of date. Prefix-aware routing is <i>not</i> a vLLM feature (vLLM only caches inside one pod): choosing the pod is the
+    router's job, which turns prefix caching from a per-machine trick into a cluster-wide one.</div>
+</section>
+
+<!-- DISAGGREGATION -->
+<section>
+  <div class="eyebrow"><span class="idx">03</span><span class="lbl">Splitting The Phases</span></div>
+  <h2>Prefill pods and decode pods</h2>
+  <p>llm-d can run some pods <b>only for prefill</b> and others <b>only for decode</b>, and move the KV blocks from one to the other. Step through our request:</p>
+  <div class="card">
+    <div id="pd-flow" style="display:flex;gap:10px;flex-wrap:wrap;align-items:stretch"></div>
+    <div id="pd-explain" class="small" style="margin-top:12px;min-height:44px"></div>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button id="pd-prev" class="pill" style="cursor:pointer;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink)">‹ Back</button>
+      <button id="pd-next" class="pill" style="cursor:pointer;border:1px solid var(--sky);background:var(--sky);color:#fff">Next step ›</button>
+      <button id="pd-reset" class="pill" style="cursor:pointer;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink)">Reset</button>
+    </div>
+  </div>
+  <div class="card">
+    <h3>What does moving the cache cost?</h3>
+    <p class="small" style="margin-top:0">The KV blocks of the prompt must be <b>copied</b> from the prefill pod to the decode pod (GPU memory to GPU memory over a fast network, using RDMA; llm-d uses NVIDIA's NIXL library for the transfer by default, as far as I could read).
+      Illustrative numbers — the prefill speed is an assumption, not a benchmark:</p>
+    <div class="row" style="display:flex;gap:18px;flex-wrap:wrap">
+      <div style="min-width:220px;flex:1"><label class="fld" for="cp-len" style="display:block;font-size:12px;color:var(--muted)">Prompt length: <b id="cp-lenv">8,000 tokens</b></label>
+        <input type="range" id="cp-len" min="100" max="64000" step="100" value="8000" style="width:100%"></div>
+      <div style="min-width:220px;flex:1"><label class="fld" for="cp-net" style="display:block;font-size:12px;color:var(--muted)">Network</label>
+        <select id="cp-net" style="width:100%"><option value="50">400 Gb/s RDMA (≈ 50 GB/s)</option><option value="12.5">100 GbE (≈ 12.5 GB/s)</option><option value="3">slow link (≈ 3 GB/s)</option></select></div>
+    </div>
+    <div style="overflow-x:auto;margin-top:10px"><table id="cp-table" style="border-collapse:collapse;font-size:13px;width:100%"></table></div>
+    <p class="small" id="cp-read" style="margin-top:10px;margin-bottom:0"></p>
+  </div>
+  <div class="note"><b>Gain:</b> decode pods never stall behind a long prefill, and the pools are sized separately (more prefill pods for long prompts, more decode pods for long answers).
+    <b>Cost:</b> the KV must be copied, so this needs a fast network. In the simple model above the copy and the prefill both grow in step with prompt length, so the <i>share</i> depends on the network and the model, not on the length (real prefill grows a little faster than linearly, which favours long prompts). What long prompts change is the stall: a long prefill sitting on a decode pod blocks every other request there, so splitting pays off with long prompts and heavy traffic, not short prompts on a small setup. Once decoding has started the request
+    stays on its decode pod, and every later K and V lands in that pod's own blocks. The prefill pod may keep its blocks as prefix cache until it needs the space, then evicts the least recently used.</div>
+</section>
+
+<!-- BEYOND GPU -->
+<section>
+  <div class="eyebrow"><span class="idx">04</span><span class="lbl">What It Adds Up To</span></div>
+  <h2>vLLM is the engine; llm-d is the coordinator</h2>
+  <div class="card">
+    <div style="display:flex;flex-direction:column;gap:9px;font-size:14px">
+      <div><b>Smart routing</b> — requests go where their prefix blocks already are.</div>
+      <div><b>Prefill/decode disaggregation</b> — separate pods for the two phases, KV blocks moved between them.</div>
+      <div><b>Cache beyond the GPU</b> — warm blocks in GPU memory, cooler ones in CPU memory or on disk (reported by the project).</div>
+      <div><b>Runs on Kubernetes or OpenShift</b> — with vLLM and SGLang as supported model servers (reported by the project).</div>
+    </div>
+    <p class="small" style="margin-bottom:0;margin-top:12px;color:var(--faint)">Claims about speedups come from each project's own benchmarks; test on your own traffic.</p>
+  </div>
+</section>
+
+<section>
+  <div class="card">
+    <h3>Read more: llm-d and disaggregated serving</h3>
+    
+    <ul style="margin:6px 0 0 20px;line-height:1.8;font-size:14px">
+      <li><a href="https://llm-d.ai" target="_blank" rel="noopener">llm-d project site</a></li>
+      <li><a href="https://github.com/llm-d/llm-d" target="_blank" rel="noopener">llm-d on GitHub</a> — the scheduler, deployment recipes and benchmarks</li>
+      <li><a href="https://github.com/ai-dynamo/nixl" target="_blank" rel="noopener">NIXL</a> — the transfer library used to move KV blocks between pods</li>
+      <li><a href="https://arxiv.org/abs/2401.09670" target="_blank" rel="noopener">DistServe paper (Zhong et al., 2024)</a> — the case for splitting prefill and decode onto separate GPUs</li>
+      <li><a href="https://docs.vllm.ai" target="_blank" rel="noopener">vLLM documentation</a> — the engine each llm-d pod runs</li>
+    </ul>
+  </div>
+</section>
+
+<div class="next">
+  <h3>Where this is heading</h3>
+  <p>llm-d is one way to turn many vLLM engines into a service. Two questions remain: are there other <i>engines</i> with a different way of remembering prefixes (SGLang), and other ways to run engines as a cluster
+    (Ray Serve)? Step 11 compares them and ties the whole series together.</p>
+  <a class="pill" style="opacity:.65" href="llm-step9-pagedattention-vllm.html">◂ Back · Step 9</a>
+  <a class="pill" href="llm-step11-alternatives-whole-picture.html">Next ▸ Step 11 · Alternatives &amp; the whole picture</a>
+</div>
+
+<footer style="margin-top:44px;padding-top:16px;border-top:1px solid var(--line);font-size:12px;line-height:1.55;color:var(--faint);font-style:italic">
+  ✦ This 11-part series was co-written with Claude (Anthropic). It favours intuition over rigour and may contain bugs or simplifications — corrections and feedback are very welcome.
+</footer>
+
+</div>
+<script>
+const $=s=>document.querySelector(s);
+
+/* ---------- 2. smart routing ---------- */
+const BS=16, REQ_BLOCKS=2, REQ_TOKENS=32+5;       // 2 full shared blocks + 5-token question
+const PODS=[
+  {name:'P1', cached:2, load:.85, note:'holds the system prompt (blocks 0 and 1)'},
+  {name:'P2', cached:1, load:.40, note:'holds block 0 only (an older version of the prompt)'},
+  {name:'P3', cached:0, load:.10, note:'has never seen this prompt'},
+];
+function renderRoute(){
+  const w=+$('#rt-w').value/100;
+  $('#rt-wv').textContent=`cache ${Math.round(w*100)}% · load ${Math.round((1-w)*100)}%`;
+  const rows=PODS.map(p=>({...p,score:w*(p.cached/REQ_BLOCKS)+(1-w)*(1-p.load),toPrefill:REQ_TOKENS-p.cached*BS}));
+  const best=rows.reduce((a,b)=>b.score>a.score?b:a), lb=PODS.reduce((a,b)=>b.load<a.load?b:a);
+  const th=s=>`<th style="padding:6px 10px;text-align:left;font-size:11px;font-weight:600;color:var(--faint);border-bottom:1px solid var(--line)">${s}</th>`;
+  const td=(s,hl)=>`<td style="padding:6px 10px;border-bottom:1px solid var(--line);${hl?'background:rgba(2,132,199,.10);':''}font-family:var(--mono)">${s}</td>`;
+  let h=`<thead><tr>${th('pod')}${th('cache it holds')}${th('leading blocks matched')}${th('load')}${th('score')}${th('tokens it must prefill')}</tr></thead><tbody>`;
+  rows.forEach(r=>{ const hl=r.name===best.name; h+=`<tr>${td('<b>'+r.name+(hl?' ✓':'')+'</b>',hl)}${td('<span style="font-family:var(--body);font-size:12px">'+r.note+'</span>',hl)}${td(r.cached+' / '+REQ_BLOCKS,hl)}${td(Math.round(r.load*100)+'% busy',hl)}${td(r.score.toFixed(2),hl)}${td(r.toPrefill+' of '+REQ_TOKENS,hl)}</tr>`; });
+  $('#rt-table').innerHTML=h+'</tbody>';
+  const lbRow=rows.find(r=>r.name===lb.name);
+  $('#rt-read').innerHTML=`A plain load balancer picks the least busy pod, <b>${lb.name}</b>, which must prefill all ${lbRow.toPrefill} tokens. The router picks <b>${best.name}</b>, which only prefills ${best.toPrefill} tokens`+
+    (best.name===lb.name?' (here the two agree, because load dominates).':` — ${lbRow.toPrefill-best.toPrefill} fewer tokens of work, at the price of sending the request to a busier pod.`)+
+    ` Slide the weight to see the trade-off: all-load behaves like the plain balancer; all-cache ignores how busy the pod is.`;
+}
+$('#rt-w').addEventListener('input',renderRoute); renderRoute();
+
+/* ---------- 3. prefill / decode hand-off ---------- */
+const PD=[
+  {a:['router'], t:'The router receives the request ("… The king sat on the") and picks a prefill pod, <b>P1</b>.'},
+  {a:['P1'], t:'<b>P1 prefills</b>: one pass over all the prompt tokens, writing their K and V into its block (say physical block 7), in every layer — exactly the prefill of Step 7.'},
+  {a:['router','P1','meta'], t:'P1 returns a small piece of <b>metadata</b> saying where those blocks live. The router hands it to a decode pod, <b>D1</b>.'},
+  {a:['P1','D1','copy'], t:'<b>D1 pulls the blocks</b> straight from P1\'s GPU memory over a fast network (RDMA) into free blocks of its own — here block 5. The number differs because each pod has its own pool.'},
+  {a:['D1'], t:'<b>D1 decodes</b>: "throne" and every later token get their K and V written into D1\'s own blocks. P1 is no longer involved and moves on to the next prompt.'},
+];
+let pdStep=0;
+function renderPD(){
+  const on=PD[pdStep].a;
+  const box=(id,title,sub,body,c)=>`<div style="flex:1;min-width:190px;padding:12px;border:2px solid ${on.includes(id)?c:'var(--line)'};border-radius:12px;opacity:${on.includes(id)||id==='router'?1:.45}"><div style="font-weight:700;color:${c}">${title}</div><div class="small" style="margin:2px 0 8px">${sub}</div>${body}</div>`;
+  const blk=(label,filled,c)=>`<div style="display:inline-block;padding:4px 8px;border-radius:6px;border:1px solid ${c};font-family:var(--mono);font-size:11px;background:${filled?c:'transparent'};color:${filled?'#fff':'var(--faint)'}">${label}</div>`;
+  const p1=pdStep>=1?blk('block 7: The·king·sat·on·the…',true,'var(--sky)'):blk('free',false,'var(--faint)');
+  const d1=pdStep>=3?blk('block 5: (copied)',pdStep>=3,'var(--good)')+(pdStep>=4?' '+blk('+ throne',true,'var(--good)'):''):blk('free',false,'var(--faint)');
+  $('#pd-flow').innerHTML=
+    box('router','Router (llm-d)','picks pods, passes metadata',`<div class="small">${pdStep>=2?'has: "blocks are on P1, block 7"':'&nbsp;'}</div>`,'var(--amber)')+
+    box('P1','P1 · prefill pod','compute-bound',p1,'var(--sky)')+
+    `<div style="align-self:center;font-size:12px;color:${on.includes('copy')?'var(--good)':'var(--faint)'};font-family:var(--mono);text-align:center">${on.includes('copy')?'⇒ RDMA copy ⇒':'—'}</div>`+
+    box('D1','D1 · decode pod','memory-bound',d1,'var(--good)');
+  $('#pd-explain').innerHTML=`<b>Step ${pdStep+1} of ${PD.length}.</b> `+PD[pdStep].t;
+}
+$('#pd-next').onclick=()=>{pdStep=Math.min(PD.length-1,pdStep+1);renderPD();};
+$('#pd-prev').onclick=()=>{pdStep=Math.max(0,pdStep-1);renderPD();};
+$('#pd-reset').onclick=()=>{pdStep=0;renderPD();};
+renderPD();
+
+/* ---------- copy-cost calculator (illustrative) ---------- */
+function renderCopy(){
+  const n=+$('#cp-len').value, gbps=+$('#cp-net').value, KIB=128, PREFILL_TPS=20000;   // assumptions
+  $('#cp-lenv').textContent=n.toLocaleString()+' tokens';
+  const bytes=n*KIB*1024, copyMs=bytes/(gbps*1e9)*1000, prefillMs=n/PREFILL_TPS*1000;
+  const fmt=b=>b>=2**30?(b/2**30).toFixed(2)+' GiB':(b/2**20).toFixed(0)+' MiB';
+  const th=s=>`<th style="padding:6px 10px;text-align:left;font-size:11px;font-weight:600;color:var(--faint);border-bottom:1px solid var(--line)">${s}</th>`;
+  const td=s=>`<td style="padding:6px 10px;border-bottom:1px solid var(--line);font-family:var(--mono)">${s}</td>`;
+  $('#cp-table').innerHTML=`<thead><tr>${th('KV cache to move (128 KiB/token, Llama-3 8B)')}${th('copy time')}${th('prefill time on one GPU (assumed 20k tokens/s)')}${th('copy as share of prefill')}</tr></thead><tbody><tr>${td('<b>'+fmt(bytes)+'</b>')}${td(copyMs.toFixed(0)+' ms')}${td(prefillMs.toFixed(0)+' ms')}${td((copyMs/prefillMs*100).toFixed(0)+'%')}</tr></tbody>`;
+  $('#cp-read').innerHTML=copyMs<prefillMs*0.25
+    ?`The copy is small next to the prefill it moves off the decode pods, so splitting the phases is likely worth it here.`
+    :copyMs<prefillMs
+      ?`The copy is a noticeable fraction of the prefill. Splitting may still pay off for heavy traffic, but the network matters.`
+      :`The copy takes <b>longer than the prefill itself</b> — on this link, splitting the phases would not pay off for this prompt.`;
+  $('#cp-read').innerHTML+=` <span style="color:var(--faint)">Drag the length slider: the percentage barely moves, because both times scale with the prompt. Change the network instead.</span>`;
+}
+$('#cp-len').addEventListener('input',renderCopy); $('#cp-net').addEventListener('change',renderCopy); renderCopy();
+</script>
+</body>
+</html>

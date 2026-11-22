@@ -199,13 +199,13 @@
   .pill{display:inline-block;font-family:var(--mono);font-size:11px;color:#075985;background:var(--sky-soft);border:1px solid var(--sky-line);border-radius:20px;padding:2px 10px;margin-top:10px;text-decoration:none;cursor:pointer;}
   .src{font-size:11px;color:var(--faint);margin-top:8px;font-family:var(--mono)}
 
-  /* ---- injected series navigator (consistent across all 9 steps) ---- */
+  /* ---- injected series navigator (consistent across all 11 steps) ---- */
   .series-nav{display:flex;flex-direction:column;align-items:center;gap:7px;padding:10px 0 14px;margin-bottom:4px}
   .sn-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center}
   .sn-chips{display:flex;gap:5px}
   .sn-chip{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:13px;font-weight:600;text-decoration:none;color:var(--muted);background:var(--bg);border:1px solid var(--line-strong);transition:all .12s}
   .sn-chip:hover{border-color:var(--ink);color:var(--ink)}
-  .sn-chip.current{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .sn-chip.current{background:var(--ink);color:var(--bg);border-color:var(--ink)}
   .sn-navbtn{font-family:var(--mono);font-size:12px;color:var(--muted);text-decoration:none;padding:6px 11px;border:1px solid var(--line-strong);border-radius:8px;white-space:nowrap;transition:all .12s}
   .sn-navbtn:hover{border-color:var(--ink);color:var(--ink)}
   .sn-navbtn.disabled{opacity:.28;pointer-events:none}
@@ -226,12 +226,12 @@
 
 
 <nav class="series-nav" aria-label="Series navigation">
-  <div class="sn-bar"><a class="sn-navbtn" href="llm-step8-memory-wall.html">‹ prev</a><div class="sn-chips"><a class="sn-chip" href="llm-step1-tokens-and-embeddings.html" title="Step 1: Tokens & Embeddings">1</a><a class="sn-chip" href="llm-step2-position-and-prediction.html" title="Step 2: Position & Prediction">2</a><a class="sn-chip" href="llm-step3-self-attention.html" title="Step 3: Self-Attention">3</a><a class="sn-chip" href="llm-step4-transformer-block.html" title="Step 4: Transformer Block">4</a><a class="sn-chip" href="llm-step5-training.html" title="Step 5: Training">5</a><a class="sn-chip" href="llm-step6-generation.html" title="Step 6: Generation">6</a><a class="sn-chip" href="llm-step7-kv-cache.html" title="Step 7: KV Cache">7</a><a class="sn-chip" href="llm-step8-memory-wall.html" title="Step 8: The Memory Wall">8</a><span class="sn-chip current" title="PagedAttention & vLLM">9</span></div><span class="sn-navbtn disabled">next ›</span></div>
-  <div class="sn-caption">Step <b>9</b> of 9 &middot; <b>PagedAttention & vLLM</b> &middot; LLM from scratch</div>
+  <div class="sn-bar"><a class="sn-navbtn" href="llm-step8-memory-wall.html">‹ prev</a><div class="sn-chips"><a class="sn-chip" href="llm-step1-tokens-and-embeddings.html" title="Step 1: Tokens & Embeddings">1</a><a class="sn-chip" href="llm-step2-position-and-prediction.html" title="Step 2: Position & Prediction">2</a><a class="sn-chip" href="llm-step3-self-attention.html" title="Step 3: Self-Attention">3</a><a class="sn-chip" href="llm-step4-transformer-block.html" title="Step 4: Transformer Block">4</a><a class="sn-chip" href="llm-step5-training.html" title="Step 5: Training">5</a><a class="sn-chip" href="llm-step6-generation.html" title="Step 6: Generation">6</a><a class="sn-chip" href="llm-step7-kv-cache.html" title="Step 7: KV Cache">7</a><a class="sn-chip" href="llm-step8-memory-wall.html" title="Step 8: The Memory Wall">8</a><span class="sn-chip current" title="PagedAttention & vLLM">9</span><a class="sn-chip" href="llm-step10-llm-d-cluster-serving.html" title="Step 10: llm-d: Many vLLMs as a Team">10</a><a class="sn-chip" href="llm-step11-alternatives-whole-picture.html" title="Step 11: SGLang, Ray Serve & the Whole Picture">11</a></div><a class="sn-navbtn" href="llm-step10-llm-d-cluster-serving.html">next ›</a></div>
+  <div class="sn-caption">Step <b>9</b> of 11 &middot; <b>PagedAttention & vLLM</b> &middot; LLM from scratch</div>
 </nav>
 
 <header>
-  <div class="kicker">Intuition-first LLMs · Step 9 of 9 — Serving</div>
+  <div class="kicker">Intuition-first LLMs · Step 9 of 11 — Serving</div>
   <h1>PagedAttention &amp; vLLM: managing the cache</h1>
   <p class="lede">Step 7 introduced the KV cache; Step 8 showed it's <b>enormous</b> and hits a memory wall.
     Worse, its size per request grows and shrinks unpredictably — store it naively and you waste
@@ -244,10 +244,6 @@
 <section>
   <div class="eyebrow"><span class="idx">01</span><span class="lbl">The Waste</span></div>
   <h2>Why contiguous allocation bleeds memory</h2>
-  <p>The naive approach: when a request arrives, reserve one <b>contiguous</b> block of memory big enough
-    for the <i>maximum</i> sequence length it might reach — say 2048 tokens — even though it might only
-    generate 30. This creates two kinds of waste:</p>
-
   <div class="card" style="margin-bottom:14px">
     <h3>First — what is a "request"?</h3>
     <p class="small" style="margin-top:0">A <b>request</b> is one user's call to the model: their prompt
@@ -263,6 +259,19 @@
     <p class="small" style="margin-top:12px;border-top:1px solid var(--line);padding-top:10px">Each finishes
       at a different, <b>unpredictable</b> time — which is exactly what makes packing them into GPU memory hard.</p>
   </div>
+
+  <div class="card" style="margin-bottom:14px">
+    <h3>The problem, with our own sentence</h3>
+    <p class="small" style="margin-top:0">Step 7 says: keep the Keys and Values of <b>"The king sat on the"</b>. Step 8 says each token's K/V is
+      large (128 KiB per token for Llama-3 8B). The naive plan is to reserve, per request, one contiguous strip big
+      enough for the <i>longest answer it might ever give</i>. Say that maximum is 2,048 tokens:</p>
+    <div id="naive-own" style="font-family:var(--mono);font-size:13px"></div>
+    <p class="small" id="naive-own-read" style="margin-top:10px;margin-bottom:0"></p>
+  </div>
+
+  <p>The naive approach: when a request arrives, reserve one <b>contiguous</b> block of memory big enough
+    for the <i>maximum</i> sequence length it might reach — say 2048 tokens — even though it might only
+    generate 30. This creates two kinds of waste:</p>
 
   <div class="card">
     <h3>Naive contiguous KV allocation — 4 requests on a GPU</h3>
@@ -430,11 +439,36 @@
     "blocks that fit" count above is the real number vLLM would report.</div>
 </section>
 
+<!-- CONTINUOUS BATCHING -->
+<section>
+  <div class="eyebrow"><span class="idx">04</span><span class="lbl">The Scheduler</span></div>
+  <h2>Continuous batching keeps the GPU full</h2>
+  <p>Flexible block memory unlocks one more win. <b>Static batching</b> groups N requests, runs them
+    together, and waits for the <i>slowest</i> to finish before starting the next batch — so finished
+    sequences leave the GPU idle. <b>Continuous batching</b> slots a new request into a free spot the
+    instant one finishes. Compare:</p>
+  <p class="small">Under the hood the scheduler runs a small loop <b>at every token step</b>: finished requests
+    (end-of-sequence or max-tokens) leave and free their blocks → waiting requests join the batch → if memory
+    runs short, one request is paused (<i>preemption</i>) and resumed later. This bookkeeping happens on the
+    CPU; it is tiny next to a GPU step, but at very high speeds it becomes a real cost.</p>
+  <div class="card">
+    <div class="seg-toggle" id="batch-toggle" style="margin-bottom:14px">
+      <button data-mode="static">Static batching</button>
+      <button data-mode="continuous" class="active">Continuous batching</button>
+    </div>
+    <div class="timeline" id="batch-timeline"></div>
+    <div class="util-meter">
+      <span class="big" id="batch-util" style="color:var(--sky)">—</span>
+      <span class="lbl">GPU slot utilization across the run. Striped = idle slots (wasted compute).</span>
+    </div>
+  </div>
+</section>
+
 <!-- PREFIX SHARING -->
 <section>
-  <div class="eyebrow"><span class="idx">04</span><span class="lbl">Bonus Win</span></div>
+  <div class="eyebrow"><span class="idx">05</span><span class="lbl">Bonus Win</span></div>
   <h2>Sharing blocks across requests</h2>
-  <p><b>Yes — and it falls straight out of the block table.</b> A table is just a list of pointers, so two
+  <p>Continuous batching works because blocks are cheap to hand out and take back. The same flexibility gives one more win, and it falls straight out of the block table: a table is just a list of pointers, so two
     requests that begin with the <i>same</i> tokens can point their first few entries at the <b>same physical
     blocks</b> instead of each storing a copy. That's <b>prefix sharing</b>.</p>
 
@@ -480,36 +514,28 @@
     The moment one sequence needs to <i>write</i> a token into a shared block, vLLM copies just that one block
     first (refcount drops, a fresh block is allocated), so the others are unaffected. Prompts are read-only,
     so their blocks are typically never copied at all.</div>
+  <div class="note"><b>How vLLM finds shared blocks — and the fine print.</b> Every <i>full</i> block gets a
+    fingerprint: <code>hash(previous block's hash, this block's 16 token ids)</code>. A new request is matched
+    from its first block onward and reuses blocks until the first mismatch. Hence: (1) only <b>full</b>
+    16-token blocks are shared — a 5-token common start shares nothing; (2) the first difference ends the
+    sharing, even if later text matches again, because every hash includes the one before it; (3) put stable
+    text first (system prompt, examples) and changing text last (date, user name, question); (4) a chat's
+    next turn re-sends the old turns, so those blocks are reused and only the new question is prefilled.
+    Finished requests' blocks aren't wiped — they stay as a cache and the least-recently-used are evicted
+    when space runs out, so a follow-up after a long gap may have to re-prefill everything.</div>
   <div class="note"><b>Why it compounds.</b> Less memory per request → more requests fit at once → bigger
     batches → the GPU's tensor cores stay busy → higher throughput. Memory efficiency and speed are the
     same lever here.</div>
-</section>
-
-<!-- CONTINUOUS BATCHING -->
-<section>
-  <div class="eyebrow"><span class="idx">05</span><span class="lbl">The Scheduler</span></div>
-  <h2>Continuous batching keeps the GPU full</h2>
-  <p>Flexible block memory unlocks one more win. <b>Static batching</b> groups N requests, runs them
-    together, and waits for the <i>slowest</i> to finish before starting the next batch — so finished
-    sequences leave the GPU idle. <b>Continuous batching</b> slots a new request into a free spot the
-    instant one finishes. Compare:</p>
-  <div class="card">
-    <div class="seg-toggle" id="batch-toggle" style="margin-bottom:14px">
-      <button data-mode="static">Static batching</button>
-      <button data-mode="continuous" class="active">Continuous batching</button>
-    </div>
-    <div class="timeline" id="batch-timeline"></div>
-    <div class="util-meter">
-      <span class="big" id="batch-util" style="color:var(--sky)">—</span>
-      <span class="lbl">GPU slot utilization across the run. Striped = idle slots (wasted compute).</span>
-    </div>
-  </div>
 </section>
 
 <!-- PAYOFF -->
 <section>
   <div class="eyebrow"><span class="idx">06</span><span class="lbl">The Result</span></div>
   <h2>What it adds up to</h2>
+  <div class="note" style="margin-top:0"><b>A common mix-up.</b> A block has 16 slots because it holds
+    <i>16 tokens</i>. Having many layers, many heads, and both K and V makes each slot <i>wider</i> (more
+    numbers per token), not more numerous — and the same block number points at the same slots in every
+    layer's cache.</div>
   <div class="card">
     <div class="stats">
       <div class="statcard"><div class="v">&lt;4%</div><div class="l">KV memory wasted<br>(was 60–80%)</div></div>
@@ -532,18 +558,28 @@
   </details>
 </section>
 
+<section>
+  <div class="card">
+    <h3>Read more: vLLM and PagedAttention</h3>
+    
+    <ul style="margin:6px 0 0 20px;line-height:1.8;font-size:14px">
+      <li><a href="https://github.com/vllm-project/vllm" target="_blank" rel="noopener">vLLM on GitHub</a> — the code</li>
+      <li><a href="https://docs.vllm.ai" target="_blank" rel="noopener">vLLM documentation</a> — automatic prefix caching, scheduler, parallelism</li>
+      <li><a href="https://arxiv.org/abs/2309.06180" target="_blank" rel="noopener">PagedAttention paper (Kwon et al., 2023)</a> — "Efficient Memory Management for LLM Serving with PagedAttention"</li>
+    </ul>
+  </div>
+</section>
+
 <div class="next">
-  <h3>🎉 The serving picture is complete</h3>
-  <p>You've now followed an LLM from raw text all the way to efficient production serving: tokens →
-    embeddings → position → attention → blocks → training → generation → <b>KV cache → PagedAttention</b>.
-    Natural next topics if you want them: speculative decoding (predict several tokens at once),
-    quantization (FP8/INT4 weights and KV), tensor/pipeline parallelism across GPUs, and disaggregated
-    prefill vs. decode. Ask whenever you'd like to go further.</p>
+  <h3>Where this is heading</h3>
+  <p>One GPU, served well: tokens → embeddings → position → attention → blocks → training → generation → <b>KV cache → PagedAttention</b>. But a real service has many GPUs, and then new questions appear:
+    which copy of vLLM should get a request, and should every copy do both prefill and decode? That is the job of <b>llm-d</b> (Step 10), and Step 11 compares it with SGLang and Ray Serve.</p>
   <a class="pill" style="opacity:.65" href="llm-step8-memory-wall.html">◂ Back · Step 8 · The Memory Wall</a>
+  <a class="pill" href="llm-step10-llm-d-cluster-serving.html">Next ▸ Step 10 · llm-d: many vLLMs as a team</a>
 </div>
 
 <footer style="margin-top:44px;padding-top:16px;border-top:1px solid var(--line);font-size:12px;line-height:1.55;color:var(--faint);font-style:italic">
-  ✦ This 9-part series was co-written with Claude (Anthropic). It favours intuition over rigour and may contain bugs or simplifications — corrections and feedback are very welcome.
+  ✦ This 11-part series was co-written with Claude (Anthropic). It favours intuition over rigour and may contain bugs or simplifications — corrections and feedback are very welcome.
 </footer>
 
 </div>
@@ -759,16 +795,15 @@ function renderShare(){
     `<div class="poolbox freeb">free…</div>`;
   $('#share-pool').innerHTML=pool;
 
-  const blocksUsed = shareCoW?6:5;
   if(!shareCoW){
     $('#share-read').innerHTML=`Two requests, 3 logical blocks each = <b>6 blocks' worth</b> of tokens — but only `+
-      `<b>5 physical blocks</b> are allocated. The 2 prompt blocks are shared (refcount <b>×2</b>), so the `+
-      `duplicate copy is <b style="color:var(--good)">saved</b>. Ten requests sharing this prompt would save `+
+      `<b>4 physical blocks</b> are allocated. The 2 prompt blocks are shared (refcount <b>×2</b>), so the `+
+      `2 duplicate copies are <b style="color:var(--good)">saved</b>. Ten requests sharing this prompt would save `+
       `<b>18 blocks</b>, not 2.`;
   } else {
     $('#share-read').innerHTML=`R2 needed to <b>write</b> into shared block #${P1}, so vLLM <b>copied it first</b> `+
       `→ new block <b style="color:var(--good)">#${COPY}</b> (refcount ×1), and #${P1}'s refcount dropped to <b>×1</b> `+
-      `(only R1 now). R1 was <b>untouched</b>. Now <b>6 physical blocks</b> are used — the copy cost one block, `+
+      `(only R1 now). R1 was <b>untouched</b>. Now <b>5 physical blocks</b> are used (4 before) — the copy cost one block, `+
       `paid only when a shared block was actually modified.`;
   }
   $('#share-cow').disabled=shareCoW;
@@ -863,6 +898,8 @@ renderBatching();
   ];
   // real token sequences (≈ one per word; a few subword splits for realism, echoing Step 1)
   const PROMPTS=[
+    {label:'“The king sat on the” (our running sentence)',
+     toks:['The','king','sat','on','the']},
     {label:'“Hi, my name is Alice”',
      toks:['Hi',',','my','name','is','Alice']},
     {label:'“Write a haiku about the ocean at dawn, then say why”',
@@ -918,7 +955,7 @@ renderBatching();
     const others=new Set(OTHERS.filter(o=>!(o in mine)));
     let strip='';
     for(let i=0;i<POOL_WIN;i++){
-      if(i in mine)          strip+=`<div class="pcell mine" title="physical block #${i}">${mine[i]}</div>`;
+      if(i in mine)          strip+=`<div class="pcell mine" title="physical block #${i+1}">${mine[i]}</div>`;
       else if(others.has(i)) strip+=`<div class="pcell other" title="another request">•</div>`;
       else                   strip+=`<div class="pcell free">·</div>`;
     }
@@ -929,7 +966,7 @@ renderBatching();
       const lo=b*BSZ, hi=Math.min(lo+BSZ,T)-1;
       bt+=`<div class="bt-row"><span class="bt-logical">logical block ${b} · tokens ${lo}–${hi}</span>`+
           `<span class="bt-arrow">→ lives at</span>`+
-          `<span class="bt-physical" style="background:var(--sky)">physical #${SCATTER[b]}</span></div>`;
+          `<span class="bt-physical" style="background:var(--sky)">physical #${SCATTER[b]+1}</span></div>`;
     }
     $('#alloc-bt').innerHTML=bt;
 
@@ -938,7 +975,7 @@ renderBatching();
     $('#alloc-read').innerHTML=
       `<b>Reading token ${s}:</b><br>`+
       `logical block = ⌊${s} ÷ 16⌋ = <b>${bi}</b> &nbsp;→&nbsp; block-table entry ${bi} &nbsp;→&nbsp; `+
-      `<b>physical #${SCATTER[bi]}</b> &nbsp;→&nbsp; slot ${s%BSZ} inside it.<br>`+
+      `<b>physical #${SCATTER[bi]+1}</b> &nbsp;→&nbsp; slot ${s%BSZ} inside it.<br>`+
       `<span class="small">That ordered table is the <i>only</i> thing linking the scattered blocks — change it and the same physical memory becomes a different sequence.</span>`;
   }
 
@@ -1019,6 +1056,17 @@ renderBatching();
   $('#blk-model').addEventListener('change',renderAll);
   $('#alloc-prompt').addEventListener('change',renderAlloc);
   renderAll();
+})();
+
+/* ---- problem first: our sentence in a max-length strip vs in blocks ---- */
+(function(){
+  const kib=128, used=5, max=2048, BS=16;
+  const strip=max*kib/1024, usedMB=used*kib/1024, blocks=Math.ceil(used/BS), blockMB=blocks*BS*kib/1024;
+  document.getElementById('naive-own').innerHTML=
+    `<div>reserved strip: ${max} tokens × ${kib} KiB = <b>${strip.toFixed(0)} MiB</b></div>`+
+    `<div style="margin:6px 0"><div style="height:14px;border-radius:7px;background:var(--line);overflow:hidden"><div style="height:100%;width:${Math.max(0.6,used/max*100)}%;background:var(--kv)"></div></div></div>`+
+    `<div>actually holding data: ${used} tokens × ${kib} KiB = <b>${usedMB.toFixed(2)} MiB</b> &nbsp;(${(used/max*100).toFixed(1)}%)</div>`;
+  document.getElementById('naive-own-read').innerHTML=`Almost the whole strip sits empty, and the model must keep it reserved because it cannot know in advance how long the answer will be. With <b>paging</b> the same request holds <b>${blocks} block</b> of ${BS} slots (${blockMB.toFixed(0)} MiB), of which 5 slots are used and 11 are the only waste; it is handed another block only when token 17 arrives. That is the entire idea of PagedAttention — the rest of this step shows how it works and what it buys.`;
 })();
 </script>
 </body>

@@ -144,13 +144,13 @@
   .next h3{font-family:var(--disp);font-size:16px;margin:0 0 6px}.next p{color:var(--muted);font-size:14px;margin:0}
   .pill{display:inline-block;font-family:var(--mono);font-size:11px;color:var(--kv);background:var(--kv-soft);border:1px solid var(--kv-line);border-radius:20px;padding:2px 10px;margin-top:10px;text-decoration:none;cursor:pointer;}
 
-  /* ---- injected series navigator (consistent across all 9 steps) ---- */
+  /* ---- injected series navigator (consistent across all 11 steps) ---- */
   .series-nav{display:flex;flex-direction:column;align-items:center;gap:7px;padding:10px 0 14px;margin-bottom:4px}
   .sn-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center}
   .sn-chips{display:flex;gap:5px}
   .sn-chip{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:13px;font-weight:600;text-decoration:none;color:var(--muted);background:var(--bg);border:1px solid var(--line-strong);transition:all .12s}
   .sn-chip:hover{border-color:var(--ink);color:var(--ink)}
-  .sn-chip.current{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .sn-chip.current{background:var(--ink);color:var(--bg);border-color:var(--ink)}
   .sn-navbtn{font-family:var(--mono);font-size:12px;color:var(--muted);text-decoration:none;padding:6px 11px;border:1px solid var(--line-strong);border-radius:8px;white-space:nowrap;transition:all .12s}
   .sn-navbtn:hover{border-color:var(--ink);color:var(--ink)}
   .sn-navbtn.disabled{opacity:.28;pointer-events:none}
@@ -230,18 +230,31 @@
 
 
 <nav class="series-nav" aria-label="Series navigation">
-  <div class="sn-bar"><a class="sn-navbtn" href="llm-step6-generation.html">‹ prev</a><div class="sn-chips"><a class="sn-chip" href="llm-step1-tokens-and-embeddings.html" title="Step 1: Tokens & Embeddings">1</a><a class="sn-chip" href="llm-step2-position-and-prediction.html" title="Step 2: Position & Prediction">2</a><a class="sn-chip" href="llm-step3-self-attention.html" title="Step 3: Self-Attention">3</a><a class="sn-chip" href="llm-step4-transformer-block.html" title="Step 4: Transformer Block">4</a><a class="sn-chip" href="llm-step5-training.html" title="Step 5: Training">5</a><a class="sn-chip" href="llm-step6-generation.html" title="Step 6: Generation">6</a><span class="sn-chip current" title="KV Cache">7</span><a class="sn-chip" href="llm-step8-memory-wall.html" title="Step 8: The Memory Wall">8</a><a class="sn-chip" href="llm-step9-pagedattention-vllm.html" title="Step 9: PagedAttention & vLLM">9</a></div><a class="sn-navbtn" href="llm-step8-memory-wall.html">next ›</a></div>
-  <div class="sn-caption">Step <b>7</b> of 9 &middot; <b>KV Cache</b> &middot; LLM from scratch</div>
+  <div class="sn-bar"><a class="sn-navbtn" href="llm-step6-generation.html">‹ prev</a><div class="sn-chips"><a class="sn-chip" href="llm-step1-tokens-and-embeddings.html" title="Step 1: Tokens & Embeddings">1</a><a class="sn-chip" href="llm-step2-position-and-prediction.html" title="Step 2: Position & Prediction">2</a><a class="sn-chip" href="llm-step3-self-attention.html" title="Step 3: Self-Attention">3</a><a class="sn-chip" href="llm-step4-transformer-block.html" title="Step 4: Transformer Block">4</a><a class="sn-chip" href="llm-step5-training.html" title="Step 5: Training">5</a><a class="sn-chip" href="llm-step6-generation.html" title="Step 6: Generation">6</a><span class="sn-chip current" title="KV Cache">7</span><a class="sn-chip" href="llm-step8-memory-wall.html" title="Step 8: The Memory Wall">8</a><a class="sn-chip" href="llm-step9-pagedattention-vllm.html" title="Step 9: PagedAttention & vLLM">9</a><a class="sn-chip" href="llm-step10-llm-d-cluster-serving.html" title="Step 10: llm-d: Many vLLMs as a Team">10</a><a class="sn-chip" href="llm-step11-alternatives-whole-picture.html" title="Step 11: SGLang, Ray Serve & the Whole Picture">11</a></div><a class="sn-navbtn" href="llm-step8-memory-wall.html">next ›</a></div>
+  <div class="sn-caption">Step <b>7</b> of 11 &middot; <b>KV Cache</b> &middot; LLM from scratch</div>
 </nav>
 
 <header>
-  <div class="kicker">Intuition-first LLMs · Step 7 of 9 — Serving</div>
+  <div class="kicker">Intuition-first LLMs · Step 7 of 11 — Serving</div>
   <h1>The KV cache: why generation isn't quadratically slow</h1>
-  <p class="lede">In Step 6 you saw generation is a loop — predict one token, append, repeat. Done naively,
-    every step would recompute attention over the entire history from scratch. The <b>KV cache</b> is the
+  <p class="lede">In Step 6 you watched "The king sat on the ___" being generated one token at a time. Done naively,
+    every step recomputes attention over the entire history from scratch. The <b>KV cache</b> is the
     one trick that makes serving LLMs practical: store each token's Keys and Values once, reuse them forever.</p>
   <div class="recap">Builds directly on <b>Step 3 (attention: Q·K, then ×V)</b> and <b>Step 6 (the generation loop)</b>. Self-contained — a quick recap is included.</div>
 </header>
+
+<!-- THE PROBLEM FIRST -->
+<section>
+  <div class="eyebrow"><span class="idx">—</span><span class="lbl">The Problem First</span></div>
+  <h2>Step 6 left us with a waste: the same work, over and over</h2>
+  <p>Generating <b>"The king sat on the throne"</b> took four model calls. Without any memory between calls, each call
+    re-reads the whole context. Count the tokens pushed through the network, step by step, and compare with a model that
+    <i>remembers</i> the Keys and Values of tokens it has already seen:</p>
+  <div class="card">
+    <div style="overflow-x:auto"><table id="waste" style="border-collapse:collapse;font-size:13px;width:100%"></table></div>
+    <p class="small" id="waste-read" style="margin-top:10px;margin-bottom:0"></p>
+  </div>
+</section>
 
 <!-- WORKED EXAMPLE -->
 <section>
@@ -249,7 +262,7 @@
   <h2>Matrix multiplication, step by step — with and without cache</h2>
   <p>The KV cache insight lives inside the attention formula
     <code>softmax(QK<sup>T</sup>/√d) · V</code>. Let's trace it with real numbers for
-    <b>"The dog sat"</b>, watching exactly which matrix operations change when we add a cache.</p>
+    <b>"The king sat"</b>, watching exactly which matrix operations change when we add a cache.</p>
 
   <div class="card">
     <h3>Without KV cache — full matrix multiply every step</h3>
@@ -257,8 +270,8 @@
       Walk through all 4 sub-steps. Notice the shapes grow — and that most of the work is wasted.</p>
     <div class="step-tabs" id="we-tabs">
       <button class="active" data-step="0">1 token: "The"</button>
-      <button data-step="1">2 tokens: "The dog"</button>
-      <button data-step="2">3 tokens: "The dog sat"</button>
+      <button data-step="1">2 tokens: "The king"</button>
+      <button data-step="2">3 tokens: "The king sat"</button>
     </div>
     <div id="we-nocache"></div>
   </div>
@@ -293,6 +306,11 @@
         <b>3. Therefore all Ks and Vs must be kept — but computed only once.</b>
         The single new Q attends over every past K and V. They never change after being computed.
         Store them once, reuse them every step. That is the KV cache.
+      </div>
+      <div class="insight">
+        <b>Why they never change: the causal mask.</b>
+        A token can only attend to tokens <em>before</em> it, so adding a new token at the end can never
+        alter the rows of earlier tokens. Their K and V are final the moment they are computed.
       </div>
     </div>
   </div>
@@ -336,7 +354,7 @@
   <div class="card">
     <h3>Two passes — watch K/V grow from 2×3 to 3×3</h3>
     <p class="small" style="margin-top:0">Each new token needs one forward pass. <b>Pass 1</b> processes
-      <b>"The dog"</b> — its K/V is <b>2×3</b>. <b>Pass 2</b> processes <b>"The dog sat"</b> — K/V is now
+      <b>"The king"</b> — its K/V is <b>2×3</b>. <b>Pass 2</b> processes <b>"The king sat"</b> — K/V is now
       <b>3×3</b>, but the top <b>2×3</b> is identical to Pass 1. That repeated block is exactly what the KV
       cache stores and reuses. (Same tiny 3-d model as Step 6 — every vector is embedding + position.)</p>
     <div class="cp-phasebar" id="cp-phasebar"></div>
@@ -359,7 +377,7 @@
 
   <div class="card">
     <h3>The full picture — two passes, spelled out</h3>
-    <p class="small" style="margin-top:0">Take the same example from Step 6: the prompt is <code>"The dog"</code>
+    <p class="small" style="margin-top:0">Take the same example from Step 6: the prompt is <code>"The king"</code>
       and the model generates <code>"sat"</code> then <code>"on"</code>. Here is <b>exactly</b> what each pass
       computes fresh versus reads from the cache:</p>
     <div style="overflow-x:auto;margin-top:12px">
@@ -376,8 +394,8 @@
         <tbody style="font-family:var(--mono)">
           <tr>
             <td style="padding:9px;border-bottom:1px solid var(--line);vertical-align:top"><b>1</b><br><span style="color:var(--faint);font-size:11px">prefill</span></td>
-            <td style="padding:9px;border-bottom:1px solid var(--line);vertical-align:top">The · dog</td>
-            <td style="padding:9px;border-bottom:1px solid var(--line);vertical-align:top;color:var(--kv)"><b>The, dog</b><br><span style="font-size:11px">(2 fresh)</span></td>
+            <td style="padding:9px;border-bottom:1px solid var(--line);vertical-align:top">The · king</td>
+            <td style="padding:9px;border-bottom:1px solid var(--line);vertical-align:top;color:var(--kv)"><b>The, king</b><br><span style="font-size:11px">(2 fresh)</span></td>
             <td style="padding:9px;border-bottom:1px solid var(--line);vertical-align:top;color:var(--faint)">— nothing yet</td>
             <td style="padding:9px;border-bottom:1px solid var(--line);vertical-align:top;color:var(--good)"><b>sat</b></td>
           </tr>
@@ -385,89 +403,38 @@
             <td style="padding:9px;vertical-align:top"><b>2</b><br><span style="color:var(--faint);font-size:11px">decode</span></td>
             <td style="padding:9px;vertical-align:top">sat <span style="color:var(--faint)">(only the new token)</span></td>
             <td style="padding:9px;vertical-align:top;color:var(--kv)"><b>sat</b><br><span style="font-size:11px">(1 fresh)</span></td>
-            <td style="padding:9px;vertical-align:top;color:var(--good)"><b>The, dog</b><br><span style="font-size:11px">(2 from cache)</span></td>
+            <td style="padding:9px;vertical-align:top;color:var(--good)"><b>The, king</b><br><span style="font-size:11px">(2 from cache)</span></td>
             <td style="padding:9px;vertical-align:top;color:var(--good)"><b>on</b></td>
           </tr>
         </tbody>
       </table>
     </div>
-    <p class="small" style="margin-top:12px">The cache now holds <code>K/V</code> for <b>The · dog · sat</b>.
+    <p class="small" style="margin-top:12px">The cache now holds <code>K/V</code> for <b>The · king · sat</b>.
       Pass 2 fed in <b>one</b> token instead of three, yet attention still saw the full history — because the
       earlier Keys and Values were waiting in the cache. That is the entire trick: <b>each decode step does
       O(1) new K/V work regardless of how long the context already is.</b></p>
   </div>
 </section>
 
-<!-- COMPUTE COMPARISON -->
+<!-- WHAT ONE TOKEN COSTS -->
 <section>
-  <div class="eyebrow"><span class="idx">03</span><span class="lbl">The Payoff</span></div>
-  <h2>Quadratic work becomes linear</h2>
-  <p>Per generated token, the cached version does a fixed amount of new K/V work; the naive version does
-    work proportional to the whole history. Across a full sequence the difference is dramatic:</p>
   <div class="card">
-    <div style="max-width:260px;margin-bottom:6px">
-      <label class="fld" for="seq-sl">Sequence length: <span id="seq-v" style="color:var(--kv)">512</span> tokens</label>
-      <input type="range" id="seq-sl" min="16" max="2048" step="16" value="512" style="width:100%">
-    </div>
-    <svg id="compute-chart" viewBox="0 0 600 260" role="img" aria-label="Compute comparison"></svg>
-    <p class="small" id="compute-read" style="margin-top:8px"></p>
+    <h3>What exactly is stored per token?</h3>
+    <p style="margin-top:0">For each token the cache keeps one K and one V <b>per head, per layer</b> — the very
+      <code>K = X·W_k</code> and <code>V = X·W_v</code> each block computed in Steps 3–4 — and nothing
+      else (Q and the attention weights are thrown away). Picture a tiny model with 2 layers, 2 heads of
+      2 numbers each: per token that is <code>2 layers × (K: 4 + V: 4) = 16 numbers</code>. Real models just
+      scale the same count up. For Llama-3.1-8B:</p>
+    <div style="font-family:var(--mono);font-size:13px;overflow-x:auto;padding:10px 12px;border-radius:10px;background:rgba(127,127,127,.08)">
+      32 layers × 8 KV heads × 128 numbers × 2 (K and V) × 2 bytes = 131,072 B = <b>128 KiB per token</b></div>
+    <p class="small" style="margin-bottom:0">That per-token price is what we multiply by context length and
+      by the number of users below.</p>
   </div>
-  <div class="note"><b>The cache trades compute for memory.</b> You stop recomputing — but now you must
-    <i>store</i> all those Keys and Values. For long contexts and many concurrent users, that storage
-    becomes the dominant cost, and the central problem of LLM serving. Let's size it.</div>
 </section>
 
-<!-- MEMORY CALCULATOR -->
+<!-- PREFILL VS DECODE -->
 <section>
-  <div class="eyebrow"><span class="idx">04</span><span class="lbl">The Cost</span></div>
-  <h2>How big does the KV cache get?</h2>
-  <p>The cache stores K and V for every layer, every token. Pick a model and context size and see the real
-    memory footprint — and how it stacks against the model's own weights:</p>
-
-  <div class="card">
-    <div class="calc-grid">
-      <div>
-        <label class="fld" for="model-sel">Model</label>
-        <select id="model-sel" style="width:100%"></select>
-      </div>
-      <div>
-        <label class="fld" for="dtype-sel">KV precision</label>
-        <select id="dtype-sel" style="width:100%">
-          <option value="2">fp16 / bf16 (2 bytes)</option>
-          <option value="1">fp8 (1 byte)</option>
-          <option value="4">fp32 (4 bytes)</option>
-        </select>
-      </div>
-    </div>
-    <div class="calc-grid" style="margin-top:14px">
-      <div>
-        <label class="fld" for="ctx-sl">Context length: <span id="ctx-v" style="color:var(--kv)">4096</span></label>
-        <div class="slider-row"><input type="range" id="ctx-sl" min="512" max="32768" step="512" value="4096" style="flex:1"></div>
-      </div>
-      <div>
-        <label class="fld" for="batch-sl">Concurrent requests: <span id="batch-v" style="color:var(--kv)">16</span></label>
-        <div class="slider-row"><input type="range" id="batch-sl" min="1" max="128" step="1" value="16" style="flex:1"></div>
-      </div>
-    </div>
-
-    <div class="result-box">
-      <div class="result-big" id="kv-total">—</div>
-      <div class="result-sub" id="kv-sub"></div>
-      <div class="membar" id="membar"></div>
-      <div class="small" id="membar-legend" style="margin-top:8px;font-family:var(--mono)"></div>
-    </div>
-
-    <div class="formula" id="formula"></div>
-  </div>
-  <div class="note"><b>GQA to the rescue (partly).</b> Modern models use <b>Grouped-Query Attention</b> —
-    many query heads share a few Key/Value heads — which shrinks the KV cache several-fold. That's baked
-    into the presets above (notice Llama-3-8B's cache is far smaller than its layer count suggests). Even
-    so, at high batch sizes the cache can rival or exceed the model weights.</div>
-</section>
-
-<!-- PREFILL AND DECODE NOTE -->
-<section style="margin-top:48px">
-  <div class="eyebrow"><span class="idx">05</span><span class="lbl">Two Phases</span></div>
+  <div class="eyebrow"><span class="idx">03</span><span class="lbl">Two Phases</span></div>
   <h2>Prefill vs. decode — the two stages of every generation</h2>
   <p>The KV cache splits inference into two very different phases. Understanding them
     explains why the <b>first token is slow</b> and all subsequent tokens are fast.</p>
@@ -480,7 +447,7 @@
       prompt token are computed and stored in the cache</b>, and the first output token
       is generated.</p>
     <div style="font-family:var(--mono);font-size:12px;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:14px;margin-top:8px">
-      <div style="color:var(--muted);margin-bottom:8px">Prompt: <b style="color:var(--ink)">"The dog sat on the"</b> → 5 tokens processed together</div>
+      <div style="color:var(--muted);margin-bottom:8px">Prompt: <b style="color:var(--ink)">"The king sat on the"</b> → 5 tokens processed together</div>
       <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">
         <span style="font-family:var(--mono);font-size:11px;background:#F3EEFF;border:1px solid #C4B5FD;color:#5B21B6;border-radius:6px;padding:3px 8px">Q [5×d]</span>
         <span style="font-size:13px;color:var(--faint)">×</span>
@@ -543,28 +510,95 @@
   </div>
 </section>
 
+<!-- COMPUTE COMPARISON -->
+<section>
+  <div class="eyebrow"><span class="idx">04</span><span class="lbl">The Payoff</span></div>
+  <h2>Quadratic work becomes linear</h2>
+  <p>Per generated token, the cached version does a fixed amount of new K/V work; the naive version does
+    work proportional to the whole history. Across a full sequence the difference is dramatic:</p>
+  <div class="card">
+    <div style="max-width:260px;margin-bottom:6px">
+      <label class="fld" for="seq-sl">Sequence length: <span id="seq-v" style="color:var(--kv)">512</span> tokens</label>
+      <input type="range" id="seq-sl" min="16" max="2048" step="16" value="512" style="width:100%">
+    </div>
+    <svg id="compute-chart" viewBox="0 0 600 260" role="img" aria-label="Compute comparison"></svg>
+    <p class="small" id="compute-read" style="margin-top:8px"></p>
+  </div>
+  <div class="note"><b>The cache trades compute for memory.</b> You stop recomputing — but now you must
+    <i>store</i> all those Keys and Values. For long contexts and many concurrent users, that storage
+    becomes the dominant cost, and the central problem of LLM serving. Let's size it.</div>
+</section>
+
+<!-- MEMORY CALCULATOR -->
+<section>
+  <div class="eyebrow"><span class="idx">05</span><span class="lbl">The Cost</span></div>
+  <h2>How big does the KV cache get?</h2>
+  <p>The cache stores K and V for every layer, every token. Pick a model and context size and see the real
+    memory footprint — and how it stacks against the model's own weights:</p>
+
+  <div class="card">
+    <div class="calc-grid">
+      <div>
+        <label class="fld" for="model-sel">Model</label>
+        <select id="model-sel" style="width:100%"></select>
+      </div>
+      <div>
+        <label class="fld" for="dtype-sel">KV precision</label>
+        <select id="dtype-sel" style="width:100%">
+          <option value="2">fp16 / bf16 (2 bytes)</option>
+          <option value="1">fp8 (1 byte)</option>
+          <option value="4">fp32 (4 bytes)</option>
+        </select>
+      </div>
+    </div>
+    <div class="calc-grid" style="margin-top:14px">
+      <div>
+        <label class="fld" for="ctx-sl">Context length: <span id="ctx-v" style="color:var(--kv)">4096</span></label>
+        <div class="slider-row"><input type="range" id="ctx-sl" min="512" max="32768" step="512" value="4096" style="flex:1"></div>
+      </div>
+      <div>
+        <label class="fld" for="batch-sl">Concurrent requests: <span id="batch-v" style="color:var(--kv)">16</span></label>
+        <div class="slider-row"><input type="range" id="batch-sl" min="1" max="128" step="1" value="16" style="flex:1"></div>
+      </div>
+    </div>
+
+    <div class="result-box">
+      <div class="result-big" id="kv-total">—</div>
+      <div class="result-sub" id="kv-sub"></div>
+      <div class="membar" id="membar"></div>
+      <div class="small" id="membar-legend" style="margin-top:8px;font-family:var(--mono)"></div>
+    </div>
+
+    <div class="formula" id="formula"></div>
+  </div>
+  <div class="note"><b>GQA to the rescue (partly).</b> Modern models use <b>Grouped-Query Attention</b> —
+    many query heads share a few Key/Value heads — which shrinks the KV cache several-fold. That's baked
+    into the presets above (notice Llama-3-8B's cache is far smaller than its layer count suggests). Even
+    so, at high batch sizes the cache can rival or exceed the model weights.</div>
+</section>
+
 <div class="next">
   <h3>Where this is heading</h3>
   <p>So the KV cache is essential <i>and</i> huge — and its size per request <b>grows and shrinks
     unpredictably</b> as each user's generation runs. Allocating that memory naively wastes 60–80% of it
     to fragmentation. The fix borrows a 1960s operating-systems idea — paging — and is what makes vLLM
-    fast. That's Step 8.</p>
+    fast. But first, Step 8 shows exactly why memory — not math — is the wall.</p>
   <a class="pill" style="opacity:.65" href="llm-step6-generation.html">◂ Back · Step 6</a>
   <a class="pill" href="llm-step8-memory-wall.html">Next ▸ Step 8 · The Memory Wall</a>
 </div>
 
 <footer style="margin-top:44px;padding-top:16px;border-top:1px solid var(--line);font-size:12px;line-height:1.55;color:var(--faint);font-style:italic">
-  ✦ This 9-part series was co-written with Claude (Anthropic). It favours intuition over rigour and may contain bugs or simplifications — corrections and feedback are very welcome.
+  ✦ This 11-part series was co-written with Claude (Anthropic). It favours intuition over rigour and may contain bugs or simplifications — corrections and feedback are very welcome.
 </footer>
 
 </div>
 <script>
 const $=s=>document.querySelector(s);
-const TOKENS=['The','dog','sat','on','the','mat','and','slept'];
+const TOKENS=['The','king','sat','on','the','throne','and','slept'];
 
 /* ============================================================
    WORKED EXAMPLE — matrix multiply walk-through
-   "The dog sat" with 2D vectors (d_k = 2)
+   "The king sat" with 2D vectors (d_k = 2)
    ============================================================ */
 // Raw embeddings (2D for readability)
 // W matrices are designed so emb × W = Q/K/V exactly (verified)
@@ -576,10 +610,10 @@ const WV = [[0.9, 0.3],[0.2, 0.8]];
 // e.g. The=[1.0,0.0] × WQ=[[0.5,0.2],[0.3,0.7]] = [1×0.5+0×0.3, 1×0.2+0×0.7] = [0.50, 0.20]
 const TOK = [
   { w:'The', emb:[1.0, 0.0], Q:[0.50, 0.20], K:[0.80, 0.10], V:[0.90, 0.30] },
-  { w:'dog', emb:[0.6, 0.8], Q:[0.54, 0.68], K:[0.56, 0.54], V:[0.70, 0.82] },
+  { w:'king', emb:[0.6, 0.8], Q:[0.54, 0.68], K:[0.56, 0.54], V:[0.70, 0.82] },
   { w:'sat', emb:[0.4, 0.6], Q:[0.38, 0.50], K:[0.38, 0.40], V:[0.48, 0.60] },
 ];
-const PREDICT = ['dog','sat','on'];
+const PREDICT = ['king','sat','on'];
 const DK = 2;
 
 function f2(x){ return (x>=0?'+':'')+x.toFixed(2); }
@@ -1122,7 +1156,7 @@ const naiveHalt=attachPlayer('naive',
 /* ========== 2. WITH CACHE ========== */
 // tiny 3-d model (same idea as Step 6) so we can show real K/V/Q numbers
 const KVD=3;
-const KVEMB={ The:[.2,.1,0], dog:[.9,.2,.1], sat:[.3,.8,.2], on:[.1,.3,.7], the:[.2,.1,0], mat:[.4,.2,.6], and:[.1,.1,.1], slept:[.2,.7,.3] };
+const KVEMB={ The:[.2,.1,0], king:[.9,.2,.1], sat:[.3,.8,.2], on:[.1,.3,.7], the:[.2,.1,0], throne:[.4,.2,.6], and:[.1,.1,.1], slept:[.2,.7,.3] };
 const KVPOS=[[0,.1,0],[.1,0,.1],[0,.2,0],[.1,.1,.1],[0,.1,.1],[.1,0,0],[0,.1,.2],[.1,.1,0]];
 const KVWQ=[[.6,.1,0],[0,.7,.1],[.1,0,.5]], KVWK=[[.5,0,.2],[.1,.6,0],[0,.1,.4]], KVWV=[[.3,.2,0],[0,.5,.1],[.2,0,.6]];
 const kvVadd=(a,b)=>a.map((x,i)=>x+b[i]);
@@ -1136,7 +1170,7 @@ function kvmMat(cap,rowLabs,data,rowCls){
   return `<div class="kvm"><span class="cap">${cap}</span><div class="kvm-grid" style="grid-template-columns:auto repeat(${cols},auto)">${body}</div></div>`;
 }
 /* Two full passes, then a rectangle around the K/V that could have been cached. */
-const CPSEQ=['The','dog','sat','on'];   // The,dog = prompt · sat,on = generated
+const CPSEQ=['The','king','sat','on'];   // The,king = prompt · sat,on = generated
 const CP=[
   {pass:1, sub:'embed', ctx:2, fed:[0,1]},
   {pass:1, sub:'kv',    ctx:2, fed:[0,1]},
@@ -1190,7 +1224,7 @@ function renderCP(){
     detail=kvmMat('embedding E', ft, st.fed.map(i=>KVEMB[CPSEQ[i]]), ()=> '')
       +`<div class="cp-op">+</div>`+kvmMat('position P', st.fed.map(i=>'pos'+i), st.fed.map(i=>KVPOS[i]), ()=> '')
       +`<div class="cp-op">=</div>`+kvmMat('X = emb + pos', ft, st.fed.map(i=>kvVadd(KVEMB[CPSEQ[i]],KVPOS[i])), ()=> 'fresh');
-    narr=`<b>Pass 1 · embed:</b> the prompt "The dog" becomes vectors — <b>embedding + position</b>, the same as Step 6.`;
+    narr=`<b>Pass 1 · embed:</b> the prompt "The king" becomes vectors — <b>embedding + position</b>, the same as Step 6.`;
   } else if(st.sub==='kv'){
     detail=kvmMat('K · 2×3',toks,K,()=> 'fresh')
       +kvmMat('V · 2×3',toks,V,()=> 'fresh')
@@ -1284,7 +1318,7 @@ function renderCalc(){
   const total=perReq*batch;
 
   $('#kv-total').textContent=fmtBytes(total);
-  $('#kv-sub').innerHTML=`KV cache for <b>${batch}</b> request(s) × <b>${ctx}</b> tokens · ${fmtBytes(perToken)}/token · ${fmtBytes(perReq)}/request`;
+  $('#kv-sub').innerHTML=`KV cache for <b>${batch}</b> request(s) × <b>${ctx}</b> tokens · ${(perToken/1024).toFixed(0)} KiB/token · ${fmtBytes(perReq)}/request`;
 
   // membar: compare KV total vs model weights vs free (assume 80GB GPU)
   const gpu=80e9;
@@ -1302,6 +1336,19 @@ function renderCalc(){
 ['#model-sel','#dtype-sel'].forEach(s=>$(s).addEventListener('change',renderCalc));
 ['#ctx-sl','#batch-sl'].forEach(s=>$(s).addEventListener('input',renderCalc));
 renderCalc();
+
+/* ---- problem first: tokens processed with vs without remembering K,V ---- */
+(function(){
+  const ctx=['The king','The king sat','The king sat on','The king sat on the'], pred=['sat','on','the','throne'];
+  const th=s=>`<th style="padding:6px 10px;text-align:left;font-size:11px;font-weight:600;color:var(--faint);border-bottom:1px solid var(--line)">${s}</th>`;
+  const td=s=>`<td style="padding:6px 10px;border-bottom:1px solid var(--line);font-family:var(--mono)">${s}</td>`;
+  let a=0,b=0,h=`<thead><tr>${th('step')}${th('context')}${th('predicts')}${th('tokens processed — no memory')}${th('tokens processed — K,V remembered')}</tr></thead><tbody>`;
+  ctx.forEach((c,i)=>{ const n=c.split(' ').length, w=i===0?n:1; a+=n; b+=w;
+    h+=`<tr>${td(i+1)}${td(c)}${td('<b style="color:var(--kv)">'+pred[i]+'</b>')}${td(n+' <span style="color:var(--faint)">(all re-done)</span>')}${td(w+(i===0?' <span style="color:var(--faint)">(prompt, once)</span>':' <span style="color:var(--faint)">(just the new token)</span>'))}</tr>`; });
+  h+=`<tr style="font-weight:600">${td('')}${td('total')}${td('')}${td(a)}${td(b)}</tr>`;
+  document.getElementById('waste').innerHTML=h+'</tbody>';
+  document.getElementById('waste-read').innerHTML=`${a} token-passes versus ${b}. The gap is ever-growing: with no memory the work at step n is n tokens, so a sequence of length n costs ≈ n²/2 in total; with remembered Keys and Values each step handles one new token. <b>Which part can be remembered?</b> That is the question this step answers — and Step 3 already gave us the clue: a past token only ever supplies its <span style="color:var(--k)">Key</span> and <span style="color:var(--v)">Value</span>, and neither changes once computed.`;
+})();
 </script>
 </body>
 </html>

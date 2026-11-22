@@ -60,10 +60,19 @@
   details{margin-top:12px}summary{cursor:pointer;font-family:var(--mono);font-size:12px;color:var(--blk);font-weight:600}
 
   /* heads */
-  .head-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
-  .head-tabs button{font-family:var(--mono);font-size:12px;border:1px solid var(--line-strong);background:var(--bg);color:var(--muted);padding:7px 13px;border-radius:8px;cursor:pointer}
-  .head-tabs button.active{background:var(--att);color:#fff;border-color:var(--att)}
-  .head-desc{font-size:13px;color:var(--muted);margin-bottom:10px;min-height:20px}
+  .heads-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+  @media(max-width:600px){.heads-grid{grid-template-columns:minmax(0,1fr)}}
+  .hpanel{border:1px solid var(--line);border-radius:12px;padding:12px 12px 10px;background:var(--bg);min-width:0}
+  .hpanel .hname{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--att)}
+  .hpanel .hjob{font-size:13px;font-weight:600;margin:2px 0 6px}
+  .hpanel .hdesc{font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:8px;min-height:54px}
+  .hpanel .mini-matrix{display:block;overflow-x:auto}
+  .hpanel .mm-cell,.hpanel .mm-hdr{width:38px}
+  .hpanel .mm-cell{height:28px;font-size:10.5px}
+  .hpanel .mm-lbl,.hpanel .mm-corner{width:40px}
+  .hpanel .mm-row.lastq .mm-lbl{color:var(--att)}
+  .hpanel .mm-row.lastq .mm-cell{outline:2px solid var(--att);outline-offset:-2px}
+  .hpanel .hlook{font-size:12px;margin-top:8px;color:var(--muted)}
   .mini-matrix{display:inline-block;font-family:var(--mono);font-size:11px}
   .mm-row{display:flex;align-items:center}
   .mm-cell{width:54px;height:34px;display:flex;align-items:center;justify-content:center;border:1px solid #fff;border-radius:3px;color:#fff;font-weight:500}
@@ -80,6 +89,11 @@
   .bd-box.ffn{border-color:#D0BFFF;background:#F3F0FF}
   .bd-box.norm{border-color:var(--line-strong);background:var(--bg)}
   .bd-box.active{box-shadow:0 0 0 3px var(--blk-line);transform:scale(1.02)}
+  .bd-heads{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:8px}
+  .bd-head{border:1px solid var(--att-line);background:var(--surface);border-radius:7px;padding:5px 3px;font-family:var(--mono);font-size:10px;line-height:1.35;color:var(--ink)}
+  .bd-head b{display:block;color:var(--att);font-size:10.5px}
+  .bd-head span{color:var(--muted)}
+  .bd-concat{margin-top:6px;font-family:var(--mono);font-size:10.5px;color:var(--muted)}
   .bd-arrow{height:22px;width:2px;background:var(--line-strong);position:relative}
   .bd-arrow::after{content:'';position:absolute;bottom:0;left:-3px;border:4px solid transparent;border-top-color:var(--line-strong)}
   .bd-res{position:absolute;right:-58px;top:50%;width:50px;height:2px;background:var(--res)}
@@ -100,13 +114,13 @@
   .next h3{font-family:var(--disp);font-size:16px;margin:0 0 6px}.next p{color:var(--muted);font-size:14px;margin:0}
   .pill{display:inline-block;font-family:var(--mono);font-size:11px;color:var(--blk);background:var(--blk-soft);border:1px solid var(--blk-line);border-radius:20px;padding:2px 10px;margin-top:10px;text-decoration:none;cursor:pointer;}
 
-  /* ---- injected series navigator (consistent across all 9 steps) ---- */
+  /* ---- injected series navigator (consistent across all 11 steps) ---- */
   .series-nav{display:flex;flex-direction:column;align-items:center;gap:7px;padding:10px 0 14px;margin-bottom:4px}
   .sn-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center}
   .sn-chips{display:flex;gap:5px}
   .sn-chip{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:13px;font-weight:600;text-decoration:none;color:var(--muted);background:var(--bg);border:1px solid var(--line-strong);transition:all .12s}
   .sn-chip:hover{border-color:var(--ink);color:var(--ink)}
-  .sn-chip.current{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .sn-chip.current{background:var(--ink);color:var(--bg);border-color:var(--ink)}
   .sn-navbtn{font-family:var(--mono);font-size:12px;color:var(--muted);text-decoration:none;padding:6px 11px;border:1px solid var(--line-strong);border-radius:8px;white-space:nowrap;transition:all .12s}
   .sn-navbtn:hover{border-color:var(--ink);color:var(--ink)}
   .sn-navbtn.disabled{opacity:.28;pointer-events:none}
@@ -127,41 +141,62 @@
 
 
 <nav class="series-nav" aria-label="Series navigation">
-  <div class="sn-bar"><a class="sn-navbtn" href="llm-step3-self-attention.html">‹ prev</a><div class="sn-chips"><a class="sn-chip" href="llm-step1-tokens-and-embeddings.html" title="Step 1: Tokens & Embeddings">1</a><a class="sn-chip" href="llm-step2-position-and-prediction.html" title="Step 2: Position & Prediction">2</a><a class="sn-chip" href="llm-step3-self-attention.html" title="Step 3: Self-Attention">3</a><span class="sn-chip current" title="Transformer Block">4</span><a class="sn-chip" href="llm-step5-training.html" title="Step 5: Training">5</a><a class="sn-chip" href="llm-step6-generation.html" title="Step 6: Generation">6</a><a class="sn-chip" href="llm-step7-kv-cache.html" title="Step 7: KV Cache">7</a><a class="sn-chip" href="llm-step8-memory-wall.html" title="Step 8: The Memory Wall">8</a><a class="sn-chip" href="llm-step9-pagedattention-vllm.html" title="Step 9: PagedAttention & vLLM">9</a></div><a class="sn-navbtn" href="llm-step5-training.html">next ›</a></div>
-  <div class="sn-caption">Step <b>4</b> of 9 &middot; <b>Transformer Block</b> &middot; LLM from scratch</div>
+  <div class="sn-bar"><a class="sn-navbtn" href="llm-step3-self-attention.html">‹ prev</a><div class="sn-chips"><a class="sn-chip" href="llm-step1-tokens-and-embeddings.html" title="Step 1: Tokens & Embeddings">1</a><a class="sn-chip" href="llm-step2-position-and-prediction.html" title="Step 2: Position & Prediction">2</a><a class="sn-chip" href="llm-step3-self-attention.html" title="Step 3: Self-Attention">3</a><span class="sn-chip current" title="Transformer Block">4</span><a class="sn-chip" href="llm-step5-training.html" title="Step 5: Training">5</a><a class="sn-chip" href="llm-step6-generation.html" title="Step 6: Generation">6</a><a class="sn-chip" href="llm-step7-kv-cache.html" title="Step 7: KV Cache">7</a><a class="sn-chip" href="llm-step8-memory-wall.html" title="Step 8: The Memory Wall">8</a><a class="sn-chip" href="llm-step9-pagedattention-vllm.html" title="Step 9: PagedAttention & vLLM">9</a><a class="sn-chip" href="llm-step10-llm-d-cluster-serving.html" title="Step 10: llm-d: Many vLLMs as a Team">10</a><a class="sn-chip" href="llm-step11-alternatives-whole-picture.html" title="Step 11: SGLang, Ray Serve & the Whole Picture">11</a></div><a class="sn-navbtn" href="llm-step5-training.html">next ›</a></div>
+  <div class="sn-caption">Step <b>4</b> of 11 &middot; <b>Transformer Block</b> &middot; LLM from scratch</div>
 </nav>
 
 <header>
-  <div class="kicker">Intuition-first LLMs · Step 4 of 9</div>
+  <div class="kicker">Intuition-first LLMs · Step 4 of 11</div>
   <h1>Many heads, then the full Transformer block</h1>
-  <p class="lede">One attention pattern sees one kind of relationship. Real models run several in
-    parallel — different <b>heads</b> specialise — then wrap attention in feed-forward layers, residual
-    "shortcuts," and normalization. Stack that block N times and you have the engine of an LLM.</p>
-  <div class="recap"><b>Story so far ▸</b> a single attention pattern resolving one relationship (Step 3). <b>This step ▸</b> running many heads at once and wrapping them into the full block you stack N times.</div>
+  <p class="lede">In Step 3 the last "the" of <b>"The king sat on the ___"</b> used one attention pattern and had to
+    squeeze two different questions — <i>who sat?</i> and <i>sat on what?</i> — into a single set of weights. Real models
+    run several patterns in parallel (<b>heads</b>, each with its own Q, K, V), then wrap attention in feed-forward layers, residual "shortcuts" and
+    normalization. Stack that block N times and you have the engine of an LLM.</p>
+  <div class="recap"><b>Story so far ▸</b> X (embedding + position, Steps 1–2) went through one attention head (Step 3), which made the last "the" richer by blending in "king". <b>This step ▸</b> running many heads at once and wrapping them into the full block you stack N times.</div>
 </header>
 
 <!-- MULTI-HEAD -->
 <section>
   <div class="eyebrow"><span class="idx">01</span><span class="lbl">Multi-Head Attention</span></div>
   <h2>Different heads, different jobs</h2>
-  <p>Instead of one set of Q/K/V projections, the model learns <b>several</b>. Each "head" attends to
-    the sentence differently — and because nobody tells them what to specialise in, they divide the
-    labour on their own during training. Here are three heads on <code>"the dog chased it"</code>,
-    each with a hand-set pattern to show the idea:</p>
+  <p><b>The problem with one head.</b> In Step 3 the last "the" gave king 43%, sat 22%, on 16%. That single set of
+    weights is a compromise: it cannot be sharply on "king" (the subject) <i>and</i> sharply on "on" (what it
+    attaches to) at the same time. The fix is not a bigger head but <b>several small ones</b>: the model learns
+    several independent sets of Q/K/V projections. Each "head" looks at the same sentence differently, and — since
+    nobody assigns jobs — they divide the labour on their own during training. Here are four heads on
+    <code>"The king sat on the"</code>, side by side, with hand-set patterns (except Head 1) to show the idea:</p>
 
   <div class="card">
-    <div class="head-tabs" id="head-tabs"></div>
-    <div class="head-desc" id="head-desc"></div>
-    <div class="mini-matrix" id="head-matrix"></div>
-    <p class="small" style="margin-top:10px">Each head produces its own context vector for every token.
+    <div class="heads-grid" id="heads-grid"></div>
+    <p class="small" style="margin-top:10px">Each box is one head's attention matrix for the same five tokens: a row is a token asking, a column is a token being looked at, and the number is the percentage of attention (rows add to 100%; the dotted cells are the future, hidden by the causal mask). The <b style="color:var(--att)">outlined bottom row</b> is the last "the", the one we need to predict from. Each head produces its own context vector for every token.
       The model <b>concatenates</b> all heads' outputs and passes them through one more linear layer
       (<code>W_O</code>) to mix them back together. This is the <b>O — "writes back"</b> — step from Step 3's
       <i>Q asks · K offers · V delivers · O writes back</i>: the mixed result is then added onto the token's
       residual stream just below.</p>
   </div>
 
-  <div class="note"><b>Why this helps.</b> Head 1 can resolve pronouns while Head 2 tracks word order and
-    Head 3 watches sentence-level tone — all at once, in a single layer. GPT-2 small uses 12 heads per
+  <div class="card">
+    <h3>Every head makes its own Q, K and V from the same X</h3>
+    <p class="small" style="margin-top:0">This is Step 3's recipe, repeated side by side. The block takes X (5 tokens × 7 numbers) and, <b>for each head</b>,
+      multiplies it by that head's own three matrices:</p>
+    <div id="qkv-heads" style="overflow-x:auto"></div>
+    <p class="small" style="margin-bottom:0;margin-top:10px">So four heads means <b>twelve</b> small matrices (3 per head) instead of three, and each head's
+      attention is that head's <code>softmax(Q<sub>h</sub>·K<sub>h</sub>ᵀ/√d)</code> blending that head's <code>V<sub>h</sub></code>. The heads never talk to each
+      other until <code>W<sub>O</sub></code> mixes their outputs. (Real models split the model width among the heads, e.g. 768 = 12 heads × 64; here each head
+      gets 3 of the 7 numbers' worth of output for simplicity.)</p>
+  </div>
+
+  <div class="card">
+    <h3>What each head hands to the last "the" — and what the combination looks like</h3>
+    <p class="small" style="margin-top:0">Same recipe as Step 3: each head blends the tokens' Values using <i>its own</i> weights
+      (the bottom row of its matrix above). As in Step 3, a token's Value here is its 7 content features. Read each row:
+      which features did this head bring in?</p>
+    <div id="head-out" style="overflow-x:auto"></div>
+    <p class="small" id="head-out-read" style="margin-top:10px;margin-bottom:0"></p>
+  </div>
+
+  <div class="note"><b>Why this helps.</b> Head 1 can find the subject while Head 2 tracks word order,
+    Head 3 keeps a sentence-level summary and Head 4 hunts for the action — all at once, in a single layer. GPT-2 small uses 12 heads per
     layer; GPT-3 uses 96. More heads = more relationship types captured simultaneously.</div>
 </section>
 
@@ -183,6 +218,15 @@
       <button id="bd-reset">Reset</button>
     </div>
     <div class="step-explain" id="bd-explain"></div>
+  </div>
+
+  <div class="card">
+    <h3>Why add the input back? (residual) — live, on the last "the"</h3>
+    <p class="small" style="margin-top:0">Attention's output for the last "the" is a blend of other tokens. If that <i>replaced</i> the
+      vector, the token would forget what it was. The residual connection adds the output <i>on top of</i> the original:
+      <code>x + attention(x)</code>.</p>
+    <div id="resid" style="overflow-x:auto"></div>
+    <p class="small" id="resid-read" style="margin-top:10px;margin-bottom:0"></p>
   </div>
 
   <details>
@@ -215,7 +259,7 @@
       <label class="fld" for="depth-sel">Number of blocks (depth)</label>
       <select id="depth-sel">
         <option value="2">2 (toy)</option>
-        <option value="6">6 (GPT-1 era)</option>
+        <option value="6">6 (small)</option>
         <option value="12" selected>12 (GPT-2 small)</option>
         <option value="48">48 (GPT-2 XL)</option>
         <option value="96">96 (GPT-3)</option>
@@ -224,6 +268,37 @@
     <div class="stack" id="stack"></div>
     <p class="small" id="stack-note" style="margin-top:12px"></p>
   </div>
+  <div class="note"><b>Each block recomputes Q, K and V.</b> Block 2 does not reuse block 1's Q, K, V: it multiplies <i>its own input</i>
+    (block 1's output) by <i>its own</i> W<sub>q</sub>, W<sub>k</sub>, W<sub>v</sub>. So a 12-block model has 12 sets of Q, K, V — which is why the KV cache
+    in Step 7 stores a K and a V <i>per layer</i> for every token.</div>
+  <div class="card">
+    <h3>What is each weight matrix in a block learning?</h3>
+    <p class="small" style="margin-top:0">A block has a handful of learned matrices. None is given a job by hand. Training (Step 5) pushes each one towards whatever lowers the loss, and these are the roles they tend to settle into:</p>
+    <div style="overflow-x:auto"><table style="border-collapse:collapse;font-size:13px;width:100%">
+      <thead><tr><th style="padding:6px 10px;text-align:left;font-size:11px;color:var(--faint);border-bottom:1px solid var(--line)">weights</th><th style="padding:6px 10px;text-align:left;font-size:11px;color:var(--faint);border-bottom:1px solid var(--line)">what they learn</th><th style="padding:6px 10px;text-align:left;font-size:11px;color:var(--faint);border-bottom:1px solid var(--line)">in "The king sat on the ___"</th></tr></thead>
+      <tbody>
+        <tr><td style="padding:6px 10px;border-bottom:1px solid var(--line);white-space:nowrap"><b style="color:var(--q)">W<sub>q</sub></b> + <b style="color:var(--k)">W<sub>k</sub></b> (per head)</td><td style="padding:6px 10px;border-bottom:1px solid var(--line)"><b>Where to look.</b> What each kind of word asks for and what it advertises, so that the right pairs score high.</td><td style="padding:6px 10px;border-bottom:1px solid var(--line)">the last "the" asks for a royal subject; "king" advertises one.</td></tr>
+        <tr><td style="padding:6px 10px;border-bottom:1px solid var(--line);white-space:nowrap"><b style="color:var(--v)">W<sub>v</sub></b> (per head)</td><td style="padding:6px 10px;border-bottom:1px solid var(--line)"><b>What to copy, and how much of each feature.</b> Dials for the parts of a word worth passing on.</td><td style="padding:6px 10px;border-bottom:1px solid var(--line)">pass "king"'s royalty and size; leave behind its function-word feature.</td></tr>
+        <tr><td style="padding:6px 10px;border-bottom:1px solid var(--line);white-space:nowrap"><b>W<sub>O</sub></b></td><td style="padding:6px 10px;border-bottom:1px solid var(--line)"><b>How to combine the heads and where to write the result</b> back into the token's vector (the residual stream).</td><td style="padding:6px 10px;border-bottom:1px solid var(--line)">merge the "who" head and the "previous word" head into one update.</td></tr>
+        <tr><td style="padding:6px 10px;border-bottom:1px solid var(--line);white-space:nowrap"><b>Feed-forward weights</b></td><td style="padding:6px 10px;border-bottom:1px solid var(--line)"><b>Knowledge applied to one token at a time.</b> Research on these layers finds they behave like a lookup memory: a pattern comes in, an associated feature goes out.</td><td style="padding:6px 10px;border-bottom:1px solid var(--line)">"royal person + sat on" in, "seat-like thing" out.</td></tr>
+        <tr><td style="padding:6px 10px;white-space:nowrap"><b>Norm scale and shift</b></td><td style="padding:6px 10px"><b>Keep the numbers in a healthy range</b> so the next matrix sees a stable input.</td><td style="padding:6px 10px">no meaning of their own.</td></tr>
+      </tbody>
+    </table></div>
+    <p class="small" style="margin-top:10px;margin-bottom:0">Every block has its <b>own</b> copy of all of these, so a 32-block model has 32 different W<sub>q</sub>s, 32 different W<sub>v</sub>s, and so on. That is why blocks can specialise, which the next card shows.</p>
+  </div>
+
+  <div class="card">
+    <h3>What does each layer learn? Early, middle and late</h3>
+    <p class="small" style="margin-top:0">Nobody tells layer 3 to "do grammar". But a later layer can only build on what earlier layers wrote into the vector, so a rough order emerges. Pick a depth band (numbers are for a 32-block model such as Llama-3 8B):</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px" id="depth-tabs"></div>
+    <div id="depth-band"></div>
+    <p class="small" style="margin-top:10px;margin-bottom:0;color:var(--faint)"><b>Honest caveat:</b> this is a simplified story based on probing studies (for example "BERT rediscovers the classical NLP pipeline") and "logit lens" experiments. Real layers mix jobs, the boundaries are blurry, and the same head can do different things in different contexts. The sentences under "our sentence" are an illustration, not measurements.</p>
+  </div>
+  <div class="note"><b>Two things people mix up.</b> (1) Every layer outputs a vector for <i>every</i> token,
+    because the next layer needs all of them as input — only at the very end is just the <i>last</i>
+    token's vector used to predict the next word. (2) Attention moves information <i>between</i> tokens;
+    the feed-forward network then transforms each token <i>on its own</i> — and much of what the model has
+    learned is widely believed to live in those feed-forward weights.</div>
 </section>
 
 <div class="next">
@@ -244,66 +319,106 @@
 </div>
 
 <footer style="margin-top:44px;padding-top:16px;border-top:1px solid var(--line);font-size:12px;line-height:1.55;color:var(--faint);font-style:italic">
-  ✦ This 9-part series was co-written with Claude (Anthropic). It favours intuition over rigour and may contain bugs or simplifications — corrections and feedback are very welcome.
+  ✦ This 11-part series was co-written with Claude (Anthropic). It favours intuition over rigour and may contain bugs or simplifications — corrections and feedback are very welcome.
 </footer>
 
 </div>
 <script>
 const $=s=>document.querySelector(s);
-const TOKENS=['the','dog','chased','it'];
+const TOKENS=['The','king','sat','on','the'];
 
-/* ---- three hand-set attention heads (rows=query, cols=key, causal) ---- */
+/* ---- four attention heads (Head 1 computed, others hand-set) (rows=query, cols=key, causal) ---- */
+/* ---- Head 1 is literally Step 3's head: Q = X·Wq, K = X·Wk, causal softmax(Q·Kᵀ/√3) ---- */
+const EMB7={ The:[0,0,0,0,0,0,.6], king:[.9,.9,.9,.9,.6,0,.1], sat:[0,0,0,0,0,.5,.2], on:[0,0,0,0,0,0,.3], the:[0,0,0,0,0,0,.6] };
+const DIMS7=['living','human','gender','royalty','size','action','abstract'], D7=DIMS7.length;
+const PEF=(pos,d)=>{const k=Math.floor(d/2),den=Math.pow(10000,2*k/D7);return d%2===0?Math.sin(pos/den):Math.cos(pos/den);};
+const POS_SCALE=0.3;   // the position stamp is kept small so it nudges the meaning instead of drowning it (Step 2)
+const XM=TOKENS.map((t,i)=>EMB7[t].map((v,d)=>v+POS_SCALE*PEF(i,d)));   // X = E + 0.3·P (Steps 1-2)
+const WQ1=[[0.04, -2.25, -7.95], [0.69, -1.3, 1.12], [-0.56, 2.76, 8.27], [0.03, 0.4, -2.32], [-0.29, 1.31, 4.19], [0.88, 0.45, 4.15], [0.86, 0.22, -1.48]], WK1=[[-0.07, 1.76, -0.07], [0.14, -1.08, 0.14], [0.59, -1.41, 0.59], [0.18, 0.65, 0.18], [0.33, -0.77, 0.33], [-0.01, 0.3, -0.01], [-0.15, 0.08, -0.15]];                                   // copied from Step 3
+const matmul=(A,B)=>A.map(r=>B[0].map((_,j)=>r.reduce((s,x,k)=>s+x*B[k][j],0)));
+const Q1=matmul(XM,WQ1), K1=matmul(XM,WK1);
+const head1W=Q1.map((q,qi)=>{ const sc=K1.map((k,ki)=>ki>qi?-Infinity:q.reduce((s,x,j)=>s+x*k[j],0)/Math.sqrt(3));
+  const m=Math.max(...sc), e=sc.map(x=>Math.exp(x-m)), z=e.reduce((s,x)=>s+x,0); return e.map(x=>x/z); });
 const HEADS=[
-  { name:'Head 1 · coreference',
-    desc:'Resolves pronouns and links words to the nouns they depend on. "it" → "dog".',
-    W:[[1,0,0,0],[.2,.8,0,0],[.1,.8,.1,0],[.05,.7,.05,.2]] },
+  { name:'Head 1 · the Step 3 head',
+    desc:'Computed live from Q = X·W_q and K = X·W_k (the same matrices as Step 3). It finds "king" for the last "the", but spreads attention over sat and on too.',
+    W:head1W },
   { name:'Head 2 · previous-token',
-    desc:'Tracks local word order — each token mostly attends to the one just before it.',
-    W:[[1,0,0,0],[.85,.15,0,0],[.1,.8,.1,0],[.05,.1,.8,.05]] },
+    desc:'Its own W_q, W_k learned a different job: each token mostly attends to the one just before it. The last "the" → "on". (Pattern hand-set for the demo.)',
+    W:[[1,0,0,0,0],[.85,.15,0,0,0],[.1,.8,.1,0,0],[.05,.1,.8,.05,0],[.05,.05,.1,.75,.05]] },
   { name:'Head 3 · broad context',
-    desc:'Spreads attention across the whole visible sentence — a sentence-level summary.',
-    W:[[1,0,0,0],[.5,.5,0,0],[.34,.33,.33,0],[.25,.25,.25,.25]] },
+    desc:'A third pair of W_q, W_k that spreads attention over the whole visible sentence — a sentence-level summary. (Pattern hand-set for the demo.)',
+    W:[[1,0,0,0,0],[.5,.5,0,0,0],[.34,.33,.33,0,0],[.25,.25,.25,.25,0],[.2,.2,.2,.2,.2]] },
+  { name:'Head 4 · action finder',
+    desc:'A fourth pair of W_q, W_k tuned to find the verb: "on" and the last "the" both look back at "sat" to learn what is being done. (Pattern hand-set for the demo.)',
+    W:[[1,0,0,0,0],[.3,.7,0,0,0],[.1,.3,.6,0,0],[.05,.1,.75,.1,0],[.05,.1,.7,.1,.05]] },
 ];
 function heat(w){
   const t=Math.max(0,Math.min(1,w));
   const r=Math.round(252-(252-194)*t),g=Math.round(231-(231-37)*t),b=Math.round(240-(240-92)*t);
   return `rgb(${r},${g},${b})`;
 }
-let activeHead=0;
-$('#head-tabs').innerHTML=HEADS.map((h,i)=>`<button class="${i===0?'active':''}" data-h="${i}">${h.name.split(' · ')[0]}</button>`).join('');
-function renderHead(){
-  const h=HEADS[activeHead];
-  $('#head-desc').innerHTML='<b style="color:var(--att)">'+h.name.split(' · ')[1]+':</b> '+h.desc;
-  let html='<div class="mm-row"><div class="mm-corner"></div>'+TOKENS.map(t=>`<div class="mm-hdr">${t}</div>`).join('')+'</div>';
-  TOKENS.forEach((qt,qi)=>{
-    html+='<div class="mm-row"><div class="mm-lbl">'+qt+'</div>';
-    h.W[qi].forEach((w,ki)=>{
-      if(ki>qi){ html+='<div class="mm-cell" style="background:var(--bg);border:1px dashed var(--line-strong);color:var(--faint)">·</div>'; }
-      else{ const pct=Math.round(w*100); html+=`<div class="mm-cell" style="background:${heat(w)};color:${w>.45?'#fff':'#86145a'}">${pct}</div>`; }
+function renderHeads(){
+  const nm=(a,b)=>`${TOKENS[a]} ${Math.round(b*100)}%`;
+  $('#heads-grid').innerHTML=HEADS.map(h=>{
+    const [hn,job]=h.name.split(' · ');
+    let m='<div class="mm-row"><div class="mm-corner"></div>'+TOKENS.map(t=>`<div class="mm-hdr">${t}</div>`).join('')+'</div>';
+    TOKENS.forEach((qt,qi)=>{
+      m+=`<div class="mm-row${qi===TOKENS.length-1?' lastq':''}"><div class="mm-lbl">${qt}</div>`;
+      h.W[qi].forEach((w,ki)=>{
+        if(ki>qi){ m+='<div class="mm-cell" style="background:var(--bg);border:1px dashed var(--line-strong);color:var(--faint)">·</div>'; }
+        else{ m+=`<div class="mm-cell" style="background:${heat(w)};color:${w>.45?'#fff':'#86145a'}">${Math.round(w*100)}</div>`; }
+      });
+      m+='</div>';
     });
-    html+='</div>';
-  });
-  $('#head-matrix').innerHTML=html;
-  document.querySelectorAll('#head-tabs button').forEach((b,i)=>b.classList.toggle('active',i===activeHead));
+    const row=h.W[TOKENS.length-1], order=row.map((w,i)=>[i,w]).sort((x,y)=>y[1]-x[1]).slice(0,2);
+    return `<div class="hpanel"><div class="hname">${hn}</div><div class="hjob">${job}</div><div class="hdesc">${h.desc}</div><div class="mini-matrix">${m}</div><div class="hlook">last "the" looks at: <b>${order.map(([i,w])=>nm(i,w)).join(' · ')}</b></div></div>`;
+  }).join('');
 }
-document.querySelectorAll('#head-tabs button').forEach(b=>b.addEventListener('click',()=>{activeHead=+b.dataset.h;renderHead();}));
-renderHead();
+renderHeads();
+
+/* ---- what each head contributes to the last "the" (V = the 7 content features of Step 2) ---- */
+const f2=v=>v.toFixed(2);
+function cell7(v){const a=Math.min(1,Math.abs(v)),bg=v>=0?`rgba(194,37,92,${(a*.45).toFixed(2)})`:`rgba(112,72,232,${(a*.45).toFixed(2)})`;return `<td style="padding:4px 9px;text-align:right;font-family:var(--mono);font-size:12px;background:${bg}">${f2(v)}</td>`;}
+function row7(lbl,sub,vec){return `<tr><th style="padding:4px 10px 4px 0;text-align:left;font-size:12px;font-weight:600;white-space:nowrap">${lbl}<div style="font-weight:400;font-size:11px;color:var(--faint)">${sub}</div></th>${vec.map(cell7).join('')}</tr>`;}
+const head7=`<tr><th></th>${DIMS7.map(d=>`<th style="padding:4px 9px;font-size:11px;font-weight:500;color:var(--faint)">${d}</th>`).join('')}</tr>`;
+const last=TOKENS.length-1;
+const headOut=HEADS.map(h=>DIMS7.map((_,d)=>TOKENS.reduce((s,t,i)=>s+h.W[last][i]*EMB7[t][d],0)));
+const combined=DIMS7.map((_,d)=>headOut.reduce((s,o)=>s+o[d],0)/HEADS.length);
+
+$('#head-out').innerHTML=`<table style="border-collapse:collapse"><thead>${head7}</thead><tbody>`+
+  HEADS.map((h,i)=>row7(h.name.split(' · ')[0],h.name.split(' · ')[1],headOut[i])).join('')+
+  row7('combined',`average of the ${HEADS.length} heads (stands in for concat + W_O)`,combined)+
+`</tbody></table>`;
+$('#head-out-read').innerHTML=`Head 1 (Step 3's head) brings in <b>king</b>'s features (royalty ${f2(headOut[0][3])}) but also a spread of sat and on. <b>Head 2</b> concentrates on <b>"on"</b> and local order (little royalty, ${f2(headOut[1][3])}); <b>Head 3</b> is a bland summary and <b>Head 4</b> goes for <b>"sat"</b> (the action, ${f2(headOut[3][5])} of the action feature). Each head asked a different question of the same X using its own W<sub>q</sub>, W<sub>k</sub> and W<sub>v</sub>, so each brings back different information. A <i>plain average</i> (the "combined" row, royalty ${f2(combined[3])}) would blur them, which is why a real model concatenates the heads and lets a learned matrix <code>W_O</code> decide how much of each to keep.`;
+
+/* ---- residual: attention output alone vs x + attention(x) for the last "the" ---- */
+(function(){
+  const x=EMB7.the;
+  $('#resid').innerHTML=`<table style="border-collapse:collapse"><thead>${head7}</thead><tbody>`+
+    row7('x','the last "the" before attention',x)+
+    row7('attention(x)','what the heads brought back',combined)+
+    row7('x + attention(x)','residual: keep who I am, add what I learned',x.map((v,d)=>v+combined[d]))+`</tbody></table>`;
+  $('#resid-read').innerHTML=`Look at the <b>abstract</b> column: "the" is mostly a function word (0.60). If attention's output <i>replaced</i> x, "the"-ness would shrink to ${f2(combined[6])}; with the residual it stays high (${f2(x[6]+combined[6])}) <i>and</i> the royal/human features arrive. The vector now says "a 'the' that follows a king who sat". Residuals also let gradients flow straight back during training (see below).`;
+})();
 
 /* ---- block diagram step-through ---- */
 const STEPS=[
   {boxes:['in'], explain:'<b>Input.</b> A sequence of token vectors enters the block — say the positioned embeddings from Steps 1–2 (or the output of the previous block).'},
   {boxes:['in','norm1'], explain:'<b>LayerNorm.</b> First, normalize each vector to zero mean and unit variance. This keeps the numbers in a stable range so the layers below behave predictably.'},
-  {boxes:['in','norm1','att'], explain:'<b>Multi-head attention.</b> Tokens look at each other (Step 3), now across multiple heads in parallel. This mixes information <i>between</i> positions.'},
-  {boxes:['in','norm1','att','add1'], explain:'<b>Residual add.</b> Add the original input back: <code>x + attention(norm(x))</code>. The shortcut lets gradients flow freely and preserves the original signal.'},
-  {boxes:['in','norm1','att','add1','norm2'], explain:'<b>LayerNorm again.</b> Normalize before the feed-forward network, same reason as before.'},
-  {boxes:['in','norm1','att','add1','norm2','ffn'], explain:'<b>Feed-forward network.</b> Each token is processed independently through <code>Linear → GELU → Linear</code>. Attention <i>gathered</i> context; the FFN <i>thinks</i> about it.'},
-  {boxes:['in','norm1','att','add1','norm2','ffn','add2'], explain:'<b>Residual add.</b> Add again: <code>x + ffn(norm(x))</code>. The block output has the <i>same shape</i> as its input — which is exactly why we can stack blocks.'},
+  {boxes:['in','norm1','qkv'], explain:'<b>Project to Q, K, V.</b> Every head multiplies the normalised input by its own three matrices: <code>Q = X·W_q</code>, <code>K = X·W_k</code>, <code>V = X·W_v</code> (Step 3). <b>Every block does this again from its own input</b> — the next block builds fresh Q, K, V from this block\'s output. These K and V are exactly what the KV cache will store (Step 7).'},
+  {boxes:['in','norm1','qkv','att'], explain:'<b>Attention.</b> In each head, <code>Q·Kᵀ</code> says who to look at, the weights blend the <code>V</code>s, and <code>W_O</code> mixes the heads. Tokens exchange information <i>between</i> positions.'},
+  {boxes:['in','norm1','qkv','att','add1'], explain:'<b>Residual add.</b> Add the original input back: <code>x + attention(norm(x))</code>. The shortcut lets gradients flow freely and preserves the original signal.'},
+  {boxes:['in','norm1','qkv','att','add1','norm2'], explain:'<b>LayerNorm again.</b> Normalize before the feed-forward network, same reason as before.'},
+  {boxes:['in','norm1','qkv','att','add1','norm2','ffn'], explain:'<b>Feed-forward network.</b> Each token is processed independently through <code>Linear → GELU → Linear</code>. Attention <i>gathered</i> context; the FFN <i>thinks</i> about it.'},
+  {boxes:['in','norm1','qkv','att','add1','norm2','ffn','add2'], explain:'<b>Residual add.</b> Add again: <code>x + ffn(norm(x))</code>. The block output has the <i>same shape</i> as its input — which is exactly why we can stack blocks.'},
 ];
 let bdStep=0;
 const BOX_DEFS={
   in:{cls:'',t:'Input vectors',s:'sequence of token embeddings'},
   norm1:{cls:'norm',t:'LayerNorm',s:'stabilize the numbers'},
-  att:{cls:'att',t:'Multi-Head Attention',s:'tokens mix information'},
+  qkv:{cls:'att',t:'Project to Q, K, V',s:'every head: its own X·Wq, X·Wk, X·Wv'},
+  att:{cls:'att',t:'Attention + W_O',s:'softmax(Q·Kᵀ)·V per head, then mix'},
   add1:{cls:'',t:'⊕ Add (residual)',s:'x + attention(x)'},
   norm2:{cls:'norm',t:'LayerNorm',s:'stabilize again'},
   ffn:{cls:'ffn',t:'Feed-Forward Network',s:'Linear → GELU → Linear'},
@@ -311,15 +426,21 @@ const BOX_DEFS={
 };
 function renderBlock(){
   const shown=STEPS[bdStep].boxes;
-  const all=['in','norm1','att','add1','norm2','ffn','add2'];
+  const all=['in','norm1','qkv','att','add1','norm2','ffn','add2'];
   let html='';
   all.forEach((key,i)=>{
     const on=shown.includes(key);
     const isLast=key===shown[shown.length-1];
     const d=BOX_DEFS[key];
     if(i>0) html+=`<div class="bd-arrow" style="opacity:${on?1:.2}"></div>`;
+    let extra='';
+    if(key==='qkv') extra=`<div class="bd-heads">${HEADS.map(h=>`<div class="bd-head"><b>${h.name.split(' · ')[0]}</b><span>Q K V</span></div>`).join('')}</div>`;
+    if(key==='att'){
+      const lr=TOKENS.length-1;
+      extra=`<div class="bd-heads">${HEADS.map(h=>{const r=h.W[lr],bi=r.indexOf(Math.max(...r));return `<div class="bd-head"><b>${h.name.split(' · ')[0]}</b><span>the → ${TOKENS[bi]} ${Math.round(r[bi]*100)}%</span></div>`;}).join('')}</div><div class="bd-concat">↓ concatenate the ${HEADS.length} outputs → × W<sub>O</sub></div>`;
+    }
     html+=`<div class="bd-box ${d.cls} ${isLast?'active':''}" style="opacity:${on?1:.25}">
-      <div class="t">${d.t}</div><div class="s">${d.s}</div></div>`;
+      <div class="t">${d.t}</div><div class="s">${d.s}</div>${extra}</div>`;
   });
   $('#block-diagram').innerHTML=html;
   $('#bd-explain').innerHTML=STEPS[bdStep].explain;
@@ -334,7 +455,7 @@ function renderStack(){
   const n=+$('#depth-sel').value;
   const stack=$('#stack');
   const show=Math.min(n,6);
-  let html='<div class="stack-layer" style="background:var(--tok-soft);border-color:var(--tok-line);color:#0a5b63">tokens + position →</div><div class="stack-arrow">↓</div>';
+  let html='<div class="stack-layer" style="background:var(--tok-soft);border-color:var(--tok-line);color:var(--ink)">tokens + position →</div><div class="stack-arrow">↓</div>';
   for(let i=0;i<show;i++){
     html+=`<div class="stack-layer">Transformer block ${i+1}</div>`;
     if(i<show-1) html+='<div class="stack-arrow">↓</div>';
@@ -342,11 +463,46 @@ function renderStack(){
   if(n>6){ html+=`<div class="stack-arrow">⋮</div><div class="stack-layer" style="background:var(--bg);border-style:dashed;color:var(--muted)">… ${n-6} more blocks …</div><div class="stack-arrow">↓</div><div class="stack-layer">Transformer block ${n}</div>`; }
   html+='<div class="stack-arrow">↓</div><div class="stack-layer" style="background:#D1FAE5;border-color:#6EE7B7;color:#065f46">→ prediction head</div>';
   stack.innerHTML=html;
-  const params={2:'~1M',6:'~110M',12:'124M',48:'1.5B',96:'175B'};
-  $('#stack-note').innerHTML=`A <b>${n}-block</b> model in this configuration has roughly <b>${params[n]||'?'}</b> parameters. Depth is one of the main levers for capability — but it also multiplies compute and the risk of unstable training, which is why residuals and normalization matter so much.`;
+  const params={2:'~53M',6:'~82M',12:'124M',48:'1.5B',96:'175B'};
+  $('#stack-note').innerHTML=`A <b>${n}-block</b> model has roughly <b>${params[n]||'?'}</b> parameters${n>=48?' (those big models are also much wider, not just deeper)':' (at GPT-2 small\'s width of 768)'}. Depth is one of the main levers for capability — but it also multiplies compute and the risk of unstable training, which is why residuals and normalization matter so much.`;
 }
 $('#depth-sel').addEventListener('change',renderStack);
 renderStack();
+
+/* ---- what each depth band tends to learn (illustrative, not measured) ---- */
+(function(){
+  const BANDS=[
+    {tab:'Early (blocks 1–8)', attn:'Look at <b>nearby</b> tokens: the previous word, the word two back, punctuation. Simple, local patterns.', ffn:'Word-level facts: "king" is a person, a noun, royal; "sat" is a past-tense verb.', sentence:'"the" notices it follows "on" (a preposition), so a noun phrase must be coming. "sat" finds its subject "king".', holds:'<i>"a noun phrase after a preposition"</i> plus a little of "king".'},
+    {tab:'Middle (blocks 9–24)', attn:'Look at <b>related</b> tokens, however far away: who did what, what a pronoun refers to, which words belong together.', ffn:'Facts and associations built on the earlier features: "royal person + sitting" → "seat-like thing".', sentence:'"the" combines "king" and "sat on" into one idea: <i>a royal person sitting on something</i>.', holds:'<i>"the thing a king sits on"</i>: meaning, no longer just a word.'},
+    {tab:'Late (blocks 25–32)', attn:'Mostly <b>tidying up</b>: pull in the last missing details and settle ties between near-equal ideas.', ffn:'Turn the idea into a <b>preference over words</b>: throne, chair, castle, each with a score.', sentence:'The vector now points more towards "throne" than "chair" or "book". The prediction head (Step 2) reads it.', holds:'<i>a ranked list of next words</i>, with "throne" on top.'}
+  ];
+  const tabs=document.querySelector('#depth-tabs'), band=document.querySelector('#depth-band');
+  if(!tabs||!band) return;
+  tabs.innerHTML=BANDS.map((b,i)=>`<button type="button" class="pill" data-b="${i}" style="cursor:pointer;border:1px solid var(--line);background:var(--surface);color:inherit">${b.tab}</button>`).join('');
+  function show(i){
+    const b=BANDS[i];
+    tabs.querySelectorAll('[data-b]').forEach(el=>{ const on=+el.dataset.b===i; el.style.background=on?'var(--blk-soft)':'var(--surface)'; el.style.borderColor=on?'var(--blk-line)':'var(--line)'; });
+    band.innerHTML=`<div style="display:grid;grid-template-columns:auto 1fr;gap:8px 14px;font-size:14px;line-height:1.55">`+
+      `<b style="color:var(--q)">Attention heads</b><span>${b.attn}</span>`+
+      `<b>Feed-forward</b><span>${b.ffn}</span>`+
+      `<b style="color:var(--blk-line)">Our sentence</b><span>${b.sentence}</span>`+
+      `<b>The last "the" now holds</b><span>${b.holds}</span></div>`;
+  }
+  tabs.addEventListener('click',e=>{ const t=e.target.closest&&e.target.closest('[data-b]'); if(t) show(+t.dataset.b); });
+  show(0);
+})();
+
+/* ---- shapes of each head's Q,K,V projections ---- */
+(function(){
+  const tile=(lbl,shape,c)=>`<span style="display:inline-block;margin:2px 6px 2px 0;padding:3px 9px;border-radius:7px;border:1px solid var(--line);font-family:var(--mono);font-size:12px"><b style="color:${c}">${lbl}</b> <span style="color:var(--faint)">${shape}</span></span>`;
+  let h='';
+  HEADS.forEach((hd,i)=>{
+    h+=`<div style="margin-bottom:6px"><b style="font-size:12px">${hd.name.split(' · ')[0]}</b> &nbsp; X <span style="color:var(--faint)">(5×7)</span> × `+
+      tile('W<sub>q</sub>'+(i+1),'7×3','var(--q)')+tile('W<sub>k</sub>'+(i+1),'7×3','var(--k)')+tile('W<sub>v</sub>'+(i+1),'7×3','var(--v)')+
+      `&nbsp;→ Q<sub>${i+1}</sub>, K<sub>${i+1}</sub>, V<sub>${i+1}</sub> <span style="color:var(--faint)">(5×3 each)</span></div>`;
+  });
+  document.getElementById('qkv-heads').innerHTML=h;
+})();
 </script>
 </body>
 </html>

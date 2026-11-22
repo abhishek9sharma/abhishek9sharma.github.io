@@ -142,19 +142,20 @@
   .note.pos{border-left-color:var(--pos-line);background:var(--pos-soft);color:#78350f}
   .note.pred{border-left-color:var(--pred-line);background:var(--pred-soft);color:#065f46}
   .note b{font-weight:600}
+  [data-theme="dark"] .note:not(.pos):not(.pred){color:var(--ink)}
 
   .next{margin-top:56px;padding:22px;border:1px dashed var(--line-strong);border-radius:14px;background:var(--surface)}
   .next h3{font-family:var(--disp);font-size:16px;margin:0 0 6px}
   .next p{color:var(--muted);font-size:14px;margin:0}
   .pill{display:inline-block;font-family:var(--mono);font-size:11px;color:var(--vec);background:var(--vec-soft);border:1px solid var(--vec-line);border-radius:20px;padding:2px 10px;margin-top:10px;text-decoration:none;cursor:pointer;}
 
-  /* ---- injected series navigator (consistent across all 9 steps) ---- */
+  /* ---- injected series navigator (consistent across all 11 steps) ---- */
   .series-nav{display:flex;flex-direction:column;align-items:center;gap:7px;padding:10px 0 14px;margin-bottom:4px}
   .sn-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center}
   .sn-chips{display:flex;gap:5px}
   .sn-chip{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:13px;font-weight:600;text-decoration:none;color:var(--muted);background:var(--bg);border:1px solid var(--line-strong);transition:all .12s}
   .sn-chip:hover{border-color:var(--ink);color:var(--ink)}
-  .sn-chip.current{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .sn-chip.current{background:var(--ink);color:var(--bg);border-color:var(--ink)}
   .sn-navbtn{font-family:var(--mono);font-size:12px;color:var(--muted);text-decoration:none;padding:6px 11px;border:1px solid var(--line-strong);border-radius:8px;white-space:nowrap;transition:all .12s}
   .sn-navbtn:hover{border-color:var(--ink);color:var(--ink)}
   .sn-navbtn.disabled{opacity:.28;pointer-events:none}
@@ -223,16 +224,20 @@
 
 
 <nav class="series-nav" aria-label="Series navigation">
-  <div class="sn-bar"><a class="sn-navbtn" href="llm-step1-tokens-and-embeddings.html">‹ prev</a><div class="sn-chips"><a class="sn-chip" href="llm-step1-tokens-and-embeddings.html" title="Step 1: Tokens & Embeddings">1</a><span class="sn-chip current" title="Position & Prediction">2</span><a class="sn-chip" href="llm-step3-self-attention.html" title="Step 3: Self-Attention">3</a><a class="sn-chip" href="llm-step4-transformer-block.html" title="Step 4: Transformer Block">4</a><a class="sn-chip" href="llm-step5-training.html" title="Step 5: Training">5</a><a class="sn-chip" href="llm-step6-generation.html" title="Step 6: Generation">6</a><a class="sn-chip" href="llm-step7-kv-cache.html" title="Step 7: KV Cache">7</a><a class="sn-chip" href="llm-step8-memory-wall.html" title="Step 8: The Memory Wall">8</a><a class="sn-chip" href="llm-step9-pagedattention-vllm.html" title="Step 9: PagedAttention & vLLM">9</a></div><a class="sn-navbtn" href="llm-step3-self-attention.html">next ›</a></div>
-  <div class="sn-caption">Step <b>2</b> of 9 &middot; <b>Position & Prediction</b> &middot; LLM from scratch</div>
+  <div class="sn-bar"><a class="sn-navbtn" href="llm-step1-tokens-and-embeddings.html">‹ prev</a><div class="sn-chips"><a class="sn-chip" href="llm-step1-tokens-and-embeddings.html" title="Step 1: Tokens & Embeddings">1</a><span class="sn-chip current" title="Position & Prediction">2</span><a class="sn-chip" href="llm-step3-self-attention.html" title="Step 3: Self-Attention">3</a><a class="sn-chip" href="llm-step4-transformer-block.html" title="Step 4: Transformer Block">4</a><a class="sn-chip" href="llm-step5-training.html" title="Step 5: Training">5</a><a class="sn-chip" href="llm-step6-generation.html" title="Step 6: Generation">6</a><a class="sn-chip" href="llm-step7-kv-cache.html" title="Step 7: KV Cache">7</a><a class="sn-chip" href="llm-step8-memory-wall.html" title="Step 8: The Memory Wall">8</a><a class="sn-chip" href="llm-step9-pagedattention-vllm.html" title="Step 9: PagedAttention & vLLM">9</a><a class="sn-chip" href="llm-step10-llm-d-cluster-serving.html" title="Step 10: llm-d: Many vLLMs as a Team">10</a><a class="sn-chip" href="llm-step11-alternatives-whole-picture.html" title="Step 11: SGLang, Ray Serve & the Whole Picture">11</a></div><a class="sn-navbtn" href="llm-step3-self-attention.html">next ›</a></div>
+  <div class="sn-caption">Step <b>2</b> of 11 &middot; <b>Position & Prediction</b> &middot; LLM from scratch</div>
 </nav>
 
 <header>
-  <div class="kicker">Intuition-first LLMs · Step 2 of 9</div>
+  <div class="kicker">Intuition-first LLMs · Step 2 of 11</div>
   <h1>Order matters: position &amp; next-token prediction</h1>
   <p class="lede">The model has vectors now — but those vectors have no idea they're in a sequence.
     "Dog bites man" and "Man bites dog" would look identical to it. This step adds <b>position</b>,
-    then closes the loop: how do we turn the last vector back into a word prediction?</p>
+    then closes the loop: how do we turn the last vector back into a word prediction?
+    From here on we follow one sentence, <b>"The king sat on the ___"</b> — in the stamping demo below, pick it
+    and notice the word <b>"the"</b> appears twice with the <i>same</i> embedding but lands on a <i>different</i> point of the position wave,
+    so after stamping the two rows are no longer identical. The result, embedding + position, is the matrix
+    <b>X</b> that Step 3 splits into Q, K and V.</p>
 
   <div class="pipe" aria-hidden="true">
     <div class="step tok dim"><div class="n">01</div><div class="t">Token IDs</div><div class="d">[4, 2, 11]</div><div class="a">∈ embedding</div></div>
@@ -347,7 +352,7 @@
     at different frequencies so every position gets a unique, continuous fingerprint.</p>
 
   <div class="card">
-    <h3>"dog bites man" — each token stamped with its position</h3>
+    <h3 id="pe-title">"the king sat on the" — each token stamped with its position</h3>
     <p class="small" style="margin-top:0">The mini-chart inside each chip is a sine wave for the
       chosen dimension across all positions. The <b style="color:var(--pos)">dot</b> marks exactly
       where this token sits on the wave. Notice: same dimension, but each token lands on a
@@ -355,6 +360,7 @@
     <div class="row" style="margin-bottom:10px">
       <div><label class="fld" for="pe-sent">Sentence</label>
         <select id="pe-sent">
+          <option selected>the king sat on the</option>
           <option>dog bites man</option>
           <option>man bites dog</option>
           <option>the king saw the queen</option>
@@ -393,12 +399,13 @@
       <em>dog bites man</em> but at <b>position 2</b> in <em>man bites dog</em>.
       Its raw embedding is exactly the same both times — only the positional encoding differs.
       That difference propagates into the combined vector the model sees.</p>
+    <p class="small"><b>Why ×0.3?</b> The raw waves swing between −1 and +1, which is as loud as the word itself (our embedding values are at most about 0.9 in size). Add them as they are and position would drown the meaning, and the same word at two positions would look like two unrelated words. So the stamp is scaled down: the word stays recognisable and position nudges it. (The original Transformer gets the same effect the other way round, by scaling the embeddings <i>up</i> by √d<sub>model</sub> before adding the waves.) Steps 3 and 4 use this scaled X = E + 0.3·P.</p>
 
     <!-- colour legend -->
     <div style="display:flex;gap:16px;font-family:var(--mono);font-size:11px;margin:10px 0 6px;flex-wrap:wrap">
       <span><span style="display:inline-block;width:10px;height:10px;background:#0E7C86;border-radius:2px;margin-right:4px;vertical-align:middle"></span>embedding (same both sides)</span>
-      <span><span style="display:inline-block;width:10px;height:10px;background:#B45309;border-radius:2px;margin-right:4px;vertical-align:middle"></span>pos encoding (differs)</span>
-      <span><span style="display:inline-block;width:10px;height:10px;background:#4F46E5;border-radius:2px;margin-right:4px;vertical-align:middle"></span>combined = emb + PE</span>
+      <span><span style="display:inline-block;width:10px;height:10px;background:#B45309;border-radius:2px;margin-right:4px;vertical-align:middle"></span>position stamp = 0.3 × PE (differs)</span>
+      <span><span style="display:inline-block;width:10px;height:10px;background:#4F46E5;border-radius:2px;margin-right:4px;vertical-align:middle"></span>combined = emb + 0.3 × PE</span>
     </div>
 
     <div id="comb-display" style="margin-top:4px"></div>
@@ -523,7 +530,7 @@
 </div>
 
 <footer style="margin-top:44px;padding-top:16px;border-top:1px solid var(--line);font-size:12px;line-height:1.55;color:var(--faint);font-style:italic">
-  ✦ This 9-part series was co-written with Claude (Anthropic). It favours intuition over rigour and may contain bugs or simplifications — corrections and feedback are very welcome.
+  ✦ This 11-part series was co-written with Claude (Anthropic). It favours intuition over rigour and may contain bugs or simplifications — corrections and feedback are very welcome.
 </footer>
 
 </div><!-- /wrap -->
@@ -559,6 +566,7 @@ function pe(pos,dim,D=7){
   const denom=Math.pow(10000, 2*d/D);
   return dim%2===0 ? Math.sin(pos/denom) : Math.cos(pos/denom);
 }
+const POS_SCALE=0.3; // the stamp is scaled down before adding (see the card below)
 function peVec(pos,D=7){ return Array.from({length:D},(_,d)=>pe(pos,d,D)); }
 function addVec(a,b){ return a.map((x,i)=>x+(b[i]||0)); }
 
@@ -783,8 +791,8 @@ function renderCombined(){
 
   const emb   = (EMB['dog'] || []).slice(); // same both sides — copy to be safe
   if(!emb.length){ emb.push(...Array(D).fill(0)); }
-  const posv0 = peVec(0, D);               // PE for position 0
-  const posv2 = peVec(2, D);               // PE for position 2
+  const posv0 = peVec(0, D).map(x=>x*POS_SCALE);   // scaled PE for position 0
+  const posv2 = peVec(2, D).map(x=>x*POS_SCALE);   // scaled PE for position 2
   if(!posv0 || !posv2 || !posv0.length) return; // safety
   const comb0 = addVec(emb, posv0);        // combined @ pos 0
   const comb2 = addVec(emb, posv2);        // combined @ pos 2
@@ -814,10 +822,10 @@ function renderCombined(){
     letter-spacing:.06em;padding-bottom:5px;border-bottom:2px solid var(--line-strong);margin-bottom:3px;align-items:end">
     <span>dim</span>
     <span style="color:#0E7C86;text-align:center">emb</span>
-    <span style="color:#B45309;text-align:center">PE<br>pos 0</span>
+    <span style="color:#B45309;text-align:center">0.3×PE<br>pos 0</span>
     <span style="color:#4F46E5;text-align:center">combined<br>pos 0</span>
     <span style="color:#0E7C86;text-align:center">emb</span>
-    <span style="color:#B45309;text-align:center">PE<br>pos 2</span>
+    <span style="color:#B45309;text-align:center">0.3×PE<br>pos 2</span>
     <span style="color:#4F46E5;text-align:center">combined<br>pos 2</span>
   </div>`;
 
@@ -867,7 +875,7 @@ function renderCombined(){
   }
 }
 
-$('#pe-sent').addEventListener('change',renderPESeq);
+$('#pe-sent').addEventListener('change',()=>{ $('#pe-title').textContent='"'+$('#pe-sent').value+'" — each token stamped with its position'; renderPESeq(); });
 $('#pe-dim').addEventListener('change',renderPESeq);
 $('#comb-word').addEventListener('change',renderCombined);
 $('#comb-pos').addEventListener('change',renderCombined);

@@ -18,7 +18,7 @@
     <link href="https://abhishek9sharma.github.io/atom.xml" rel="self" type="application/atom+xml"/>
     <link href="https://abhishek9sharma.github.io" rel="alternate" type="text/html"/>
     <generator uri="https://www.getzola.org/">Zola</generator><updated>2026-06-28T00:00:00+00:00</updated><id>https://abhishek9sharma.github.io/atom.xml</id><entry xml:lang="en">
-        <title>From Tokens to KV Cache — An Interactive, Intuition-First Walkthrough</title>
+        <title>From Tokens to a Serving Cluster — An Interactive, Intuition-First Walkthrough</title>
         <published>2026-06-28T00:00:00+00:00</published>
         <updated>2026-06-28T00:00:00+00:00</updated>
         <author>
@@ -26,7 +26,7 @@
         </author>
         <link rel="alternate" href="https://abhishek9sharma.github.io/blog/llm-serving/" type="text/html"/>
         <id>https://abhishek9sharma.github.io/blog/llm-serving/</id>
-        <summary type="html">A 9-part interactive series building intuition for how LLMs work, from tokenisation to the KV-cache memory wall and PagedAttention.</summary>
+        <summary type="html">An 11-part interactive series following one sentence, &#x27;The king sat on the ___&#x27;, from tokenisation and attention through the KV cache, the memory wall and PagedAttention&#x2F;vLLM, to llm-d, SGLang and Ray Serve.</summary>
         </entry><entry xml:lang="en">
         <title>Asangati</title>
         <published>2026-04-29T00:00:00+00:00</published>

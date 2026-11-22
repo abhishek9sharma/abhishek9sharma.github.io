@@ -153,13 +153,13 @@
   .fp-headrow.win{font-weight:600;color:var(--gen)}
   @media(max-width:560px){.fp-stage{min-width:70px;padding:8px 4px}.fp-stage .st-sub{display:none}.fp-arrow{padding:0 1px}}
 
-  /* ---- injected series navigator (consistent across all 9 steps) ---- */
+  /* ---- injected series navigator (consistent across all 11 steps) ---- */
   .series-nav{display:flex;flex-direction:column;align-items:center;gap:7px;padding:10px 0 14px;margin-bottom:4px}
   .sn-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center}
   .sn-chips{display:flex;gap:5px}
   .sn-chip{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:13px;font-weight:600;text-decoration:none;color:var(--muted);background:var(--bg);border:1px solid var(--line-strong);transition:all .12s}
   .sn-chip:hover{border-color:var(--ink);color:var(--ink)}
-  .sn-chip.current{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .sn-chip.current{background:var(--ink);color:var(--bg);border-color:var(--ink)}
   .sn-navbtn{font-family:var(--mono);font-size:12px;color:var(--muted);text-decoration:none;padding:6px 11px;border:1px solid var(--line-strong);border-radius:8px;white-space:nowrap;transition:all .12s}
   .sn-navbtn:hover{border-color:var(--ink);color:var(--ink)}
   .sn-navbtn.disabled{opacity:.28;pointer-events:none}
@@ -180,17 +180,17 @@
 
 
 <nav class="series-nav" aria-label="Series navigation">
-  <div class="sn-bar"><a class="sn-navbtn" href="llm-step5-training.html">‹ prev</a><div class="sn-chips"><a class="sn-chip" href="llm-step1-tokens-and-embeddings.html" title="Step 1: Tokens & Embeddings">1</a><a class="sn-chip" href="llm-step2-position-and-prediction.html" title="Step 2: Position & Prediction">2</a><a class="sn-chip" href="llm-step3-self-attention.html" title="Step 3: Self-Attention">3</a><a class="sn-chip" href="llm-step4-transformer-block.html" title="Step 4: Transformer Block">4</a><a class="sn-chip" href="llm-step5-training.html" title="Step 5: Training">5</a><span class="sn-chip current" title="Generation">6</span><a class="sn-chip" href="llm-step7-kv-cache.html" title="Step 7: KV Cache">7</a><a class="sn-chip" href="llm-step8-memory-wall.html" title="Step 8: The Memory Wall">8</a><a class="sn-chip" href="llm-step9-pagedattention-vllm.html" title="Step 9: PagedAttention & vLLM">9</a></div><a class="sn-navbtn" href="llm-step7-kv-cache.html">next ›</a></div>
-  <div class="sn-caption">Step <b>6</b> of 9 &middot; <b>Generation</b> &middot; LLM from scratch</div>
+  <div class="sn-bar"><a class="sn-navbtn" href="llm-step5-training.html">‹ prev</a><div class="sn-chips"><a class="sn-chip" href="llm-step1-tokens-and-embeddings.html" title="Step 1: Tokens & Embeddings">1</a><a class="sn-chip" href="llm-step2-position-and-prediction.html" title="Step 2: Position & Prediction">2</a><a class="sn-chip" href="llm-step3-self-attention.html" title="Step 3: Self-Attention">3</a><a class="sn-chip" href="llm-step4-transformer-block.html" title="Step 4: Transformer Block">4</a><a class="sn-chip" href="llm-step5-training.html" title="Step 5: Training">5</a><span class="sn-chip current" title="Generation">6</span><a class="sn-chip" href="llm-step7-kv-cache.html" title="Step 7: KV Cache">7</a><a class="sn-chip" href="llm-step8-memory-wall.html" title="Step 8: The Memory Wall">8</a><a class="sn-chip" href="llm-step9-pagedattention-vllm.html" title="Step 9: PagedAttention & vLLM">9</a><a class="sn-chip" href="llm-step10-llm-d-cluster-serving.html" title="Step 10: llm-d: Many vLLMs as a Team">10</a><a class="sn-chip" href="llm-step11-alternatives-whole-picture.html" title="Step 11: SGLang, Ray Serve & the Whole Picture">11</a></div><a class="sn-navbtn" href="llm-step7-kv-cache.html">next ›</a></div>
+  <div class="sn-caption">Step <b>6</b> of 11 &middot; <b>Generation</b> &middot; LLM from scratch</div>
 </nav>
 
 <header>
-  <div class="kicker">Intuition-first LLMs · Step 6 of 9</div>
+  <div class="kicker">Intuition-first LLMs · Step 6 of 11</div>
   <h1>Generation: putting it all together</h1>
   <p class="lede">A trained model doesn't write a sentence in one shot. It predicts <b>one token</b>,
     appends it, and feeds the whole thing back in to predict the next — over and over. That loop is all
     "generation" is. Here's a small model that actually <b>runs it live</b>, so you can watch words appear.</p>
-  <div class="recap"><b>Story so far ▸</b> a fully trained model, Steps 1–5. <b>This step ▸</b> using it to generate text, one token at a time — the build is complete here; Steps 7–8 cover serving it efficiently.</div>
+  <div class="recap"><b>Story so far ▸</b> a fully trained model, Steps 1–5. <b>This step ▸</b> using it to generate text, one token at a time — the build is complete here; Steps 7–11 cover serving it efficiently.</div>
 </header>
 
 <!-- THE LOOP -->
@@ -213,6 +213,27 @@
       <div class="loop-back">↺ &nbsp; feed the longer context back in and repeat until done</div>
     </div>
   </div>
+  <div class="card">
+    <h3>The whole sentence, one token at a time: "The king" → … → "throne"</h3>
+    <p class="small" style="margin-top:0">The model only ever answers <i>one</i> question: "given everything so far, what is the
+      next token?" To produce a sentence we ask it again and again, appending each answer. Here is our running sentence.
+      The last column counts how many tokens the model has to push through the network <b>on that step</b>.</p>
+    <div style="overflow-x:auto"><table id="gen-loop" style="border-collapse:collapse;font-size:13px;width:100%"></table></div>
+    <p class="small" id="gen-loop-read" style="margin-top:10px;margin-bottom:0"></p>
+  </div>
+  <div class="card">
+    <h3>What happens inside one "forward pass"</h3>
+    <ol style="margin:4px 0 0 20px;line-height:1.75;font-size:14px">
+      <li><b>Embed + position</b> each token of the context: <code>X = E + 0.3·P</code> (Steps 1–2).</li>
+      <li>In <b>every block</b> (Step 4): multiply the block's input by <code>W_q, W_k, W_v</code> for each head to get
+        <b style="color:var(--q)">Q</b>, <b style="color:var(--k)">K</b>, <b style="color:var(--v)">V</b> (Step 3).</li>
+      <li><code>Q·Kᵀ</code> decides who to look at; the weights <b>blend the V's</b>; the residual and feed-forward finish the block, and
+        the improved vectors become the next block's input.</li>
+      <li>Only the <b>last</b> token's final vector goes to the output layer, which gives next-word probabilities.</li>
+    </ol>
+    <p class="small" style="margin-bottom:0;margin-top:10px">Notice what repeats from one generation step to the next: the Keys and Values of tokens we
+      already processed. They are recomputed from scratch every time — that is the waste Step 7 removes.</p>
+  </div>
   <div class="note"><b>Every token costs a full forward pass.</b> That's why generating long text is
     slower than reading it, and why "tokens per second" is the headline speed metric for LLMs. Real
     systems cache past computation (the "KV cache") so they don't recompute everything each step — but
@@ -224,8 +245,8 @@
   <div class="eyebrow"><span class="idx">02</span><span class="lbl">Watch the Data Flow</span></div>
   <h2>Two full cycles, animated end to end</h2>
   <p>Here is the journey of Steps 1–4 made concrete, played twice — now with the <b>actual numbers</b>.
-    Watch each token become a vector, get projected into the <b style="color:var(--vec)">Q</b>,
-    <b style="color:var(--att)">K</b>, <b style="color:var(--gen)">V</b> matrices, mix through attention,
+    Watch each token become a vector, mix with the words before it through attention
+    (the Q/K/V matrices are tucked away — open them if you want the detail),
     reach the final head, and produce a prediction that is <b>appended and fed back in</b>. The numbers use a
     tiny 3-dimensional model so they fit on screen; for the same idea on a real GPT-2, see the
     <a href="https://poloclub.github.io/transformer-explainer/" target="_blank" rel="noopener" style="color:var(--gen);font-weight:600">Transformer Explainer ↗</a>.</p>
@@ -344,7 +365,7 @@
   <h3>Where this is heading</h3>
   <p>You now have the complete end-to-end picture. But generation has a performance problem: every new
     token re-reads all previous tokens' keys and values from scratch. The <b>KV cache</b> (Step 7) fixes
-    that by storing them — and <b>PagedAttention</b> (Step 8) solves how to manage that memory efficiently
+    that by storing them — while Step 8 shows the memory wall it creates and <b>PagedAttention</b> (Step 9) solves how to manage that memory efficiently
     in production.</p>
   <p class="small" style="margin-top:10px;color:var(--faint)">
     To explore temperature and top-k/p on a real model:
@@ -357,7 +378,7 @@
 </div>
 
 <footer style="margin-top:44px;padding-top:16px;border-top:1px solid var(--line);font-size:12px;line-height:1.55;color:var(--faint);font-style:italic">
-  ✦ This 9-part series was co-written with Claude (Anthropic). It favours intuition over rigour and may contain bugs or simplifications — corrections and feedback are very welcome.
+  ✦ This 11-part series was co-written with Claude (Anthropic). It favours intuition over rigour and may contain bugs or simplifications — corrections and feedback are very welcome.
 </footer>
 
 </div>
@@ -500,7 +521,7 @@ $('#pipeline').innerHTML=STAGES.map((s,i)=>`
 
   // ---- a tiny 3-dimensional model, so every matrix fits on screen ----
   const D=3;
-  const EMB={ The:[0.20,0.10,0.00], dog:[0.90,0.20,0.10], sat:[0.30,0.80,0.20], on:[0.10,0.30,0.70] };
+  const EMB={ The:[0.20,0.10,0.00], king:[0.90,0.20,0.10], sat:[0.30,0.80,0.20], on:[0.10,0.30,0.70] };
   const POS=[ [0.00,0.10,0.00],[0.10,0.00,0.10],[0.00,0.20,0.00],[0.10,0.10,0.10] ];
   const WQ=[[0.6,0.1,0.0],[0.0,0.7,0.1],[0.1,0.0,0.5]];
   const WK=[[0.5,0.0,0.2],[0.1,0.6,0.0],[0.0,0.1,0.4]];
@@ -508,8 +529,8 @@ $('#pipeline').innerHTML=STAGES.map((s,i)=>`
   const PRED=['sat','on'];
   // illustrative candidate logits per cycle (argmax matches PRED)
   const HEAD=[
-    [['sat',2.1],['ran',1.0],['barked',0.6],['the',0.2]],
-    [['on',1.9],['down',1.1],['away',0.7],['the',0.3]],
+    [['sat',2.1],['ruled',1.0],['spoke',0.6],['the',0.2]],
+    [['on',1.9],['down',1.1],['beside',0.7],['the',0.3]],
   ];
   // math
   const vadd=(a,b)=>a.map((x,i)=>x+b[i]);
@@ -546,7 +567,7 @@ $('#pipeline').innerHTML=STAGES.map((s,i)=>`
   ];
 
   const STEP_MS=2700;            // per-frame pacing during auto-play (slowed down)
-  let context=[], timer=null, idx=0, plan=[];
+  let context=[], timer=null, idx=0, plan=[], attnOpen=false;
 
   function renderCtx(newIdx){
     ctxEl.innerHTML=context.map((t,i)=>
@@ -570,7 +591,7 @@ $('#pipeline').innerHTML=STAGES.map((s,i)=>`
         +`<div class="fp-op">=</div>`+matHTML('X (positioned)',context,X)+`</div>`;
     } else if(si===2){
       const a=computeAttn(context);
-      det.innerHTML=`<div class="fp-row">`+matHTML('X (input)',context,a.X)
+      const mats=`<div class="fp-row">`+matHTML('X (input)',context,a.X)
         +`<div class="fp-op">→</div>`
         +matHTML('Q = X·Wq',context,a.Q,'q')
         +matHTML('K = X·Wk',context,a.K,'k')
@@ -579,6 +600,13 @@ $('#pipeline').innerHTML=STAGES.map((s,i)=>`
         +matHTML('scores Q·Kᵀ/√d — rows=query, cols=key (<em>last row used</em>)',context,a.scoreM,'',a.last)
         +`<div class="fp-op">→</div>`+matHTML('softmax → weights (each row sums to 1)',context,a.weightM,'',a.last)
         +`<div class="fp-op">→</div>`+matHTML('output = Σ (last-row weights)·V',['context'],[a.out],'v')+`</div>`;
+      det.innerHTML=`<div class="small" style="margin-bottom:8px"><b>In plain words:</b> the newest word looks back at the words before it, `
+        +`<b>scores</b> how relevant each one is (<b style="color:var(--vec)">Q</b> matched against <b style="color:var(--att)">K</b>), `
+        +`then <b>blends</b> their content (<b style="color:var(--gen)">V</b>) by those scores. That blend is what the next-word prediction is made from. `
+        +`New to Q/K/V? Step 3 explains them — you can skip the matrices below.</div>`
+        +`<details id="fp-attn-mats"${attnOpen?' open':''}><summary>${attnOpen?'Hide':'Show'} the Q / K / V matrices and scores</summary>${mats}</details>`;
+      const dEl=det.querySelector('#fp-attn-mats');
+      dEl.addEventListener('toggle',()=>{ attnOpen=dEl.open; dEl.querySelector('summary').textContent=(attnOpen?'Hide':'Show')+' the Q / K / V matrices and scores'; });
     } else if(si===3){
       const a=computeAttn(context), cands=HEAD[cyc], probs=softmax(cands.map(c=>c[1]));
       const bars=cands.map((c,i)=>`<div class="fp-headrow ${i===0?'win':''}"><span>${c[0]}</span><div class="fp-headtrack"><div class="fp-headbar" style="width:${Math.round(probs[i]*100)}%"></div></div><span>${Math.round(probs[i]*100)}%</span></div>`).join('');
@@ -620,7 +648,7 @@ $('#pipeline').innerHTML=STAGES.map((s,i)=>`
     });
     p.push(()=>{
       stages.forEach(s=>{s.classList.remove('active');s.classList.add('done');});
-      narr.innerHTML=`Two tokens generated: <b>"The dog"</b> → <b>"sat"</b> → <b>"on"</b>. Every cycle is one full forward pass — that's all generation is.`;
+      narr.innerHTML=`Two tokens generated: <b>"The king"</b> → <b>"sat"</b> → <b>"on"</b>. Every cycle is one full forward pass — that's all generation is.`;
     });
     return p;
   }
@@ -641,7 +669,7 @@ $('#pipeline').innerHTML=STAGES.map((s,i)=>`
   // replaying from the start up to the target frame, instantly.
   function rebuildTo(target){
     stopAuto();
-    context=['The','dog']; resetStages(); setCycle(1); q('#fp-detail').innerHTML=''; renderCtx(-1);
+    context=['The','king']; resetStages(); setCycle(1); q('#fp-detail').innerHTML=''; renderCtx(-1);
     plan=buildPlan();
     for(let i=0;i<target;i++){ plan[i](); }
     idx=target;
@@ -652,7 +680,7 @@ $('#pipeline').innerHTML=STAGES.map((s,i)=>`
 
   function reset(){
     stopAuto();
-    context=['The','dog']; renderCtx(-1); resetStages(); setCycle(1);
+    context=['The','king']; renderCtx(-1); resetStages(); setCycle(1);
     q('#fp-detail').innerHTML='';
     narr.innerHTML=`Ready. Press <b>▶ Play</b> to run, or <b>Step ›</b> to advance one stage at a time.`;
     plan=buildPlan(); idx=0; setButtons();
@@ -689,6 +717,18 @@ $('#pipeline').innerHTML=STAGES.map((s,i)=>`
   q('#fp-replay').addEventListener('click',replay);
 
   reset();   // idle on load — nothing fires until Play or Step is pressed
+})();
+
+/* ---- the running sentence as a generation loop ---- */
+(function(){
+  const steps=[['The king','sat'],['The king sat','on'],['The king sat on','the'],['The king sat on the','throne']];
+  const th=s=>`<th style="padding:6px 10px;text-align:left;font-size:11px;font-weight:600;color:var(--faint);border-bottom:1px solid var(--line)">${s}</th>`;
+  const td=s=>`<td style="padding:6px 10px;border-bottom:1px solid var(--line)">${s}</td>`;
+  let tot=0,h=`<thead><tr>${th('step')}${th('context fed in')}${th('model predicts')}${th('tokens processed this step')}${th('running total')}</tr></thead><tbody>`;
+  steps.forEach(([c,n],i)=>{ const k=c.split(' ').length; tot+=k;
+    h+=`<tr>${td(i+1)}${td(`<span style="font-family:var(--mono)">${c}</span>`)}${td(`<b style="color:var(--gen);font-family:var(--mono)">${n}</b>`)}${td(`<span style="font-family:var(--mono)">${k}</span>`)}${td(`<span style="font-family:var(--mono)">${tot}</span>`)}</tr>`; });
+  document.getElementById('gen-loop').innerHTML=h+'</tbody>';
+  document.getElementById('gen-loop-read').innerHTML=`Four steps, but the model processed <b>${tot}</b> tokens in total for a sentence that only has 6 tokens. Each step re-reads the entire context from scratch, so the work per step <b>keeps growing</b> (2, 3, 4, 5, …). Most of it is repeated: the first two tokens were pushed through every block again and again, recomputing the same Keys and Values (<code>X·W_k</code>, <code>X·W_v</code>) each time, and those never changed. Step 7 shows how to stop repeating that work.`;
 })();
 </script>
 </body>

@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>LLM serving · Step 11 — Alternatives &amp; the whole picture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F7F8FA;--surface:#FFFFFF;--line:#E3E7EE;--line-strong:#CBD3DF;
+    --ink:#1B2433;--muted:#5C6675;--faint:#8B94A3;
+    --kv:#7C3AED;--sky:#0284C7;--sky-soft:#E0F2FE;--sky-line:#A5D8F0;  /* paged = sky */
+    --waste:#E03131;--good:#0CA678;--amber:#D9480F;
+    --r1:#0284C7;--r2:#7C3AED;--r3:#0CA678;--r4:#D9480F;  /* request colors */
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+    --disp:'Space Grotesk',system-ui,sans-serif;--body:'Inter',system-ui,sans-serif;
+  }
+
+  /* ── dark mode ── */
+  [data-theme="dark"]{
+    --bg:#18191f;
+    --surface:#22262e;
+    --line:#2d3240;
+    --line-strong:#3d4455;
+    --ink:#dde3ee;
+    --muted:#8b94a8;
+    --faint:#5c6475;
+    --tok-soft:#0a2f32;
+    --tok-line:#1a5c62;
+    --vec-soft:#1a1847;
+    --vec-line:#3730a3;
+  }
+  *{box-sizing:border-box}html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:880px;margin:0 auto;padding:32px 22px 120px}
+  header{padding:18px 0 30px;border-bottom:1px solid var(--line)}
+  .kicker{font-family:var(--mono);font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--sky);font-weight:600}
+  h1{font-family:var(--disp);font-weight:700;font-size:clamp(26px,5vw,42px);line-height:1.08;margin:.35em 0 .25em;letter-spacing:-.015em}
+  .lede{color:var(--muted);max-width:62ch;font-size:17px}
+  .recap{font-family:var(--mono);font-size:12px;color:var(--faint);margin-top:14px}
+  .recap b{color:var(--sky)}
+  section{margin-top:48px}
+  .eyebrow{display:flex;align-items:baseline;gap:12px;margin-bottom:8px}
+  .eyebrow .idx{font-family:var(--mono);font-size:13px;font-weight:600;color:#fff;background:var(--sky);border-radius:6px;padding:2px 8px}
+  .eyebrow .lbl{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+  h2{font-family:var(--disp);font-weight:600;font-size:24px;margin:.1em 0 .3em;letter-spacing:-.01em}
+  section>p{color:var(--muted);max-width:64ch}section>p b{color:var(--ink);font-weight:600}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px;margin-top:18px}
+  .card h3{font-family:var(--disp);font-size:14px;font-weight:600;margin:0 0 12px;color:var(--ink)}
+  label.fld{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin:0 0 6px}
+  select{font-family:var(--body);font-size:15px;color:var(--ink);background:var(--bg);border:1px solid var(--line-strong);border-radius:9px;padding:8px 12px;cursor:pointer}
+  :focus-visible{outline:2px solid var(--sky);outline-offset:2px}
+  code{font-family:var(--mono);font-size:.88em;background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+  .small{font-size:13px;color:var(--muted)}
+  .note{border-left:3px solid var(--sky-line);background:var(--sky-soft);border-radius:0 10px 10px 0;padding:12px 16px;margin-top:16px;font-size:14px;color:#075985}
+  .note b{font-weight:600}
+  details{margin-top:12px}summary{cursor:pointer;font-family:var(--mono);font-size:12px;color:var(--sky);font-weight:600}
+  .btn{font-family:var(--body);font-size:14px;font-weight:500;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);padding:9px 16px;border-radius:9px;cursor:pointer}
+  .btn:hover{border-color:var(--sky)}.btn.primary{background:var(--sky);color:#fff;border-color:var(--sky)}
+  .btn:disabled{opacity:.4;cursor:default}
+  .controls{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;align-items:center}
+
+  /* toggle */
+  .seg-toggle{display:inline-flex;border:1px solid var(--line-strong);border-radius:9px;overflow:hidden}
+  .seg-toggle button{font-family:var(--body);font-size:13.5px;border:0;background:var(--bg);color:var(--muted);padding:8px 16px;cursor:pointer}
+  .seg-toggle button.active{background:var(--sky);color:#fff}
+
+  /* memory bar (naive contiguous) */
+  .memwrap{margin-top:8px}
+  .memrow{display:flex;height:38px;border:1px solid var(--line-strong);border-radius:8px;overflow:hidden;background:var(--bg)}
+  .memrow .blk{display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:10px;color:#fff;border-right:1px solid rgba(255,255,255,.5);position:relative}
+  .memrow .blk.wasted{background:repeating-linear-gradient(45deg,#f3b0b0,#f3b0b0 5px,#fadbdb 5px,#fadbdb 10px);color:#a01;}
+  .memrow .blk.free{background:var(--bg);color:var(--faint)}
+  .util-meter{display:flex;align-items:center;gap:12px;margin-top:12px}
+  .util-meter .big{font-family:var(--disp);font-size:30px;font-weight:700}
+  .util-meter .lbl{font-size:12px;color:var(--muted)}
+
+  /* paged grid */
+  .pagegrid{display:grid;grid-template-columns:repeat(12,1fr);gap:4px;margin-top:8px}
+  .pageblk{aspect-ratio:1;border-radius:5px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:9px;color:#fff;background:var(--bg);border:1px solid var(--line)}
+  .pageblk.free{background:var(--bg);color:var(--line-strong);border:1px dashed var(--line-strong)}
+  .pageblk.partial{opacity:.55}
+  .reqstat{display:flex;flex-direction:column;gap:4px;font-family:var(--mono);font-size:11.5px}
+  .reqstat .rs-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .reqstat .rs-tag{width:28px;height:19px;border-radius:5px;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:9px;flex:0 0 28px}
+  .reqstat .rs-note{color:var(--muted)}
+  .reqstat .rs-boxed{color:var(--waste);font-weight:600}
+  .reqstat .rs-grow{color:var(--good);font-weight:600}
+  /* side-by-side naive vs paged */
+  .sbs{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:620px){.sbs{grid-template-columns:1fr}}
+  .sbs-panel{border:1px solid var(--line);border-radius:11px;padding:12px;background:var(--bg)}
+  .sbs-head{font-family:var(--disp);font-weight:700;font-size:13px;margin-bottom:8px;text-align:center}
+  .sbs-grid{grid-template-columns:repeat(8,1fr)!important;gap:3px}
+  .sbs-panel .util-meter{margin-top:8px}
+  .sbs-panel .util-meter .big{font-size:22px}
+  .sbs-panel .util-meter .lbl{font-size:10.5px}
+
+  /* block table */
+  .blocktable{font-family:var(--mono);font-size:12px;margin-top:8px}
+  .bt-row{display:flex;align-items:center;gap:8px;margin:3px 0}
+  .bt-logical{background:var(--sky-soft);border:1px solid var(--sky-line);color:#075985;border-radius:6px;padding:3px 9px;min-width:120px}
+  .bt-arrow{color:var(--faint)}
+  .bt-physical{border-radius:6px;padding:3px 9px;color:#fff;font-weight:500}
+
+  /* batching timeline */
+  .timeline{margin-top:8px}
+  .tl-row{display:flex;align-items:center;gap:8px;margin:5px 0;font-family:var(--mono);font-size:11px}
+  .tl-label{width:54px;color:var(--muted);flex:0 0 54px}
+  .tl-track{flex:1;display:flex;height:24px;border-radius:5px;overflow:hidden;background:var(--bg);border:1px solid var(--line)}
+  .tl-seg{display:flex;align-items:center;justify-content:center;color:#fff;font-size:9px}
+  .tl-seg.idle{background:repeating-linear-gradient(45deg,#e3e7ee,#e3e7ee 4px,#f0f2f5 4px,#f0f2f5 8px);color:var(--faint)}
+
+  /* result stat cards */
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:6px}
+  @media(max-width:560px){.stats{grid-template-columns:1fr}}
+  .statcard{border:1px solid var(--sky-line);background:var(--sky-soft);border-radius:11px;padding:14px;text-align:center}
+  .statcard .v{font-family:var(--disp);font-size:26px;font-weight:700;color:var(--sky)}
+  .statcard .l{font-size:11px;color:#075985;margin-top:2px}
+
+  /* block anatomy + VRAM budget (sizing the block pool) */
+  .formula{font-family:var(--mono);font-size:12.5px;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-top:14px;line-height:1.9;overflow-x:auto;white-space:nowrap}
+  .formula .hl{color:var(--sky);font-weight:600}
+  .blockviz{display:flex;gap:22px;justify-content:center;flex-wrap:wrap;margin-top:10px;padding:6px 0}
+  .blk-col{display:flex;flex-direction:column;align-items:center;gap:3px}
+  .blk-col .hdr{font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:4px;font-weight:600}
+  .blk-cell{width:20px;height:14px;border-radius:3px}
+  .blk-cell.k{background:var(--kv);opacity:.85}
+  .blk-cell.v{background:var(--good);opacity:.85}
+  .blk-brace{display:flex;align-items:center;font-family:var(--mono);font-size:10.5px;color:var(--faint)}
+  .vram-track{display:flex;height:38px;border-radius:8px;overflow:hidden;background:var(--bg);border:1px solid var(--line-strong);margin-top:10px}
+  .vram-seg{display:flex;align-items:center;justify-content:center;color:#fff;font-family:var(--mono);font-size:10px;white-space:nowrap;overflow:hidden}
+  .vram-seg.weights{background:var(--faint)}
+  .vram-seg.overhead{background:var(--waste);opacity:.75}
+  .vram-seg.pool{background:var(--sky)}
+  .vram-legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:8px;font-size:11px;color:var(--muted);font-family:var(--mono)}
+  .vram-legend span{display:inline-flex;align-items:center;gap:5px}
+  .vram-legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
+
+  /* block anatomy — grouped K / V panels */
+  .blk-group{display:flex;flex-direction:column;align-items:center;gap:5px}
+  .blk-group .glabel{font-family:var(--disp);font-weight:600;font-size:12px}
+  .blk-heads{display:flex;gap:8px}
+  .blk-axis{display:flex;flex-direction:column;align-items:flex-end;justify-content:center;font-family:var(--mono);font-size:10px;color:var(--faint);line-height:1.2;text-align:right}
+
+  /* per-layer stacking visual */
+  .layerstack{display:flex;flex-direction:column;gap:4px;margin-top:6px}
+  .layer-row{display:flex;align-items:center;gap:10px}
+  .layer-tag{font-family:var(--mono);font-size:10px;color:var(--muted);width:70px;flex:0 0 70px;text-align:right}
+  .layer-blocks{display:flex;gap:4px}
+  .layer-blk{min-width:30px;height:20px;padding:0 4px;border-radius:4px;background:var(--sky);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:9px;color:#fff;font-weight:600}
+  .layer-blk.partial{background:repeating-linear-gradient(45deg,var(--sky),var(--sky) 4px,#7dc4e8 4px,#7dc4e8 8px)}
+  .layer-ellipsis{font-family:var(--mono);color:var(--faint);font-size:13px;padding-left:80px;letter-spacing:.15em}
+  .mult{font-family:var(--mono);font-size:14px;text-align:center;margin-top:14px;padding:12px;background:var(--bg);border:1px solid var(--line);border-radius:10px}
+  .mult b{color:var(--sky);font-weight:700}
+  .mult .big{font-size:20px}
+
+  /* real tokens filling 16-slot blocks */
+  .tokfill{display:flex;gap:14px;flex-wrap:wrap;margin-top:12px}
+  .tblock{border:1.5px solid var(--sky-line);border-radius:10px;padding:9px;background:var(--surface)}
+  .tblock .th{font-family:var(--mono);font-size:10px;color:var(--sky);margin-bottom:7px;font-weight:600}
+  .tblock .th .part{color:var(--waste)}
+  .tgrid{display:grid;grid-template-columns:repeat(4,minmax(38px,1fr));gap:3px}
+  .tslot{height:24px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:10px;background:var(--bg);border:1px solid var(--line-strong);color:var(--ink);overflow:hidden;padding:0 3px;white-space:nowrap}
+  .tslot.empty{background:transparent;border:1px dashed var(--line-strong);color:var(--faint)}
+  .tflow{font-family:var(--mono);font-size:11px;color:var(--faint);text-align:center;margin:6px 0 0}
+
+  /* scattered physical pool + block-table linking */
+  .physstrip{display:grid;grid-template-columns:repeat(12,1fr);gap:4px;margin:8px 0}
+  .pcell{aspect-ratio:1;border-radius:5px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:9px;border:1px solid var(--line);color:var(--faint)}
+  .pcell.free{border:1px dashed var(--line-strong);background:transparent}
+  .pcell.other{background:var(--line);color:var(--faint)}
+  .pcell.mine{background:var(--sky);color:#fff;font-weight:700;border-color:var(--sky)}
+  .readbox{font-family:var(--mono);font-size:12px;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:11px 13px;margin-top:12px;line-height:1.7}
+  .readbox b{color:var(--sky)}
+
+  /* block sharing across requests */
+  .share-tables{display:flex;gap:22px;flex-wrap:wrap;margin-top:6px}
+  .share-col{flex:1;min-width:220px}
+  .share-col .ct{font-family:var(--disp);font-weight:600;font-size:13px;margin-bottom:8px}
+  .share-bt{display:flex;flex-direction:column;gap:4px;font-family:var(--mono);font-size:11.5px}
+  .sbt-row{display:flex;align-items:center;gap:6px}
+  .sbt-log{color:var(--muted);white-space:nowrap}
+  .sbt-phys{border-radius:6px;padding:2px 8px;color:#fff;font-weight:600;white-space:nowrap}
+  .sbt-phys.shared{background:var(--kv)}
+  .sbt-phys.uniq{background:var(--sky)}
+  .sbt-phys.cow{background:var(--good)}
+  .sbt-tag{font-size:9.5px;color:var(--kv);font-weight:600}
+  .poolrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .poolbox{position:relative;border-radius:8px;padding:9px 12px;color:#fff;font-family:var(--mono);font-size:11px;font-weight:600;text-align:center}
+  .poolbox .rc{position:absolute;top:-8px;right:-8px;background:var(--ink);color:#fff;border-radius:10px;font-size:9px;padding:1px 6px;font-weight:700}
+  .poolbox.shared{background:var(--kv)}.poolbox.uniq{background:var(--sky)}.poolbox.cow{background:var(--good)}
+  .poolbox.freeb{background:transparent;border:1px dashed var(--line-strong);color:var(--faint)}
+
+  .next{margin-top:56px;padding:22px;border:1px solid var(--sky-line);border-radius:14px;background:var(--sky-soft)}
+  .next h3{font-family:var(--disp);font-size:16px;margin:0 0 6px;color:#075985}.next p{color:#0369a1;font-size:14px;margin:0}
+  .pill{display:inline-block;font-family:var(--mono);font-size:11px;color:#075985;background:var(--sky-soft);border:1px solid var(--sky-line);border-radius:20px;padding:2px 10px;margin-top:10px;text-decoration:none;cursor:pointer;}
+  .src{font-size:11px;color:var(--faint);margin-top:8px;font-family:var(--mono)}
+
+  /* ---- injected series navigator (consistent across all 11 steps) ---- */
+  .series-nav{display:flex;flex-direction:column;align-items:center;gap:7px;padding:10px 0 14px;margin-bottom:4px}
+  .sn-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center}
+  .sn-chips{display:flex;gap:5px}
+  .sn-chip{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:13px;font-weight:600;text-decoration:none;color:var(--muted);background:var(--bg);border:1px solid var(--line-strong);transition:all .12s}
+  .sn-chip:hover{border-color:var(--ink);color:var(--ink)}
+  .sn-chip.current{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+  .sn-navbtn{font-family:var(--mono);font-size:12px;color:var(--muted);text-decoration:none;padding:6px 11px;border:1px solid var(--line-strong);border-radius:8px;white-space:nowrap;transition:all .12s}
+  .sn-navbtn:hover{border-color:var(--ink);color:var(--ink)}
+  .sn-navbtn.disabled{opacity:.28;pointer-events:none}
+  .sn-caption{font-family:var(--mono);font-size:11.5px;color:var(--faint);letter-spacing:.03em}
+  .sn-caption b{color:var(--ink);font-weight:600}
+  @media(max-width:560px){.sn-chip{width:26px;height:26px;font-size:11px}.sn-navbtn{padding:5px 8px;font-size:11px}}
+</style>
+<script>(function(){
+  var t=localStorage.getItem('theme')||(window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
+  document.documentElement.setAttribute('data-theme',t);
+  window.addEventListener('storage',function(e){
+    if(e.key==='theme') document.documentElement.setAttribute('data-theme',e.newValue||'light');
+  });
+})()</script>
+</head>
+<body>
+<div class="wrap">
+
+<nav class="series-nav" aria-label="Series navigation">
+  <div class="sn-bar"><a class="sn-navbtn" href="llm-step10-llm-d-cluster-serving.html">‹ prev</a><div class="sn-chips"><a class="sn-chip" href="llm-step1-tokens-and-embeddings.html" title="Step 1: Tokens & Embeddings">1</a><a class="sn-chip" href="llm-step2-position-and-prediction.html" title="Step 2: Position & Prediction">2</a><a class="sn-chip" href="llm-step3-self-attention.html" title="Step 3: Self-Attention">3</a><a class="sn-chip" href="llm-step4-transformer-block.html" title="Step 4: Transformer Block">4</a><a class="sn-chip" href="llm-step5-training.html" title="Step 5: Training">5</a><a class="sn-chip" href="llm-step6-generation.html" title="Step 6: Generation">6</a><a class="sn-chip" href="llm-step7-kv-cache.html" title="Step 7: KV Cache">7</a><a class="sn-chip" href="llm-step8-memory-wall.html" title="Step 8: The Memory Wall">8</a><a class="sn-chip" href="llm-step9-pagedattention-vllm.html" title="Step 9: PagedAttention & vLLM">9</a><a class="sn-chip" href="llm-step10-llm-d-cluster-serving.html" title="Step 10: llm-d: Many vLLMs as a Team">10</a><span class="sn-chip current" title="Alternatives & Whole Picture">11</span></div><span class="sn-navbtn disabled">next ›</span></div>
+  <div class="sn-caption">Step <b>11</b> of 11 &middot; <b>Alternatives & Whole Picture</b> &middot; LLM from scratch</div>
+</nav>
+
+<header>
+  <div class="kicker">Intuition-first LLMs · Step 11 of 11 — The whole picture</div>
+  <h1>SGLang, Ray Serve &amp; the whole picture</h1>
+  <p class="lede">Step 10 showed llm-d turning many vLLM engines into a service. But vLLM isn't the only engine, and llm-d isn't the only way to run engines as a cluster.
+    This last step compares the alternatives, then walks <b>"The king sat on the ___" → "throne"</b> through every layer you have built, from text to pods.</p>
+  <div class="recap">Builds on <b>Step 9 (prefix sharing by block hash)</b> and <b>Step 10 (llm-d)</b>. These projects change quickly; treat the finer points as a starting point, not a verdict.</div>
+</header>
+
+<!-- SGLANG -->
+<section>
+  <div class="eyebrow"><span class="idx">01</span><span class="lbl">Another Engine</span></div>
+  <h2>SGLang: the same goal, a different prefix index</h2>
+  <p>SGLang is another open-source LLM engine, a direct alternative to vLLM: it also does continuous batching and prefix caching. The main difference is <b>how it remembers prefixes</b>.
+    vLLM (Step 9) gives every full 16-token block a hash and matches block by block. SGLang keeps a <b>radix tree of token sequences</b> (RadixAttention), with the cached K and V attached to the tree nodes.
+    A new prompt walks down the tree as far as it matches and reuses everything up to that point. Try it on a tree that already holds three earlier prompts:</p>
+  <div class="card">
+    <div id="tree" style="font-family:var(--mono);font-size:12.5px;line-height:1.9"></div>
+    <div style="margin-top:12px;max-width:420px"><label class="fld" for="tr-p" style="display:block;font-size:12px;color:var(--muted)">New prompt</label>
+      <select id="tr-p" style="width:100%"></select></div>
+    <p class="small" id="tr-read" style="margin-top:10px;margin-bottom:0"></p>
+  </div>
+  <div class="card">
+    <h3>Block hashes versus a token tree — what each can reuse</h3>
+    <p class="small" style="margin-top:0">Suppose a new request shares its first <b id="bt-nv">20</b> tokens with something already cached:</p>
+    <input type="range" id="bt-n" min="0" max="80" step="1" value="20" style="width:100%;max-width:420px">
+    <div style="overflow-x:auto;margin-top:8px"><table id="bt-table" style="border-collapse:collapse;font-size:13px;width:100%"></table></div>
+    <p class="small" id="bt-read" style="margin-top:10px;margin-bottom:0"></p>
+  </div>
+  <div class="note"><b>Both are engines</b>; they sit at the same layer. The orchestrators in the next section sit above engines. Which approach is better depends on the workload, and the finer-grained reuse of a tree is my
+    understanding of the design, not something verified here. Details of both engines change quickly.</div>
+</section>
+
+<!-- RAY SERVE -->
+<section>
+  <div class="eyebrow"><span class="idx">02</span><span class="lbl">Another Way To Run Engines</span></div>
+  <h2>Ray Serve: the same job as llm-d, by a different route</h2>
+  <p>Ray is a general framework for distributed Python: a <b>head node</b> schedules and <b>worker nodes</b> do the work. <b>Ray Serve</b> is its serving layer: a model becomes a <i>deployment</i> with <i>replicas</i> that can be autoscaled,
+    and a replica can run vLLM. <b>Ray Serve LLM</b> adds LLM-specific features, including prefill/decode disaggregation and a prefix-aware router. Both cover what Step 10 covered; the route differs:</p>
+  <div class="card">
+    <div style="overflow-x:auto"><table style="border-collapse:collapse;font-size:13px;width:100%">
+      <thead><tr><th style="padding:6px 10px;text-align:left;font-size:11px;color:var(--faint);border-bottom:1px solid var(--line)"></th><th style="padding:6px 10px;text-align:left;font-size:11px;color:var(--sky);border-bottom:1px solid var(--line)">llm-d</th><th style="padding:6px 10px;text-align:left;font-size:11px;color:var(--amber);border-bottom:1px solid var(--line)">Ray Serve LLM</th></tr></thead>
+      <tbody id="cmp"></tbody></table></div>
+    <p class="small" style="margin-bottom:0;margin-top:10px"><b>Rule of thumb:</b> a team that already lives on Kubernetes and wants LLM-specific behaviour fits llm-d naturally; a team already using Ray for other workloads, or wanting one framework for many kinds of models, fits Ray Serve.
+      Neither is a drop-in answer, and speed claims on both sides come from their own benchmarks — test on your own traffic. NVIDIA Dynamo is a third project in the same space; this series does not cover it and I have not checked how it compares.</p>
+  </div>
+</section>
+
+<!-- WHOLE PICTURE -->
+<section>
+  <div class="eyebrow"><span class="idx">03</span><span class="lbl">The Whole Picture</span></div>
+  <h2>"The king sat on the ___" → "throne", end to end</h2>
+  <p>Read from the top down. Each line is one step of the series and what it did to our sentence:</p>
+  <div class="card"><div id="journey" style="display:flex;flex-direction:column;gap:2px"></div></div>
+  <div class="card">
+    <h3>Common mix-ups, settled</h3>
+    <div id="mixups" style="display:flex;flex-direction:column;gap:10px;font-size:14px"></div>
+  </div>
+  <div class="note"><b>Real models differ in size, not in kind.</b> Everything here was built from a 5-token toy. Llama-3.1-8B has 32 layers and 128 KiB of KV cache per token, and a real vocabulary has about 128,000 tokens.
+    Every engine caches K and V; vLLM changed how that memory is organised; llm-d and Ray Serve spread engines over a cluster.</div>
+</section>
+
+<section>
+  <div class="card">
+    <h3>Links: every project in this series</h3>
+    <p class="small" style="margin-top:0">Project pages change quickly, so check each project's own docs for current features.</p>
+    <ul style="margin:6px 0 0 20px;line-height:1.8;font-size:14px">
+      <li><a href="https://github.com/vllm-project/vllm" target="_blank" rel="noopener">vLLM</a> — GitHub · <a href="https://docs.vllm.ai" target="_blank" rel="noopener">docs</a> · <a href="https://arxiv.org/abs/2309.06180" target="_blank" rel="noopener">PagedAttention paper</a></li>
+      <li><a href="https://github.com/sgl-project/sglang" target="_blank" rel="noopener">SGLang</a> — GitHub · <a href="https://docs.sglang.ai" target="_blank" rel="noopener">docs</a> · <a href="https://arxiv.org/abs/2312.07104" target="_blank" rel="noopener">RadixAttention paper</a></li>
+      <li><a href="https://llm-d.ai" target="_blank" rel="noopener">llm-d</a> — project site · <a href="https://github.com/llm-d/llm-d" target="_blank" rel="noopener">GitHub</a></li>
+      <li><a href="https://docs.ray.io/en/latest/serve/llm/index.html" target="_blank" rel="noopener">Ray Serve LLM</a> — Ray documentation</li>
+      <li><a href="https://github.com/ai-dynamo/dynamo" target="_blank" rel="noopener">NVIDIA Dynamo</a> — GitHub (not covered in this series) · <a href="https://github.com/ai-dynamo/nixl" target="_blank" rel="noopener">NIXL</a></li>
+      <li><a href="https://arxiv.org/abs/1706.03762" target="_blank" rel="noopener">Attention Is All You Need</a> — the transformer paper (Steps 3–4)</li>
+      <li><a href="https://arxiv.org/abs/2305.13245" target="_blank" rel="noopener">Grouped-Query Attention paper</a> — why the KV cache is smaller (Step 8)</li>
+      <li><a href="https://arxiv.org/abs/2205.14135" target="_blank" rel="noopener">FlashAttention paper</a> — the memory-wall fix inside attention (Step 8)</li>
+      <li><a href="https://arxiv.org/abs/2401.09670" target="_blank" rel="noopener">DistServe paper</a> — prefill/decode disaggregation (Step 10)</li>
+    </ul>
+  </div>
+</section>
+
+<div class="next">
+  <h3>🎉 The series is complete</h3>
+  <p>You have followed an LLM from raw text to a cluster: tokens → embeddings + position → Q, K, V attention → the transformer block → training → generation → <b>KV cache → memory wall → PagedAttention and vLLM → llm-d, SGLang, Ray Serve</b>.
+    Natural next topics: speculative decoding, quantisation of weights and KV, tensor/pipeline parallelism across GPUs. Ask whenever you'd like to go further.</p>
+  <a class="pill" style="opacity:.65" href="llm-step10-llm-d-cluster-serving.html">◂ Back · Step 10</a>
+</div>
+
+<footer style="margin-top:44px;padding-top:16px;border-top:1px solid var(--line);font-size:12px;line-height:1.55;color:var(--faint);font-style:italic">
+  ✦ This 11-part series was co-written with Claude (Anthropic). It favours intuition over rigour and may contain bugs or simplifications — corrections and feedback are very welcome.
+</footer>
+
+</div>
+<script>
+const $=s=>document.querySelector(s);
+
+/* ---------- 1a. radix tree walk ---------- */
+// each node: text (words ~ tokens), children. token count = number of words.
+const TREE={t:'',kids:[
+  {t:'You are helpful.',kids:[
+    {t:'Translate:',kids:[{t:'cat',kids:[]},{t:'dog',kids:[]}]},
+    {t:'Summarise:',kids:[{t:'this text',kids:[]}]},
+  ]},
+]};
+const tc=s=>s?s.split(' ').length:0;
+const PROMPTS=['You are helpful. Translate: cat','You are helpful. Translate: bird','You are helpful. Summarise: this text','You are rude. Translate: cat','Write a poem about kings'];
+function walk(prompt){
+  const words=prompt.split(' '); let i=0, node=TREE, path=[], partial=null;
+  for(;;){
+    let best=null, bestLen=0;
+    node.kids.forEach(k=>{ const kw=k.t.split(' '); let m=0; while(m<kw.length && words[i+m]===kw[m]) m++; if(m>bestLen){ best=k; bestLen=m; } });
+    if(!best) break;
+    i+=bestLen;
+    if(bestLen<tc(best.t)){ partial={node:best,len:bestLen}; break; }   // a real radix tree splits the node here
+    path.push(best); node=best;
+  }
+  return {matched:i, total:words.length, path, partial};
+}
+function renderTree(path,partial){
+  const on=new Set(path); if(partial) on.add(partial.node);
+  const draw=(n,d)=>n.kids.map(k=>`<div style="margin-left:${d*22}px"><span style="padding:1px 8px;border-radius:6px;border:1px solid ${on.has(k)?'var(--sky)':'var(--line)'};background:${on.has(k)?'rgba(2,132,199,.14)':'transparent'}">${k.t}</span> <span style="color:var(--faint)">(${tc(k.t)} tok)</span></div>`+draw(k,d+1)).join('');
+  $('#tree').innerHTML=`<div style="color:var(--faint)">root</div>`+draw(TREE,1);
+}
+$('#tr-p').innerHTML=PROMPTS.map(p=>`<option>${p}</option>`).join('');
+function renderWalk(){
+  const w=walk($('#tr-p').value); renderTree(w.path,w.partial);
+  $('#tr-read').innerHTML=`The prompt has ${w.total} tokens. It walks down the highlighted path and reuses the cached K and V of <b>${w.matched}</b> of them`+(w.total===w.matched?`: every token is already cached (a real engine still recomputes the last one to get the next-word scores).`:`; only the remaining <b>${w.total-w.matched}</b> need prefill.`)+
+    (w.partial?` The match stops <i>inside</i> the node "${w.partial.node.t}" after ${w.partial.len} token(s); a radix tree simply splits that node there, so those tokens are still reused.`:'')+(w.matched===0?' Nothing matches from the very first token, so nothing is reused.':'');
+}
+$('#tr-p').addEventListener('change',renderWalk); renderWalk();
+
+/* ---------- 1b. block hash vs token tree ---------- */
+function renderBT(){
+  const n=+$('#bt-n').value; $('#bt-nv').textContent=n;
+  const vllm=Math.floor(n/16)*16, sg=n;
+  const th=s=>`<th style="padding:6px 10px;text-align:left;font-size:11px;font-weight:600;color:var(--faint);border-bottom:1px solid var(--line)">${s}</th>`;
+  const td=s=>`<td style="padding:6px 10px;border-bottom:1px solid var(--line);font-family:var(--mono)">${s}</td>`;
+  $('#bt-table').innerHTML=`<thead><tr>${th('engine')}${th('how it matches')}${th('shared-prefix tokens reused')}${th('shared-prefix tokens still prefilled')}</tr></thead><tbody>`+
+    `<tr>${td('<b style="color:var(--kv)">vLLM</b>')}${td('<span style="font-family:var(--body)">whole 16-token blocks, by hash</span>')}${td(vllm)}${td(n-vllm)}</tr>`+
+    `<tr>${td('<b style="color:var(--sky)">SGLang</b>')}${td('<span style="font-family:var(--body)">longest matching token path in the tree</span>')}${td(sg)}${td(0)}</tr></tbody>`;
+  $('#bt-read').innerHTML=n<16
+    ?`With fewer than 16 shared tokens, vLLM's block hashing reuses <b>nothing</b> (a partial block is never shared — Step 9). A token tree can still reuse these ${n} tokens. (Both engines still prefill everything after the shared prefix.)`
+    :(n===vllm?`${n} tokens fill whole blocks, so vLLM and the token tree both reuse all ${n}.`:`vLLM reuses ${vllm} tokens and re-prefills the ${n-vllm} left over in the partial block; the token tree reuses all ${n}.`)+` The gap is at most 15 tokens per shared prefix — small for a long system prompt, noticeable for short ones. (Both engines still prefill everything <i>after</i> the shared prefix, such as the new question.)`;
+}
+$('#bt-n').addEventListener('input',renderBT); renderBT();
+
+/* ---------- 2. comparison ---------- */
+const CMP=[
+  ['Runs on','Kubernetes directly: pods, services, an endpoint picker','A Ray cluster (head node + workers); can run on Kubernetes through KubeRay'],
+  ['Prefix-aware routing','Index built from real block events reported by each pod','Router keeps its own text prefix tree and estimates what replicas hold'],
+  ['Prefill/decode split','Separate pod pools, KV pulled with NIXL over RDMA','Supported in Ray Serve LLM'],
+  ['Beyond LLMs','LLM-specific','Yes — any Python workload, other models in the same cluster'],
+];
+$('#cmp').innerHTML=CMP.map(r=>`<tr><td style="padding:6px 10px;border-bottom:1px solid var(--line);font-weight:600">${r[0]}</td><td style="padding:6px 10px;border-bottom:1px solid var(--line)">${r[1]}</td><td style="padding:6px 10px;border-bottom:1px solid var(--line)">${r[2]}</td></tr>`).join('');
+
+/* ---------- 3. journey ---------- */
+const J=[
+  [1,'Tokens and embeddings','"The king sat on the" becomes 5 tokens, then 5 vectors E.','llm-step1-tokens-and-embeddings.html'],
+  [2,'Position','Each row gets a position signal added: X = E + 0.3·P (the two "the"s now differ).','llm-step2-position-and-prediction.html'],
+  [3,'Self-attention','X·W_q, X·W_k, X·W_v give Q, K, V. Q·K says the last "the" should look at "king"; blending V enriches it.','llm-step3-self-attention.html'],
+  [4,'The transformer block','Several heads, W_O, residual + feed-forward; every block makes its own Q, K, V; stack N blocks.','llm-step4-transformer-block.html'],
+  [5,'Training','Random weights → learned weights, so the final vector points at "throne".','llm-step5-training.html'],
+  [6,'Generation','Predict "throne" from the last vector, append, repeat — one token per pass.','llm-step6-generation.html'],
+  [7,'KV cache','Keep every block\'s K and V instead of recomputing them; prefill once, then decode one token at a time.','llm-step7-kv-cache.html'],
+  [8,'The memory wall','128 KiB per token for Llama-3 8B adds up; serving is limited by memory, not math.','llm-step8-memory-wall.html'],
+  [9,'PagedAttention and vLLM','Store the cache in 16-slot blocks found through a block table; continuous batching; prefix sharing.','llm-step9-pagedattention-vllm.html'],
+  [10,'llm-d','Many vLLM pods: route to where the blocks are, optionally split prefill from decode.','llm-step10-llm-d-cluster-serving.html'],
+  [11,'Alternatives','SGLang (token tree) and Ray Serve (Ray cluster) do the same jobs another way.',''],
+];
+$('#journey').innerHTML=J.map(([n,t,d,h])=>`<div style="display:flex;gap:12px;align-items:baseline;padding:7px 4px;border-bottom:1px solid var(--line)"><span style="flex:0 0 26px;font-family:var(--mono);font-weight:700;color:var(--sky)">${n}</span><div><b>${h?`<a href="${h}" style="color:inherit">${t}</a>`:t}</b><div class="small" style="margin-top:1px">${d}</div></div></div>`).join('');
+
+/* ---------- mix-ups ---------- */
+const MIX=[
+  ['Why 16 slots in a block?','Because a block holds 16 <i>tokens</i>. Layers, heads and K+V make each slot wider, not more numerous.'],
+  ['Do we cache Q?','No. New tokens need old K and V, never old Q — Q and the attention weights are thrown away after each step.'],
+  ['Why can K and V be cached?','The causal mask means later tokens can never change earlier rows, so earlier K and V are final once computed.'],
+  ['Why does every layer output a full matrix?','The next layer needs all rows. Only the last row of the final layer goes to the output layer.'],
+  ['Where is the learned knowledge?','Attention moves information between tokens; the feed-forward weights, widely believed to hold much of what was learned, transform each token alone.'],
+  ['Who shares blocks?','Only identical full blocks of a shared prefix are read by several requests — at least 16 identical leading tokens, matched in order.'],
+  ['Did vLLM change what is cached?','No. Every engine caches K and V. vLLM changed how that memory is organised.'],
+];
+$('#mixups').innerHTML=MIX.map(([q,a])=>`<div><b>${q}</b> ${a}</div>`).join('');
+</script>
+</body>
+</html>

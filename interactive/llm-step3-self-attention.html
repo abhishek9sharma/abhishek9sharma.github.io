@@ -67,6 +67,7 @@
   .note{border-left:3px solid var(--vec-line);background:var(--vec-soft);border-radius:0 10px 10px 0;padding:12px 16px;margin-top:16px;font-size:14px;color:#37306b}
   .note.att{border-left-color:var(--att-line);background:var(--att-soft);color:#7C2D12}
   .note b{font-weight:600}
+  [data-theme="dark"] .note,[data-theme="dark"] .note.att{color:var(--ink)}
   details{margin-top:12px}summary{cursor:pointer;font-family:var(--mono);font-size:12px;color:var(--att);font-weight:600}
 
   /* QKV vectors */
@@ -110,13 +111,13 @@
   .next h3{font-family:var(--disp);font-size:16px;margin:0 0 6px}.next p{color:var(--muted);font-size:14px;margin:0}
   .pill{display:inline-block;font-family:var(--mono);font-size:11px;color:var(--att);background:var(--att-soft);border:1px solid var(--att-line);border-radius:20px;padding:2px 10px;margin-top:10px;text-decoration:none;cursor:pointer;}
 
-  /* ---- injected series navigator (consistent across all 9 steps) ---- */
+  /* ---- injected series navigator (consistent across all 11 steps) ---- */
   .series-nav{display:flex;flex-direction:column;align-items:center;gap:7px;padding:10px 0 14px;margin-bottom:4px}
   .sn-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center}
   .sn-chips{display:flex;gap:5px}
   .sn-chip{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:13px;font-weight:600;text-decoration:none;color:var(--muted);background:var(--bg);border:1px solid var(--line-strong);transition:all .12s}
   .sn-chip:hover{border-color:var(--ink);color:var(--ink)}
-  .sn-chip.current{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .sn-chip.current{background:var(--ink);color:var(--bg);border-color:var(--ink)}
   .sn-navbtn{font-family:var(--mono);font-size:12px;color:var(--muted);text-decoration:none;padding:6px 11px;border:1px solid var(--line-strong);border-radius:8px;white-space:nowrap;transition:all .12s}
   .sn-navbtn:hover{border-color:var(--ink);color:var(--ink)}
   .sn-navbtn.disabled{opacity:.28;pointer-events:none}
@@ -137,17 +138,17 @@
 
 
 <nav class="series-nav" aria-label="Series navigation">
-  <div class="sn-bar"><a class="sn-navbtn" href="llm-step2-position-and-prediction.html">‹ prev</a><div class="sn-chips"><a class="sn-chip" href="llm-step1-tokens-and-embeddings.html" title="Step 1: Tokens & Embeddings">1</a><a class="sn-chip" href="llm-step2-position-and-prediction.html" title="Step 2: Position & Prediction">2</a><span class="sn-chip current" title="Self-Attention">3</span><a class="sn-chip" href="llm-step4-transformer-block.html" title="Step 4: Transformer Block">4</a><a class="sn-chip" href="llm-step5-training.html" title="Step 5: Training">5</a><a class="sn-chip" href="llm-step6-generation.html" title="Step 6: Generation">6</a><a class="sn-chip" href="llm-step7-kv-cache.html" title="Step 7: KV Cache">7</a><a class="sn-chip" href="llm-step8-memory-wall.html" title="Step 8: The Memory Wall">8</a><a class="sn-chip" href="llm-step9-pagedattention-vllm.html" title="Step 9: PagedAttention & vLLM">9</a></div><a class="sn-navbtn" href="llm-step4-transformer-block.html">next ›</a></div>
-  <div class="sn-caption">Step <b>3</b> of 9 &middot; <b>Self-Attention</b> &middot; LLM from scratch</div>
+  <div class="sn-bar"><a class="sn-navbtn" href="llm-step2-position-and-prediction.html">‹ prev</a><div class="sn-chips"><a class="sn-chip" href="llm-step1-tokens-and-embeddings.html" title="Step 1: Tokens & Embeddings">1</a><a class="sn-chip" href="llm-step2-position-and-prediction.html" title="Step 2: Position & Prediction">2</a><span class="sn-chip current" title="Self-Attention">3</span><a class="sn-chip" href="llm-step4-transformer-block.html" title="Step 4: Transformer Block">4</a><a class="sn-chip" href="llm-step5-training.html" title="Step 5: Training">5</a><a class="sn-chip" href="llm-step6-generation.html" title="Step 6: Generation">6</a><a class="sn-chip" href="llm-step7-kv-cache.html" title="Step 7: KV Cache">7</a><a class="sn-chip" href="llm-step8-memory-wall.html" title="Step 8: The Memory Wall">8</a><a class="sn-chip" href="llm-step9-pagedattention-vllm.html" title="Step 9: PagedAttention & vLLM">9</a><a class="sn-chip" href="llm-step10-llm-d-cluster-serving.html" title="Step 10: llm-d: Many vLLMs as a Team">10</a><a class="sn-chip" href="llm-step11-alternatives-whole-picture.html" title="Step 11: SGLang, Ray Serve & the Whole Picture">11</a></div><a class="sn-navbtn" href="llm-step4-transformer-block.html">next ›</a></div>
+  <div class="sn-caption">Step <b>3</b> of 11 &middot; <b>Self-Attention</b> &middot; LLM from scratch</div>
 </nav>
 
 <header>
-  <div class="kicker">Intuition-first LLMs · Step 3 of 9</div>
+  <div class="kicker">Intuition-first LLMs · Step 3 of 11</div>
   <h1>Self-attention: letting tokens look at each other</h1>
   <p class="lede">This is the mechanism that made Transformers work. Each token asks a
     <b>question</b> (Query), every token advertises what it <b>has</b> (Key), and the matches decide
-    how much each token's <b>content</b> (Value) flows into the result. The reflexive pronoun "itself" resolves directly back to "dog" — both are in the same sentence.</p>
-  <div class="recap"><b>Story so far ▸</b> text → tokens → vectors (Step 1), each stamped with its position (Step 2). <b>This step ▸</b> letting those tokens share information with one another.</div>
+    how much each token's <b>content</b> (Value) flows into the result. We follow one sentence through the whole series — <b>"The king sat on the ___"</b> — and watch the last word reach back to "king" to work out what comes next.</p>
+  <div class="recap"><b>Story so far ▸</b> "The king sat on the" → tokens → vectors (Step 1), each stamped with its position to make <b>X</b> (Step 2). <b>This step ▸</b> letting those tokens share information with one another.</div>
   <div class="pipe" aria-hidden="true">
     <div class="step dim"><div class="n">02</div><div class="t">Positioned</div><div class="d">emb + pos</div><div class="a">→ attention</div></div>
     <div class="step att"><div class="n">03a</div><div class="t">Q · K</div><div class="d">scores</div><div class="a">↓ scale+softmax</div></div>
@@ -156,49 +157,142 @@
   </div>
 </header>
 
+<!-- WHY NOT EMBEDDINGS -->
+<section>
+  <div class="eyebrow"><span class="idx">00</span><span class="lbl">The Problem First</span></div>
+  <h2>Why not just use the embeddings directly?</h2>
+  <p>After Step 2 we have <b>X</b>, one vector per token of <b>"The king sat on the ___"</b>. To predict the next
+    word we use the <i>last</i> vector — but the last "the" is a function word. Its vector says almost nothing
+    about <b>who</b> sat or <b>on what</b>. It must pull that information in from the other tokens.</p>
+  <div class="card">
+    <h3>X = embedding E + position P — the input to attention (5 tokens × 7 numbers)</h3>
+    <div id="x-matrix" style="overflow-x:auto"></div>
+    <p class="small" style="margin-top:10px;margin-bottom:0">Each row is one token: its word embedding (Step 1) plus a small position stamp (Step 2, scaled to 0.3).
+      Attention will turn X into three matrices: <span style="font-family:var(--mono)">Q = X·W<sub>q</sub></span>,
+      <span style="font-family:var(--mono)">K = X·W<sub>k</sub></span>, <span style="font-family:var(--mono)">V = X·W<sub>v</sub></span>
+      (each W is 7×3, giving 5×3). The next card shows Q and K.</p>
+  </div>
+
+  <h3 style="margin-top:26px">Attempt 1 — compare the embeddings themselves</h3>
+  <p>The obvious plan: take the last row of X and take its dot product with every row (a dot product is just
+    "multiply matching numbers and add them up" — big when two vectors overlap). Then look mostly at the
+    tokens that score highest. No Q, K or V needed. The last column of the table below shows what that does.</p>
+
+  <h3 style="margin-top:22px">Attempt 2 — give every token a question and an advertisement</h3>
+  <p>Instead of comparing whole embeddings, the model makes two <b>short</b> vectors from each row of X:</p>
+  <ul style="margin:6px 0 6px 20px;line-height:1.7">
+    <li><b style="color:var(--q)">Query (Q)</b> — "what am I looking for?"</li>
+    <li><b style="color:var(--k)">Key (K)</b> — "what do I advertise about myself?"</li>
+  </ul>
+  <p>Both are made from X by multiplying with a learned matrix (<code>Q = X·W<sub>q</sub></code>,
+    <code>K = X·W<sub>k</sub></code>). Here we shrink each token to just <b>3 numbers</b> and — only so you can read
+    them — we label the three numbers <code>[noun-ness, action-ness, royalty]</code>. (In a real model the numbers are
+    learned and have no human labels; training discovers whatever features make good matches. Here we use matrices solved
+    to make the three numbers readable.)</p>
+
+  <div class="card">
+    <h3>Where Q and K come from: multiply X by a learned matrix</h3>
+    <p class="small" style="margin-top:0">Each token's row of X (7 numbers) is multiplied by a <b>7×3 matrix</b> to get its 3-number
+      Query, and by a different 7×3 matrix to get its 3-number Key. Row by row, this is just 7 multiply-and-adds per output number:</p>
+    <div id="wq-mult" style="overflow-x:auto"></div>
+    <div id="wk-mult" style="overflow-x:auto;margin-top:14px"></div>
+    <p class="small" id="w-worked" style="margin-top:12px;margin-bottom:0"></p>
+    <p class="small" style="margin-top:8px;margin-bottom:0;color:var(--faint)"><b>Honest note:</b> in a real model W<sub>q</sub> and W<sub>k</sub>
+      start random and are <i>learned</i> in training (Step 5), and their three output columns have no human names. Here we solved for
+      matrices that make the three columns come out as <code>[noun-ness, action-ness, royalty]</code> so you can read them. The multiplication is
+      exactly the real thing. (The weights are biggish, up to about ±8, because the two "the" rows differ only by that small position nudge and we asked for very different Queries.)</p>
+  </div>
+
+  <div class="card">
+    <h3>Reading the table: how the last "the" decides where to look</h3>
+    <ol style="margin:4px 0 12px 20px;line-height:1.75;font-size:14px">
+      <li>The last "the" writes down its <b style="color:var(--q)">Query</b>. Below it is <code>Q ≈ [0.6, 1.4, 2.0]</code> (computed as X·W<sub>q</sub>, above):
+        it wants a bit of noun, some action, and above all <b>royalty</b>.</li>
+      <li>Each token shows its <b style="color:var(--k)">Key</b> — e.g. "king" advertises <code>[1, 0, 1]</code> (a noun, royal);
+        "sat" advertises <code>[0, 1, 0]</code> (an action).</li>
+      <li><b>Score = Q·K</b>: multiply feature by feature and add. For "king": 0.6×1 + 1.4×0 + 2.0×1 = <b>2.6</b>.
+        For "sat": 1.4. For the two "the"s: 0, because they advertise nothing. We then divide by √3 (a standard
+        scaling to keep the numbers small; explained below).</li>
+      <li><b>Softmax</b> turns the scores into percentages that add to 100% — the <b>attention weights</b>.</li>
+    </ol>
+    <div id="qk-q" style="font-family:var(--mono);font-size:13px;margin:10px 0"></div>
+    <div style="overflow-x:auto"><table id="qk-table" style="border-collapse:collapse;font-size:13px;width:100%"></table></div>
+    <p class="small" style="margin-top:12px;margin-bottom:0" id="naive-read"></p>
+  </div>
+
+  <div class="card">
+    <h3>Same word, two different jobs: the first "The" vs. the last "the"</h3>
+    <p style="margin-top:0">Our sentence contains "the" twice. In this toy both get the <b>same embedding</b> (a real tokenizer would give "The" and " the" different IDs), so only their positions differ. That alone is enough to give them different Queries, and they behave very differently. The mask (a token may only look at earlier tokens) is switched on here, as in a real generating model:</p>
+    <div style="overflow-x:auto"><table id="two-the" style="border-collapse:collapse;font-size:13px;width:100%"></table></div>
+    <p class="small" style="margin-top:12px;margin-bottom:0" id="two-the-read"></p>
+  </div>
+
+  <div class="card">
+    <h3>What goes wrong — and what Q, K, V add</h3>
+    <div style="display:flex;flex-direction:column;gap:10px;font-size:14px">
+      <div><b>1 · Similar is not the same as relevant.</b> Embeddings put <i>alike</i> words close together
+        (king ≈ queen). But what the last "the" needs is a <i>different kind</i> of word — a royal subject and a
+        sitting verb. Raw similarity makes the last "the" attend mostly to itself, and gives "king" the least.
+        <span style="color:var(--q)"><b>Q</b></span> and <span style="color:var(--k)"><b>K</b></span> are learned
+        <i>lenses</i> that turn "what I need" and "what I offer" into vectors that line up even when the words
+        are unalike.</div>
+      <div><b>2 · The relationship is one-way.</b> X<sub>the</sub>·X<sub>king</sub> equals X<sub>king</sub>·X<sub>the</sub>,
+        so raw similarity is symmetric. But "the" needs "king", not the other way round. Separate Q and K
+        matrices break the symmetry: each word can ask one thing and advertise another.</div>
+      <div><b>3 · One vector can't do three jobs.</b> The embedding has to say who the word <i>is</i>,
+        how to <i>match</i> it, and what to <i>pass on</i>. Splitting it gives each job its own copy:
+        <span style="color:var(--q)"><b>Q</b></span> = what I'm looking for,
+        <span style="color:var(--k)"><b>K</b></span> = what I advertise for matching,
+        <span style="color:var(--v)"><b>V</b></span> = what I hand over once matched. Blending raw embeddings
+        would copy all of "king" wholesale; V lets the model pass on just the useful part.</div>
+    </div>
+    <p class="small" style="margin-top:12px;border-top:1px solid var(--line);padding-top:10px;margin-bottom:0">
+      <b>So Q, K, V are the same X seen through three different learned lenses</b> (W<sub>q</sub>, W<sub>k</sub>,
+      W<sub>v</sub>). The embedding says <i>what a word is</i>; Q, K and V say <i>what it needs, what it
+      offers, and what it delivers</i>.</p>
+  </div>
+</section>
+
 <!-- INTUITION -->
 <section>
-  <div class="eyebrow"><span class="idx">01</span><span class="lbl">The Intuition</span></div>
-  <h2>Query, Key, Value — think Netflix</h2>
-  <p>Imagine you open Netflix in a particular mood. You want something <em>tense, psychological, with a
-    twist ending</em>. That mood is your <b style="color:var(--q)">Query</b> — what you're looking for.</p>
-  <p style="margin-top:10px">Every title on the platform has tags: <em>"psychological thriller · dark ·
-    non-linear"</em>. Those tags are the <b style="color:var(--k)">Keys</b> — what each title advertises
-    about itself.</p>
-  <p style="margin-top:10px">Netflix scores your mood against every title's tags. High match → high score
-    → that show gets recommended more heavily. What you actually receive — the episodes, the acting, the
-    story — is the <b style="color:var(--v)">Value</b>. The Key was just the index; the Value is the
-    content.</p>
+  <div class="eyebrow"><span class="idx">01</span><span class="lbl">The Three Roles</span></div>
+  <h2>Q asks, K offers, V delivers</h2>
+  <p>You have just seen the idea at work: a <b style="color:var(--q)">correlation</b> between what one token needs and what
+    another advertises (Q·K) decides <i>where to look</i>, and the content of what it finds (V) is <i>blended in</i> to make the
+    embedding better. The three vectors, in one place:</p>
 
   <div class="card" style="margin-top:16px">
     <div style="display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font-size:13px;align-items:start">
       <span style="font-family:var(--mono);font-weight:700;color:var(--q);padding-top:2px">Q</span>
       <span><b style="color:var(--q)">Query</b> — what this token is looking for<br>
-        <span style="color:var(--faint)">e.g. "itself" looking for the noun it refers to</span></span>
+        <span style="color:var(--faint)">e.g. the last "the" looking for who is sitting, and on what</span></span>
       <span style="font-family:var(--mono);font-weight:700;color:var(--k);padding-top:2px">K</span>
       <span><b style="color:var(--k)">Key</b> — what this token advertises about itself<br>
-        <span style="color:var(--faint)">e.g. "dog" advertising: animate, noun, subject</span></span>
+        <span style="color:var(--faint)">e.g. "king" advertising: noun, royal, subject</span></span>
       <span style="font-family:var(--mono);font-weight:700;color:var(--v);padding-top:2px">V</span>
       <span><b style="color:var(--v)">Value</b> — the actual content that flows when matched<br>
-        <span style="color:var(--faint)">e.g. the meaning payload "itself" receives from "dog"</span></span>
+        <span style="color:var(--faint)">e.g. the royal-ness payload the last "the" receives from "king"</span></span>
     </div>
     <p class="small" style="margin-top:12px;border-top:1px solid var(--line);padding-top:10px"><b>Q asks · K offers · V delivers.</b> Score (<span style="color:var(--q)">Q</span>·<span style="color:var(--k)">K</span>) decides <i>how much</i> to attend; <span style="color:var(--v)">V</span> is <i>what</i> actually flows. You never receive the Key — it's just the index.</p>
     <p class="small" style="margin-top:8px;color:var(--faint)"><b>One common trip-up:</b> V is <i>not</i> the token's original embedding. Q, K, and V are three <i>separate</i> learned projections of the same input vector — V is a dedicated "here's what I hand over if you attend to me" copy, kept apart from the routing done by Q and K.</p>
   </div>
 
   <div class="note att" style="margin-top:16px"><b>In the model:</b> Q, K, and V are each the token's
-    vector multiplied by a learned weight matrix (<code>W_Q</code>, <code>W_K</code>, <code>W_V</code>).
-    In the example below they're hand-set so the numbers are readable — in a real model they're learned
-    from data, exactly like the embeddings in Step 1.</div>
+    vector X multiplied by a learned weight matrix (<code>W_Q</code>, <code>W_K</code>, <code>W_V</code>) — you saw
+    Q = X·W<sub>q</sub> and K = X·W<sub>k</sub> computed above. In a real model those matrices are learned from data, exactly like
+    the embeddings in Step 1.</div>
 </section>
 
 <!-- THE EXAMPLE -->
 <section>
   <div class="eyebrow"><span class="idx">02</span><span class="lbl">Worked Example</span></div>
-  <h2>"the dog groomed itself"</h2>
-  <p>Four tokens. We've given each one a tiny 3-number Query and Key, designed around three readable
-    features: <code>[noun-ness, verb-ness, animate]</code>. <b>"itself"</b> is a reflexive pronoun that
-    unambiguously refers back to <b>"dog"</b> in the same sentence — watch where its attention lands.</p>
+  <h2>"The king sat on the ___"</h2>
+  <p>Five tokens (the running example for the rest of the series). We've given each one a tiny 3-number
+    Query and Key, designed around three readable features: <code>[noun-ness, action-ness, royalty]</code>.
+    The last token <b>"the"</b> on its own says nothing — to guess the next word it must look back at
+    <b>"king"</b> (who) and <b>"sat on"</b> (doing what). Watch where its attention lands. (Note the two
+    "the"s: a real tokenizer treats a capitalised sentence-start <code>The</code> and a mid-sentence
+    <code> the</code> as different tokens. In this toy we give both the same embedding on purpose, so only position tells them apart.)</p>
 
   <div class="card">
     <h3>The Q / K / V vectors for each token</h3>
@@ -231,9 +325,87 @@
     training stalls. Dividing by the square root of the key dimension keeps scores in a sane range.</div>
 </section>
 
+<!-- Q·K vs V -->
+<section>
+  <div class="eyebrow"><span class="idx">03</span><span class="lbl">Two Different Jobs</span></div>
+  <h2>Q·K decides <i>who</i> to listen to — V decides <i>what</i> you hear</h2>
+  <p>It's easy to blur Q, K and V together. They do two completely separate jobs, and keeping them apart is
+    the whole trick of attention.</p>
+
+  <div class="card">
+    <h3>1 · Q · K — a relevance (correlation) score between two words</h3>
+    <p style="margin-top:0">The dot product of one word's <b style="color:var(--q)">Query</b> with another word's
+      <b style="color:var(--k)">Key</b> measures how well they <i>match</i>: large when the two vectors point the
+      same way, near zero when unrelated, negative when opposed. Think of it as a correlation between
+      "what I'm looking for" and "what you advertise". Do this for every pair and you get the attention
+      matrix above. <b>No word content moves yet</b> — this step only produces <i>scores</i> (then softmax turns
+      them into weights that sum to 1).</p>
+
+    <h3 style="margin-top:18px">2 · V — the information that actually gets passed along</h3>
+    <p style="margin-top:0">A word's <b style="color:var(--v)">Value</b> is its payload: the content it hands over
+      <i>if</i> someone attends to it. Q and K are only used to <i>match</i>; V is what is <i>delivered</i>.
+      That's why K and V are separate projections: how a word is <i>found</i> and what it <i>gives</i>
+      once found are different things.</p>
+
+    <div class="small" style="margin-top:14px;border-top:1px solid var(--line);padding-top:12px">
+      <b>Three roles in our sentence</b> &nbsp;·&nbsp;
+      <span style="color:var(--q)">Q (last "the") = "who sat, and on what?"</span> &nbsp;·&nbsp;
+      <span style="color:var(--k)">K ("king") = "I'm a royal noun, the subject"</span> &nbsp;·&nbsp;
+      <span style="color:var(--v)">V ("king") = "here's what 'king' means"</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>3 · How attention improves the embedding that went in</h3>
+    <p style="margin-top:0">Go back to the problem: the last "the" went into attention with an <b>almost empty</b>
+      vector (it only knows "I am a function word"). Q·Kᵀ told us <i>where to look</i> (mostly "king"). Now we
+      <b>use those weights to blend the other tokens' Values</b>, and the blend is added to the vector. Below, every
+      number is computed live. For readability we let each token's Value be its own content features (the 7 numbers
+      from Step 2); in a real model V is a learned projection.</p>
+    <div id="improve" style="overflow-x:auto"></div>
+    <p class="small" id="improve-read" style="margin-top:10px"></p>
+    <p class="small" style="margin-top:10px">The weights come from <b>Q·K</b>; the things being mixed are <b>V</b>s.
+      So the last "the" started as a nearly empty function-word vector, and comes out as a vector that is
+      mostly <i>"king"</i> with some <i>"sat on"</i> mixed in — it has absorbed context, and is now a good
+      basis for predicting "throne". Every word does this
+      simultaneously, so after one attention layer <b>each embedding is a context-aware blend of the others</b>,
+      not just itself. Stack layers and the mixing compounds: words gather information from words that
+      already gathered information.</p>
+    <p class="small">Why three vectors instead of just comparing embeddings? Because attention is
+      <b>asymmetric</b>: the last "the" is looking for "king", but "king" isn't looking for a following "the". Q and K
+      are two different <i>learned views</i> of the same embedding, so each word can ask one thing and
+      advertise another. (Here the vectors are hand-made; in a real model the projection matrices
+      W<sub>q</sub>, W<sub>k</sub>, W<sub>v</sub> are learned in training — Step 5.) Everything on this page is
+      <b>one head in one layer</b>; Step 4 repeats it side by side (heads) and stacked (layers).</p>
+    <p class="small" style="margin-bottom:0">Two consequences worth remembering: (a) a word that nobody
+      attends to still keeps its own value through the residual connection (Step 4); (b) in generation,
+      the causal mask means a word can only be changed by words <i>before</i> it — which is exactly why
+      old K and V never change and can be cached in Step 7.</p>
+  </div>
+
+  <div class="card">
+    <h3>4 · What are W<sub>q</sub>, W<sub>k</sub> and W<sub>v</sub> each learning?</h3>
+    <p style="margin-top:0">All three multiply the <i>same</i> X, so what makes them different is the feedback each one gets in training (Step 5).</p>
+    <ul style="margin:6px 0 10px 20px;line-height:1.75;font-size:14px">
+      <li><b style="color:var(--q)">W<sub>q</sub> learns what each kind of word should look for.</b> If the last "the" put its attention on "on" when "king" would have predicted "throne" better, the loss goes up and W<sub>q</sub> is nudged so that Query points more towards royal nouns.</li>
+      <li><b style="color:var(--k)">W<sub>k</sub> learns what each kind of word should advertise.</b> It is trained <i>together</i> with W<sub>q</sub>: only the dot product Q·K ever reaches the loss, so the two matrices must agree on a shared "language" of features. Neither means anything alone.</li>
+      <li><b style="color:var(--v)">W<sub>v</sub> learns which parts of a word are worth copying, and how much of each.</b> A weight near 0 leaves that part of the word behind, a large weight carries it strongly, and a negative weight flips it. It usually also <i>narrows</i> the vector (here 7 numbers → 3; in Llama-3 8B 4096 → 128 per head), so it has to choose what to keep.</li>
+    </ul>
+    <p class="small" style="margin-top:0"><b>Why the feedback differs.</b> Q and K only decide the attention <i>weights</i>, so they learn from "did I look at the right words?". V is the content that actually gets copied, so it learns from "did the copied content help predict the next word?". If a copied feature made "throne" more likely, its weight grows. If it was noise, its weight shrinks.</p>
+
+    <h3 style="margin-top:18px">Try being W<sub>v</sub>: one dial per feature</h3>
+    <p class="small" style="margin-top:0">In card 3 above, each word handed over <b>all</b> of its features (every dial at 1). Below you set how much of each feature is passed on. The weights from Q·K stay the same; only what is copied changes. Watch the next-word guess.</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px" id="wv-presets"></div>
+    <div id="wv-dials" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px 14px;margin-bottom:12px"></div>
+    <div id="wv-out" style="overflow-x:auto"></div>
+    <p class="small" id="wv-read" style="margin-top:10px"></p>
+    <p class="small" style="margin-bottom:0;color:var(--faint)"><b>Simplification:</b> a real W<sub>v</sub> is a full matrix, so it can also <i>mix</i> features (for example fold "human" and "gender" into one "person" feature). One dial per feature is its simplest form (a matrix with numbers only on its diagonal). Training finds the dial settings, or the full matrix, that lower the loss.</p>
+  </div>
+</section>
+
 <!-- THE PIPELINE (4 stages + write-back) -->
 <section>
-  <div class="eyebrow"><span class="idx">03</span><span class="lbl">The Pipeline</span></div>
+  <div class="eyebrow"><span class="idx">04</span><span class="lbl">The Pipeline</span></div>
   <h2>Score → Scale → Soften → Blend <span style="color:var(--faint)">→ Write back</span></h2>
   <p>Attention proper is <b>four</b> operations — the ones inside the <code>softmax(QK<sup>T</sup>/√d<sub>k</sub>)V</code> formula. You already saw them in the step-by-step calc above. A <b>fifth</b> step, the output projection, runs just after — it lives in the multi-head wrapper, not the formula itself, so we show it set apart:</p>
 
@@ -313,7 +485,7 @@
 
 <!-- THE FORMULA -->
 <section>
-  <div class="eyebrow"><span class="idx">04</span><span class="lbl">The Whole Thing</span></div>
+  <div class="eyebrow"><span class="idx">05</span><span class="lbl">The Whole Thing</span></div>
   <h2>One formula, four stages</h2>
   <p>The four stages collapse into a single expression you'll see in every Transformer paper:</p>
   <div class="card" style="text-align:center">
@@ -350,20 +522,31 @@
 </div>
 
 <footer style="margin-top:44px;padding-top:16px;border-top:1px solid var(--line);font-size:12px;line-height:1.55;color:var(--faint);font-style:italic">
-  ✦ This 9-part series was co-written with Claude (Anthropic). It favours intuition over rigour and may contain bugs or simplifications — corrections and feedback are very welcome.
+  ✦ This 11-part series was co-written with Claude (Anthropic). It favours intuition over rigour and may contain bugs or simplifications — corrections and feedback are very welcome.
 </footer>
 
 </div>
 <script>
 const $=s=>document.querySelector(s);
 
-/* ---- the worked example: "the dog groomed itself" ----
-   Q/K dims = [noun-ness, verb-ness, animate]  (hand-set for legibility)
+/* ---- the worked example: "The king sat on the ___" ----
+   Q/K dims = [noun-ness, action-ness, royalty]  (hand-set for legibility)
    V = a single "meaning payload" number, just to show the weighted blend. */
-const TOKENS=['the','dog','groomed','itself'];
-const Q={ the:[1,0,0], dog:[.3,0,.3], groomed:[.5,0,1], itself:[1,0,1] };   // what each looks for
-const K={ the:[0,0,0], dog:[1,0,1], groomed:[0,1,0], itself:[.7,0,.6] };    // what each offers
-const V={ the:0.1, dog:0.9, groomed:0.5, itself:0.7 };                      // content payload
+const TOKENS=['The','king','sat','on','the'];
+/* shared toy data: X = E + 0.3·P (Steps 1-2), Q = X·Wq, K = X·Wk (this step) */
+const EMB7={ The:[0,0,0,0,0,0,.6], king:[.9,.9,.9,.9,.6,0,.1], sat:[0,0,0,0,0,.5,.2], on:[0,0,0,0,0,0,.3], the:[0,0,0,0,0,0,.6] };
+const DIMS7=['living','human','gender','royalty','size','action','abstract'], D7=DIMS7.length;
+const PEF=(pos,d)=>{const k=Math.floor(d/2),den=Math.pow(10000,2*k/D7);return d%2===0?Math.sin(pos/den):Math.cos(pos/den);};
+const POS_SCALE=0.3;   // the position stamp is kept small so it nudges the meaning instead of drowning it (Step 2)
+const XM=TOKENS.map((t,i)=>EMB7[t].map((v,d)=>v+POS_SCALE*PEF(i,d)));  // 5×7
+/* 7×3 projection matrices. A real model LEARNS these; here they were solved for so that
+   Q and K come out as the readable features [noun-ness, action-ness, royalty]. */
+const WQ=[[0.04, -2.25, -7.95], [0.69, -1.3, 1.12], [-0.56, 2.76, 8.27], [0.03, 0.4, -2.32], [-0.29, 1.31, 4.19], [0.88, 0.45, 4.15], [0.86, 0.22, -1.48]];
+const WK=[[-0.07, 1.76, -0.07], [0.14, -1.08, 0.14], [0.59, -1.41, 0.59], [0.18, 0.65, 0.18], [0.33, -0.77, 0.33], [-0.01, 0.3, -0.01], [-0.15, 0.08, -0.15]];
+const matmul=(A,B)=>A.map(r=>B[0].map((_,j)=>r.reduce((s,x,k)=>s+x*B[k][j],0)));
+const QM=matmul(XM,WQ), KM=matmul(XM,WK);                              // 5×3 each
+const Q={}, K={}; TOKENS.forEach((tk,i)=>{ Q[tk]=QM[i]; K[tk]=KM[i]; });
+const V={ The:0.1, king:0.9, sat:0.5, on:0.3, the:0.1 };                // content payload (kept scalar for the demo)
 const DK=3;
 
 const dot=(a,b)=>a.reduce((s,x,i)=>s+x*b[i],0);
@@ -384,7 +567,8 @@ function softmaxRow(raw){
 }
 
 /* ---- render Q/K/V cards ---- */
-function fmt(a){return '['+a.map(x=>x.toFixed(1)).join(', ')+']';}
+const z0=x=>Math.abs(x)<0.05?0:x;
+function fmt(a){return '['+a.map(x=>z0(x).toFixed(1)).join(', ')+']';}
 $('#qkv-grid').innerHTML=TOKENS.map(t=>`
   <div class="qkv-card"><div class="word">${t}</div>
     <div class="qkv-vec q"><span class="tag">Q</span><span class="qkv-nums">${fmt(Q[t])}</span></div>
@@ -401,7 +585,7 @@ function heat(w){ // w in 0..1 -> orange scale
   return `rgb(${r},${g},${b})`;
 }
 
-let focusRow=3; // start on "itself"
+let focusRow=4; // start on the last "the"
 function renderMatrix(){
   const masked=$('#mask-toggle').checked;
   const M=$('#matrix');
@@ -431,7 +615,7 @@ function updateRead(){
   const w=softmaxRow(scoresFor(focusRow,masked));
   let best=0,bi=0; w.forEach((wi,i)=>{if(wi!==null&&wi>best){best=wi;bi=i;}});
   $('#matrix-read').innerHTML=`Token <b style="color:var(--tok)">"${TOKENS[focusRow]}"</b> attends most strongly to <b style="color:var(--att)">"${TOKENS[bi]}"</b> (${Math.round(best*100)}%)`+
-    (TOKENS[focusRow]==='itself'&&TOKENS[bi]==='dog'?` — the reflexive pronoun resolves directly to its referent in the same sentence. That's attention doing coreference.`:`.`);
+    (TOKENS[focusRow]==='the'&&TOKENS[bi]==='king'?` — the last "the" reaches back to the subject. That is why the next word is "throne" and not "mat": the model needs "king" (and "sat on") to decide.`:`.`);
 }
 
 /* ---- focus select ---- */
@@ -469,6 +653,153 @@ $('#mask-toggle').addEventListener('change',()=>{renderMatrix();renderCalc();});
 $('#focus-tok').addEventListener('change',()=>{renderCalc();updateRead();});
 
 renderMatrix(); renderCalc();
+
+/* ---- show Q = X·Wq and K = X·Wk as real matrix products ---- */
+(function(){
+  const cell=(v,s)=>{const a=Math.min(1,Math.abs(v)/s);return `<td style="padding:3px 7px;text-align:right;font-family:var(--mono);font-size:11.5px;background:${v>=0?`rgba(234,88,12,${(a*.4).toFixed(2)})`:`rgba(112,72,232,${(a*.4).toFixed(2)})`}">${(Math.abs(v)<0.005?0:v).toFixed(2)}</td>`;};
+  const mat=(rows,rl,cl,s,colr)=>`<table style="border-collapse:collapse;display:inline-table;vertical-align:top"><thead><tr><th></th>${cl.map(c=>`<th style="padding:3px 7px;font-size:10px;font-weight:500;color:${colr||'var(--faint)'}">${c}</th>`).join('')}</tr></thead><tbody>${rows.map((r,i)=>`<tr><th style="padding:3px 8px 3px 0;text-align:left;font-size:11px;font-family:var(--mono);font-weight:500">${rl[i]}</th>${r.map(v=>cell(v,s)).join('')}</tr>`).join('')}</tbody></table>`;
+  const op=s=>`<span style="display:inline-block;padding:0 10px;font-family:var(--mono);font-size:18px;color:var(--faint);align-self:center">${s}</span>`;
+  const fcols=['noun','action','royalty'];
+  const block=(name,W,M,colr)=>`<div style="display:flex;align-items:flex-start;gap:2px;flex-wrap:nowrap"><div><div style="font-size:11px;margin-bottom:3px"><b>X</b> (5×7)</div>${mat(XM,TOKENS,DIMS7.map(d=>d.slice(0,3)),1.2)}</div>${op('×')}<div><div style="font-size:11px;margin-bottom:3px;color:${colr}"><b>W<sub>${name}</sub></b> (7×3)</div>${mat(W,DIMS7,fcols,8,colr)}</div>${op('=')}<div><div style="font-size:11px;margin-bottom:3px;color:${colr}"><b>${name.toUpperCase()}</b> (5×3)</div>${mat(M,TOKENS,fcols,2,colr)}</div></div>`;
+  document.getElementById('wq-mult').innerHTML=block('q',WQ,QM,'var(--q)');
+  document.getElementById('wk-mult').innerHTML=block('k',WK,KM,'var(--k)');
+  const i=TOKENS.length-1, c=2;
+  const terms=XM[i].map((x,d)=>`${x.toFixed(2)}×${WQ[d][c].toFixed(2)}`);
+  document.getElementById('w-worked').innerHTML=`<b>One number, worked out:</b> the last "the"'s Query for <i>royalty</i> = row <code>X[the]</code> · column 3 of W<sub>q</sub> = ${terms.join(' + ')} = <b>${QM[i][c].toFixed(2)}</b>. Every entry of Q and K is computed this way.`;
+})();
+
+/* ---- before/after: what attention does to the last "the" ---- */
+(function(){
+  const E=EMB7, DIMS=DIMS7;
+  const CAND={ throne:[-.3,0,0,.9,.5,0,0], castle:[-.5,0,0,.7,.9,0,0], chair:[-.9,0,0,0,.3,0,0], book:[-.9,0,0,0,.2,0,.5], garden:[-.5,0,0,0,.4,0,0], forest:[-.6,0,0,0,.7,0,0] };
+  const qi=TOKENS.length-1;
+  const w=softmaxRow(scoresFor(qi,true));
+  const before=E[TOKENS[qi]];
+  const blend=DIMS.map((_,d)=>TOKENS.reduce((s,t,i)=>s+(w[i]||0)*E[t][d],0));
+  const after=before.map((v,d)=>v+blend[d]);
+  const cell=v=>{const a=Math.min(1,Math.abs(v)/1);return `<td style="padding:4px 9px;text-align:right;font-family:var(--mono);font-size:12px;background:${v>=0?`rgba(234,88,12,${(a*.45).toFixed(2)})`:`rgba(112,72,232,${(a*.45).toFixed(2)})`}">${v.toFixed(2)}</td>`;};
+  const row=(lbl,vec,sub)=>`<tr><th style="padding:4px 10px 4px 0;text-align:left;font-size:12px;font-weight:600">${lbl}<div style="font-weight:400;font-size:11px;color:var(--faint)">${sub}</div></th>${vec.map(cell).join('')}</tr>`;
+  const hd=`<tr><th></th>${DIMS.map(d=>`<th style="padding:4px 9px;font-size:11px;font-weight:500;color:var(--faint)">${d}</th>`).join('')}</tr>`;
+  const wl=TOKENS.map((t,i)=>`${w[i].toFixed(2)}×V<sub>${t}</sub>`).join(' + ');
+  const sm=a=>{const m=Math.max(...a),e=a.map(x=>Math.exp(x-m)),s=e.reduce((p,c)=>p+c,0);return e.map(x=>x/s);};
+  const names=Object.keys(CAND), dot2=(a,b)=>a.reduce((s,x,i)=>s+x*b[i],0);
+  const pb=sm(names.map(n=>dot2(before,CAND[n])*4)), pa=sm(names.map(n=>dot2(after,CAND[n])*4));
+  const bar=(x,c)=>`<div style="display:flex;align-items:center;gap:6px"><div style="height:9px;border-radius:4px;background:${c};width:${(x*100*1.3).toFixed(0)}px;min-width:2px"></div><span style="font-family:var(--mono);font-size:11px">${Math.round(x*100)}%</span></div>`;
+  const best=a=>names[a.indexOf(Math.max(...a))];
+  $('#improve').innerHTML=
+    `<div style="font-size:13px;margin-bottom:6px"><b style="color:var(--att)">1 · weights from Q·Kᵀ</b> (the last row of the attention matrix): ${TOKENS.map((t,i)=>`${t} ${Math.round(w[i]*100)}%`).join(' · ')}</div>`+
+    `<div style="font-size:13px;margin:6px 0"><b style="color:var(--v)">2 · blend the Values</b>: <span style="font-family:var(--mono);font-size:12px">${wl}</span></div>`+
+    `<table style="border-collapse:collapse"><thead>${hd}</thead><tbody>`+
+      row('before',before,'the last "the" going in: almost empty')+
+      row('+ blend of V',blend,'what attention gathered (mostly king)')+
+      row('= after',after,'the improved embedding coming out')+
+    `</tbody></table>`+
+    `<div style="font-size:13px;margin:14px 0 6px"><b>3 · does it help predict the next word?</b> Score each candidate word against the vector:</div>`+
+    `<table style="border-collapse:collapse;font-size:13px"><thead><tr><th style="padding:4px 10px;text-align:left;font-size:11px;color:var(--faint)">next word</th><th style="padding:4px 10px;text-align:left;font-size:11px;color:var(--faint)">using the vector BEFORE attention</th><th style="padding:4px 10px;text-align:left;font-size:11px;color:var(--att)">using the vector AFTER attention</th></tr></thead><tbody>`+
+    names.map((n,i)=>`<tr><td style="padding:4px 10px;font-family:var(--mono)">${n}</td><td style="padding:4px 10px">${bar(pb[i],'var(--faint)')}</td><td style="padding:4px 10px">${bar(pa[i],'var(--att)')}</td></tr>`).join('')+`</tbody></table>`;
+  $('#improve-read').innerHTML=`<b>Before</b>, the vector has no royalty or size information. The only thing it carries is "function word" (the abstract feature), so the scores are driven by that: <b>${best(pb)}</b> leads with ${Math.round(Math.max(...pb)*100)}% and "throne" gets just ${Math.round(pb[names.indexOf('throne')]*100)}%. <b>After</b>, the vector carries a chunk of "king"'s royal, human, large features, and <b>${best(pa)}</b> is on top with ${Math.round(Math.max(...pa)*100)}% (the other royal places, like castle at ${Math.round(pa[names.indexOf('castle')]*100)}%, rise too, while chair, book, garden and forest fall). Nothing about the word "the" changed — attention <i>looked up the relevant tokens</i> (Q·Kᵀ) and <i>copied in their content</i> (×V). That is how attention improves the embeddings that go in: each vector leaves richer than it arrived, ready for the next layer.`;
+})();
+
+/* ---- "same word, two jobs": every token's attention under the causal mask ---- */
+(function(){
+  const th=(s)=>`<th style="padding:6px 10px;text-align:left;font-size:11px;font-weight:600;color:var(--faint);border-bottom:1px solid var(--line)">${s}</th>`;
+  const td=s=>`<td style="padding:6px 10px;border-bottom:1px solid var(--line);vertical-align:top">${s}</td>`;
+  let h=`<thead><tr>${th('token (Query)')}${th('Q = what it looks for')}${th('can look at')}${th('where its attention goes')}</tr></thead><tbody>`;
+  TOKENS.forEach((tk,qi)=>{
+    const w=softmaxRow(scoresFor(qi,true));
+    const parts=w.map((x,i)=>x===null?null:`${TOKENS[i]} <b>${Math.round(x*100)}%</b>`).filter(Boolean).join(' · ');
+    const hl=(tk==='The'||(tk==='the'&&qi===4));
+    h+=`<tr${hl?' style="background:rgba(234,88,12,.07)"':''}>${td(`<b style="font-family:var(--mono)">${tk}</b> <span style="color:var(--faint);font-size:11px">(pos ${qi})</span>`)}${td(`<span style="font-family:var(--mono);color:var(--q)">[${Q[tk].map(x=>z0(x).toFixed(1)).join(', ')}]</span>`)}${td(TOKENS.slice(0,qi+1).join(', '))}${td(parts)}</tr>`;
+  });
+  $('#two-the').innerHTML=h+'</tbody>';
+  $('#two-the-read').innerHTML=`The first <b>"The"</b> is at position 0: it can see nothing but itself, so it just keeps its own meaning (100%). The last <b>"the"</b> can see everything before it and has a rich Query, so it gathers information — mostly from "king". Same word, same embedding; as the reminder under the X table says, the <i>position</i> (and later, the surrounding context) is the only thing that changes what it asks. The two rows of X for these "the"s are alike (same word, a small position nudge apart), but their Queries are very different. That is W<sub>q</sub> doing its job: it has big weights on exactly the dimensions where position differs, so it <i>reads</i> the position nudge and amplifies it. Notice also that <b>"sat"</b> looks mostly at "king" (who sat?) and <b>"on"</b> leans a little toward "sat" (what is it attached to?): every token runs this same lookup at once.`;
+})();
+
+/* ---- "why not raw embeddings?" demo: Step 2's word vectors, last "the" as the query ---- */
+(function(){
+  const E=EMB7, DIMS=DIMS7, D=D7, X=XM;
+  const cell=v=>{const a=Math.min(1,Math.abs(v)/1.2);return `<td style="padding:6px 9px;text-align:right;font-family:var(--mono);font-size:12px;background:${v>=0?`rgba(234,88,12,${(a*.45).toFixed(2)})`:`rgba(112,72,232,${(a*.45).toFixed(2)})`}">${v.toFixed(2)}</td>`;};
+  const tri='position:absolute;left:-9px;width:0;height:0;border-right:9px solid var(--att);border-top:5px solid transparent;border-bottom:5px solid transparent';
+  const bracket=`<td rowspan="${TOKENS.length}" style="position:relative;width:330px;min-width:330px;padding:0"><div id="x-bracket" style="position:absolute;left:26px;right:0;top:16px;bottom:16px;border:2px solid var(--att);border-left:none;border-radius:0 12px 12px 0;display:flex;align-items:center;padding:6px 12px 6px 16px">`+
+    `<span style="${tri};top:-6px"></span><span style="${tri};bottom:-6px"></span>`+
+    `<div style="font-size:12px;line-height:1.5"><b style="color:var(--att)">The two rows differ because of the <a href="llm-step2-position-and-prediction.html#pos-enc" style="color:var(--att)">positional embedding</a>.</b></div></div></td>`;
+  $('#x-matrix').innerHTML=`<table style="border-collapse:collapse"><thead><tr><th></th>${DIMS.map(d=>`<th style="padding:4px 9px;font-size:11px;font-weight:500;color:var(--faint)">${d}</th>`).join('')}<th></th></tr></thead><tbody>`+
+    TOKENS.map((t,i)=>{
+      const hl=(i===0||i===TOKENS.length-1), ob='2px solid var(--att)';
+      const th=`<th style="padding:6px 10px 6px ${hl?8:0}px;text-align:left;font-family:var(--mono);font-size:12px${hl?`;border:${ob};border-right:none;border-radius:8px 0 0 8px`:''}">${i} · ${t}</th>`;
+      const tds=X[i].map((v,d)=>{ const c=cell(v); return hl?c.replace('<td style="',`<td style="border-top:${ob};border-bottom:${ob};${d===X[i].length-1?`border-right:${ob};border-radius:0 8px 8px 0;`:''}`):c; }).join('');
+      return `<tr>${th}${tds}${i===0?bracket:''}</tr>`;
+    }).join('')+`</tbody></table>`;
+  (function(){ // point the bracket's arrows at the centres of the first and last rows
+    const rows=document.querySelectorAll('#x-matrix tbody tr'), br=document.getElementById('x-bracket');
+    if(!rows||!rows.length||!br||!rows[0].offsetHeight) return;
+    br.style.top=(rows[0].offsetHeight/2)+'px'; br.style.bottom=(rows[rows.length-1].offsetHeight/2)+'px';
+  })();
+  const qi=TOKENS.length-1;
+  const sm=a=>{const m=Math.max(...a),e=a.map(x=>Math.exp(x-m)),s=e.reduce((p,c)=>p+c,0);return e.map(x=>x/s);};
+  const naive=sm(TOKENS.map((t,i)=>dot(X[qi],X[i])/Math.sqrt(D)));
+  const qk=sm(TOKENS.map(t=>dot(Q[TOKENS[qi]],K[t])/Math.sqrt(DK)));
+  const f=v=>z0(v).toFixed(1), qv=Q[TOKENS[qi]];
+  $('#qk-q').innerHTML=`<span style="color:var(--q)"><b>Q</b><sub>the</sub> = [${qv.map(f).join(', ')}]</span> <span style="color:var(--faint);font-size:12px">&nbsp;= needs a noun (${f(qv[0])}), wants an action (${f(qv[1])}), wants royalty (${f(qv[2])})</span>`;
+  const bar=(w,c)=>`<div style="display:flex;align-items:center;gap:8px"><div style="height:10px;border-radius:5px;background:${c};width:${(w*100*1.4).toFixed(0)}px;min-width:2px"></div><span style="font-family:var(--mono);font-size:12px">${Math.round(w*100)}%</span></div>`;
+  const th=(s,c)=>`<th style="padding:6px 10px;text-align:left;font-size:11px;font-weight:600;color:${c||'var(--faint)'};border-bottom:1px solid var(--line)">${s}</th>`;
+  const td=s=>`<td style="padding:6px 10px;border-bottom:1px solid var(--line);vertical-align:middle">${s}</td>`;
+  let h=`<thead><tr>${th('token')}${th('K = what it advertises<br>[noun, action, royalty]','var(--k)')}${th('Q·K score<br>(match, ÷√3)','var(--att)')}${th('attention with<br>learned Q·K','var(--att)')}${th('attention with raw<br>X·X similarity','var(--faint)')}</tr></thead><tbody>`;
+  TOKENS.forEach((t,i)=>{
+    const kv=K[t].map(z0), parts=kv.map((x,j)=>z0(x*qv[j])), sc=dot(qv,kv)/Math.sqrt(DK);
+    h+=`<tr>${td(`<b style="font-family:var(--mono)">${t}</b>`)}${td(`<span style="font-family:var(--mono);color:var(--k)">[${kv.map(f).join(', ')}]</span>`)}${td(`<span style="font-family:var(--mono);font-size:12px">${parts.map(x=>x.toFixed(1)).join(' + ')} = ${parts.reduce((p,c)=>p+c,0).toFixed(1)} → <b>${sc.toFixed(2)}</b></span>`)}${td(bar(qk[i],'var(--att)'))}${td(bar(naive[i],'var(--faint)'))}</tr>`;
+  });
+  $('#qk-table').innerHTML=h+'</tbody>';
+  const top=a=>a.indexOf(Math.max(...a));
+  $('#naive-read').innerHTML=`Raw similarity mostly favours <b>"${TOKENS[top(naive)]}"</b> (itself); "king" gets only ${Math.round(naive[1]*100)}%. With Q·K, "king" gets ${Math.round(qk[1]*100)}%: its Key advertises <i>noun + royalty</i>, which is exactly what the Query asks for (0.6 from noun-ness plus 2.0 from royalty in its score). So the score is just "how well does what I need match what you offer".`;
+})();
+
+/* ---- "try being W_v": a dial per feature controls what gets copied ---- */
+(function(){
+  const E=EMB7, DIMS=DIMS7, qi=TOKENS.length-1;
+  const CAND={ throne:[-.3,0,0,.9,.5,0,0], castle:[-.5,0,0,.7,.9,0,0], chair:[-.9,0,0,0,.3,0,0], book:[-.9,0,0,0,.2,0,.5], garden:[-.5,0,0,0,.4,0,0], forest:[-.6,0,0,0,.7,0,0] };
+  const names=Object.keys(CAND), w=softmaxRow(scoresFor(qi,true));
+  const sm=a=>{const m=Math.max(...a),e=a.map(x=>Math.exp(x-m)),s=e.reduce((p,c)=>p+c,0);return e.map(x=>x/s);};
+  const PRESETS=[
+    ['Pass everything',[1,1,1,1,1,1,1]],
+    ['Drop "abstract"',[1,1,1,1,1,1,0]],
+    ['Drop royalty',[1,1,1,0,1,1,1]],
+    ['Pass nothing',[0,0,0,0,0,0,0]],
+    ['Turn everything up ×2',[2,2,2,2,2,2,2]]
+  ];
+  let g=PRESETS[0][1].slice();
+  const dialsEl=$('#wv-dials');
+  dialsEl.innerHTML=DIMS.map((d,i)=>`<label class="fld" for="wv-g${i}" style="font-size:12px">${d}: <b id="wv-v${i}">1.0</b><input type="range" id="wv-g${i}" min="0" max="2" step="0.1" value="1" style="width:100%"></label>`).join('');
+  $('#wv-presets').innerHTML=PRESETS.map((p,i)=>`<button type="button" class="pill" data-pre="${i}" style="cursor:pointer;border:1px solid var(--line);background:var(--surface);color:inherit">${p[0]}</button>`).join('');
+  const probs=gv=>{
+    const before=E[TOKENS[qi]];
+    const blend=DIMS.map((_,d)=>TOKENS.reduce((s,t,i)=>s+(w[i]||0)*E[t][d]*gv[d],0));
+    const after=before.map((v,d)=>v+blend[d]);
+    return {blend, after, p:sm(names.map(n=>after.reduce((s,x,i)=>s+x*CAND[n][i],0)*4))};
+  };
+  const base=probs(PRESETS[0][1]);
+  const cell=v=>{const a=Math.min(1,Math.abs(v)/1);return `<td style="padding:4px 9px;text-align:right;font-family:var(--mono);font-size:12px;background:${v>=0?`rgba(234,88,12,${(a*.45).toFixed(2)})`:`rgba(112,72,232,${(a*.45).toFixed(2)})`}">${v.toFixed(2)}</td>`;};
+  const bar=(x,c)=>`<div style="display:flex;align-items:center;gap:6px"><div style="height:9px;border-radius:4px;background:${c};width:${(x*100*1.3).toFixed(0)}px;min-width:2px"></div><span style="font-family:var(--mono);font-size:11px">${Math.round(x*100)}%</span></div>`;
+  function render(){
+    g.forEach((v,i)=>{ $('#wv-g'+i).value=v; $('#wv-v'+i).textContent=v.toFixed(1); });
+    const r=probs(g), ti=names.indexOf('throne');
+    const top=a=>a.indexOf(Math.max(...a));
+    const hd=`<tr><th></th>${DIMS.map(d=>`<th style="padding:4px 9px;font-size:11px;font-weight:500;color:var(--faint)">${d}</th>`).join('')}</tr>`;
+    const row=(l,vec)=>`<tr><th style="padding:4px 10px 4px 0;text-align:left;font-size:12px;font-weight:600">${l}</th>${vec.map(cell).join('')}</tr>`;
+    $('#wv-out').innerHTML=`<table style="border-collapse:collapse"><thead>${hd}</thead><tbody>${row('dial (what W<sub>v</sub> passes)',g)}${row('blend the last "the" receives',r.blend)}${row('= vector after attention',r.after)}</tbody></table>`+
+      `<table style="border-collapse:collapse;font-size:13px;margin-top:12px"><thead><tr><th style="padding:4px 10px;text-align:left;font-size:11px;color:var(--faint)">next word</th><th style="padding:4px 10px;text-align:left;font-size:11px;color:var(--faint)">all dials at 1</th><th style="padding:4px 10px;text-align:left;font-size:11px;color:var(--v)">your dials</th></tr></thead><tbody>`+
+      names.map((n,i)=>`<tr><td style="padding:4px 10px;font-family:var(--mono)">${n}</td><td style="padding:4px 10px">${bar(base.p[i],'var(--faint)')}</td><td style="padding:4px 10px">${bar(r.p[i],'var(--v)')}</td></tr>`).join('')+`</tbody></table>`;
+    const t=top(r.p), pt=Math.round(r.p[ti]*100), pb=Math.round(base.p[ti]*100);
+    if(g.every(v=>v===1)){ $('#wv-read').innerHTML=`All dials at 1 is exactly card 3 above: every feature of every word is copied, and "throne" gets <b>${pt}%</b>. Move a dial, or pick a preset, to see what each feature is worth.`; return; }
+    $('#wv-read').innerHTML=`With these dials the top guess is <b>${names[t]}</b> (${Math.round(r.p[t]*100)}%) and "throne" gets <b>${pt}%</b>, against ${pb}% with every dial at 1. `+
+      (names[t]==='throne'
+        ? (pt>=pb?`The dials keep (or boost) the royal and size features that make "throne" likely, which is what training rewards. Training would nudge W<sub>v</sub> towards settings like this.`:`"throne" still wins, but by less than when everything is passed.`)
+        : `These dials throw away what the prediction needs (look at the royalty and size columns of the blend), so the model would guess <b>${names[t]}</b> instead and the loss would be high. Training pushes those dials back up.`);
+  }
+  dialsEl.addEventListener('input',e=>{ const m=/^wv-g(\d)$/.exec(e.target.id||''); if(!m) return; g[+m[1]]=+e.target.value; render(); });
+  $('#wv-presets').addEventListener('click',e=>{ const b=e.target.closest&&e.target.closest('[data-pre]'); if(!b) return; g=PRESETS[+b.dataset.pre][1].slice(); render(); });
+  render();
+})();
 </script>
 </body>
 </html>

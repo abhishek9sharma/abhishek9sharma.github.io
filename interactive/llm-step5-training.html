@@ -58,6 +58,7 @@
   .note{border-left:3px solid var(--trn-line);background:var(--trn-soft);border-radius:0 10px 10px 0;padding:12px 16px;margin-top:16px;font-size:14px;color:#8a3410}
   .note.vec{border-left-color:var(--vec-line);background:var(--vec-soft);color:#37306b}
   .note b{font-weight:600}
+  [data-theme="dark"] .note.vec{color:var(--ink)}
   details{margin-top:12px}summary{cursor:pointer;font-family:var(--mono);font-size:12px;color:var(--trn);font-weight:600}
   .btn{font-family:var(--body);font-size:14px;font-weight:500;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);padding:9px 18px;border-radius:9px;cursor:pointer}
   .btn:hover{border-color:var(--trn)}
@@ -96,13 +97,13 @@
   .next h3{font-family:var(--disp);font-size:16px;margin:0 0 6px}.next p{color:var(--muted);font-size:14px;margin:0}
   .pill{display:inline-block;font-family:var(--mono);font-size:11px;color:var(--trn);background:var(--trn-soft);border:1px solid var(--trn-line);border-radius:20px;padding:2px 10px;margin-top:10px;text-decoration:none;cursor:pointer;}
 
-  /* ---- injected series navigator (consistent across all 9 steps) ---- */
+  /* ---- injected series navigator (consistent across all 11 steps) ---- */
   .series-nav{display:flex;flex-direction:column;align-items:center;gap:7px;padding:10px 0 14px;margin-bottom:4px}
   .sn-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center}
   .sn-chips{display:flex;gap:5px}
   .sn-chip{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:13px;font-weight:600;text-decoration:none;color:var(--muted);background:var(--bg);border:1px solid var(--line-strong);transition:all .12s}
   .sn-chip:hover{border-color:var(--ink);color:var(--ink)}
-  .sn-chip.current{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .sn-chip.current{background:var(--ink);color:var(--bg);border-color:var(--ink)}
   .sn-navbtn{font-family:var(--mono);font-size:12px;color:var(--muted);text-decoration:none;padding:6px 11px;border:1px solid var(--line-strong);border-radius:8px;white-space:nowrap;transition:all .12s}
   .sn-navbtn:hover{border-color:var(--ink);color:var(--ink)}
   .sn-navbtn.disabled{opacity:.28;pointer-events:none}
@@ -123,12 +124,12 @@
 
 
 <nav class="series-nav" aria-label="Series navigation">
-  <div class="sn-bar"><a class="sn-navbtn" href="llm-step4-transformer-block.html">‹ prev</a><div class="sn-chips"><a class="sn-chip" href="llm-step1-tokens-and-embeddings.html" title="Step 1: Tokens & Embeddings">1</a><a class="sn-chip" href="llm-step2-position-and-prediction.html" title="Step 2: Position & Prediction">2</a><a class="sn-chip" href="llm-step3-self-attention.html" title="Step 3: Self-Attention">3</a><a class="sn-chip" href="llm-step4-transformer-block.html" title="Step 4: Transformer Block">4</a><span class="sn-chip current" title="Training">5</span><a class="sn-chip" href="llm-step6-generation.html" title="Step 6: Generation">6</a><a class="sn-chip" href="llm-step7-kv-cache.html" title="Step 7: KV Cache">7</a><a class="sn-chip" href="llm-step8-memory-wall.html" title="Step 8: The Memory Wall">8</a><a class="sn-chip" href="llm-step9-pagedattention-vllm.html" title="Step 9: PagedAttention & vLLM">9</a></div><a class="sn-navbtn" href="llm-step6-generation.html">next ›</a></div>
-  <div class="sn-caption">Step <b>5</b> of 9 &middot; <b>Training</b> &middot; LLM from scratch</div>
+  <div class="sn-bar"><a class="sn-navbtn" href="llm-step4-transformer-block.html">‹ prev</a><div class="sn-chips"><a class="sn-chip" href="llm-step1-tokens-and-embeddings.html" title="Step 1: Tokens & Embeddings">1</a><a class="sn-chip" href="llm-step2-position-and-prediction.html" title="Step 2: Position & Prediction">2</a><a class="sn-chip" href="llm-step3-self-attention.html" title="Step 3: Self-Attention">3</a><a class="sn-chip" href="llm-step4-transformer-block.html" title="Step 4: Transformer Block">4</a><span class="sn-chip current" title="Training">5</span><a class="sn-chip" href="llm-step6-generation.html" title="Step 6: Generation">6</a><a class="sn-chip" href="llm-step7-kv-cache.html" title="Step 7: KV Cache">7</a><a class="sn-chip" href="llm-step8-memory-wall.html" title="Step 8: The Memory Wall">8</a><a class="sn-chip" href="llm-step9-pagedattention-vllm.html" title="Step 9: PagedAttention & vLLM">9</a><a class="sn-chip" href="llm-step10-llm-d-cluster-serving.html" title="Step 10: llm-d: Many vLLMs as a Team">10</a><a class="sn-chip" href="llm-step11-alternatives-whole-picture.html" title="Step 11: SGLang, Ray Serve & the Whole Picture">11</a></div><a class="sn-navbtn" href="llm-step6-generation.html">next ›</a></div>
+  <div class="sn-caption">Step <b>5</b> of 11 &middot; <b>Training</b> &middot; LLM from scratch</div>
 </nav>
 
 <header>
-  <div class="kicker">Intuition-first LLMs · Step 5 of 9</div>
+  <div class="kicker">Intuition-first LLMs · Step 5 of 11</div>
   <h1>Training: turning noise into knowledge</h1>
   <p class="lede">Every weight in the model starts as <b>random noise</b>. Training is a loop: predict,
     measure how wrong you were (<b>loss</b>), and nudge every weight to be slightly less wrong
@@ -136,6 +137,26 @@
     emerge from randomness — the payoff promised back in Step 1.</p>
   <div class="recap"><b>Story so far ▸</b> the complete model architecture, Steps 1–4. <b>This step ▸</b> how its randomly-initialised weights actually learn to make good predictions.</div>
 </header>
+
+<!-- THE PROBLEM -->
+<section>
+  <div class="eyebrow"><span class="idx">00</span><span class="lbl">The Problem First</span></div>
+  <h2>An untrained model has no idea what follows "The king sat on the"</h2>
+  <p>Steps 1–4 built the machine: embeddings E, position P, the projection matrices <code>W<sub>q</sub></code>,
+    <code>W<sub>k</sub></code>, <code>W<sub>v</sub></code>, <code>W<sub>o</sub></code>, and the feed-forward weights of every
+    block. We hand-set small numbers to make attention readable — but in a real model <b>all of those start as random
+    noise</b>. Run the sentence through random weights and the next-word scores are random too:</p>
+  <div class="card">
+    <h3>Next word after "The king sat on the ___" — same model, before vs. after training</h3>
+    <div id="bt-grid" style="display:grid;grid-template-columns:auto 1fr 1fr;gap:6px 14px;align-items:center;font-size:13px"></div>
+    <p class="small" id="bt-read" style="margin-top:12px;margin-bottom:0"></p>
+  </div>
+  <p style="margin-top:12px"><b>So what is there to learn?</b> Every number in those matrices. Training adjusts them so that
+    <code>W<sub>q</sub></code> and <code>W<sub>k</sub></code> make the last "the" ask for a royal subject
+    (Step 3's lens), <code>W<sub>v</sub></code> carries the right content, and the output layer maps the enriched vector to
+    "throne". We cannot set them by hand for billions of words, so we let the model <b>measure its own mistake and fix itself</b>
+    — the rest of this step.</p>
+</section>
 
 <!-- CROSS ENTROPY -->
 <section>
@@ -265,7 +286,7 @@
 </div>
 
 <footer style="margin-top:44px;padding-top:16px;border-top:1px solid var(--line);font-size:12px;line-height:1.55;color:var(--faint);font-style:italic">
-  ✦ This 9-part series was co-written with Claude (Anthropic). It favours intuition over rigour and may contain bugs or simplifications — corrections and feedback are very welcome.
+  ✦ This 11-part series was co-written with Claude (Anthropic). It favours intuition over rigour and may contain bugs or simplifications — corrections and feedback are very welcome.
 </footer>
 
 </div>
@@ -292,6 +313,21 @@ function renderCE(){
 }
 $('#ce-target').addEventListener('change',renderCE);
 renderCE();
+
+/* ---- before vs after training, on the running sentence ---- */
+(function(){
+  const words=Object.keys(CE_DIST);
+  let s=7; const rnd=()=>{ s=(s+0x6D2B79F5)|0; let x=Math.imul(s^(s>>>15),1|s); x=(x+Math.imul(x^(x>>>7),61|x))^x; return ((x^(x>>>14))>>>0)/4294967296; }; // mulberry32
+  const logits=words.map(()=>rnd()*1.2-0.6);                 // random weights -> near-random logits
+  const e=logits.map(Math.exp), z=e.reduce((a,b)=>a+b,0);
+  const before=Object.fromEntries(words.map((w,i)=>[w,e[i]/z]));
+  const bar=(p,c)=>`<div style="display:flex;align-items:center;gap:8px"><div style="height:10px;border-radius:5px;background:${c};width:${(p*100*2.2).toFixed(0)}px;min-width:2px"></div><span style="font-family:var(--mono);font-size:12px">${Math.round(p*100)}%</span></div>`;
+  let h=`<span></span><b>untrained (random weights)</b><b style="color:var(--trn)">trained</b>`;
+  words.forEach(w=>{ h+=`<span style="font-family:var(--mono)">${w}${w==='throne'?' ✓':''}</span>${bar(before[w],'var(--faint)')}${bar(CE_DIST[w],'var(--trn)')}`; });
+  document.getElementById('bt-grid').innerHTML=h;
+  const lb=-Math.log(before.throne), la=-Math.log(CE_DIST.throne);
+  document.getElementById('bt-read').innerHTML=`With random weights the scores are essentially noise (the bars on the left are illustrative random scores, not a measured model): "throne" gets about ${Math.round(before.throne*100)}%, compared with ${Math.round(100/words.length)}% for picking among ${words.length} words at random, so the loss on the right answer is high (<b>${lb.toFixed(2)}</b>). After training it gives "throne" ${Math.round(CE_DIST.throne*100)}%, loss <b>${la.toFixed(2)}</b>. Same architecture, same sentence: only the numbers inside changed.`;
+})();
 
 /* ============ 2. GRADIENT DESCENT LANDSCAPE ============ */
 // loss(w) = quartic-ish bowl with a minimum near w=3.2

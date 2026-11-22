@@ -110,13 +110,13 @@
   .pill{display:inline-block;font-family:var(--mono);font-size:11px;color:var(--acc-ink);background:var(--acc-soft);border:1px solid var(--acc-line);border-radius:20px;padding:2px 10px;margin-top:10px;text-decoration:none;cursor:pointer}
   .src{font-size:11px;color:var(--faint);margin-top:8px;font-family:var(--mono)}
 
-  /* ---- injected series navigator (consistent across all 9 steps) ---- */
+  /* ---- injected series navigator (consistent across all 11 steps) ---- */
   .series-nav{display:flex;flex-direction:column;align-items:center;gap:7px;padding:10px 0 14px;margin-bottom:4px}
   .sn-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center}
   .sn-chips{display:flex;gap:5px}
   .sn-chip{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:13px;font-weight:600;text-decoration:none;color:var(--muted);background:var(--bg);border:1px solid var(--line-strong);transition:all .12s}
   .sn-chip:hover{border-color:var(--ink);color:var(--ink)}
-  .sn-chip.current{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .sn-chip.current{background:var(--ink);color:var(--bg);border-color:var(--ink)}
   .sn-navbtn{font-family:var(--mono);font-size:12px;color:var(--muted);text-decoration:none;padding:6px 11px;border:1px solid var(--line-strong);border-radius:8px;white-space:nowrap;transition:all .12s}
   .sn-navbtn:hover{border-color:var(--ink);color:var(--ink)}
   .sn-navbtn.disabled{opacity:.28;pointer-events:none}
@@ -137,12 +137,12 @@
 
 
 <nav class="series-nav" aria-label="Series navigation">
-  <div class="sn-bar"><a class="sn-navbtn" href="llm-step7-kv-cache.html">‹ prev</a><div class="sn-chips"><a class="sn-chip" href="llm-step1-tokens-and-embeddings.html" title="Step 1: Tokens & Embeddings">1</a><a class="sn-chip" href="llm-step2-position-and-prediction.html" title="Step 2: Position & Prediction">2</a><a class="sn-chip" href="llm-step3-self-attention.html" title="Step 3: Self-Attention">3</a><a class="sn-chip" href="llm-step4-transformer-block.html" title="Step 4: Transformer Block">4</a><a class="sn-chip" href="llm-step5-training.html" title="Step 5: Training">5</a><a class="sn-chip" href="llm-step6-generation.html" title="Step 6: Generation">6</a><a class="sn-chip" href="llm-step7-kv-cache.html" title="Step 7: KV Cache">7</a><span class="sn-chip current" title="The Memory Wall">8</span><a class="sn-chip" href="llm-step9-pagedattention-vllm.html" title="Step 9: PagedAttention & vLLM">9</a></div><a class="sn-navbtn" href="llm-step9-pagedattention-vllm.html">next ›</a></div>
-  <div class="sn-caption">Step <b>8</b> of 9 &middot; <b>The Memory Wall</b> &middot; LLM from scratch</div>
+  <div class="sn-bar"><a class="sn-navbtn" href="llm-step7-kv-cache.html">‹ prev</a><div class="sn-chips"><a class="sn-chip" href="llm-step1-tokens-and-embeddings.html" title="Step 1: Tokens & Embeddings">1</a><a class="sn-chip" href="llm-step2-position-and-prediction.html" title="Step 2: Position & Prediction">2</a><a class="sn-chip" href="llm-step3-self-attention.html" title="Step 3: Self-Attention">3</a><a class="sn-chip" href="llm-step4-transformer-block.html" title="Step 4: Transformer Block">4</a><a class="sn-chip" href="llm-step5-training.html" title="Step 5: Training">5</a><a class="sn-chip" href="llm-step6-generation.html" title="Step 6: Generation">6</a><a class="sn-chip" href="llm-step7-kv-cache.html" title="Step 7: KV Cache">7</a><span class="sn-chip current" title="The Memory Wall">8</span><a class="sn-chip" href="llm-step9-pagedattention-vllm.html" title="Step 9: PagedAttention & vLLM">9</a><a class="sn-chip" href="llm-step10-llm-d-cluster-serving.html" title="Step 10: llm-d: Many vLLMs as a Team">10</a><a class="sn-chip" href="llm-step11-alternatives-whole-picture.html" title="Step 11: SGLang, Ray Serve & the Whole Picture">11</a></div><a class="sn-navbtn" href="llm-step9-pagedattention-vllm.html">next ›</a></div>
+  <div class="sn-caption">Step <b>8</b> of 11 &middot; <b>The Memory Wall</b> &middot; LLM from scratch</div>
 </nav>
 
 <header>
-  <div class="kicker">Intuition-first LLMs · Step 8 of 9 — Serving</div>
+  <div class="kicker">Intuition-first LLMs · Step 8 of 11 — Serving</div>
   <h1>The Memory Wall: why inference is memory-bound</h1>
   <p class="lede">Step 7 showed the KV cache is essential. This step is the reality check: <b>how big</b> does it
     actually get, and <b>where</b> does it live? GPU memory is a strict hierarchy, and the KV cache eats it
@@ -162,6 +162,14 @@
     token) and the <b>KV cache</b> (read in full, every token, for every request in flight). To see why the
     KV cache is the villain, we need to look at where memory physically lives — and how much of it the cache
     demands.</p>
+  <div class="card">
+    <h3>From our five-token sentence to a real server</h3>
+    <p class="small" style="margin-top:0">Step 7 priced the Keys and Values of <b>"The king sat on the"</b> at 128 KiB per token for Llama-3 8B.
+      Scale the same arithmetic up and see where the memory goes on one 80 GB GPU (the model's own weights take ~16 GB, and about 4 GB more goes to activations and framework overhead, as Step 9 shows):</p>
+    <div style="overflow-x:auto"><table id="ladder" style="border-collapse:collapse;font-size:13px;width:100%"></table></div>
+    <p class="small" id="ladder-read" style="margin-top:10px;margin-bottom:0"></p>
+  </div>
+
   <div class="note"><b>The one-line version:</b> a serving GPU rarely runs out of <i>compute</i>. It runs out
     of <i>memory</i> — and memory <i>bandwidth</i>. Every optimization in this step and the next is really a
     fight over those two.</div>
@@ -191,6 +199,7 @@
 <section>
   <div class="eyebrow"><span class="idx">03</span><span class="lbl">The Numbers</span></div>
   <h2>How big is the KV cache, really?</h2>
+  <p class="small">Step 7 sized it for a few presets; here the same formula is applied at scale, with the hardware limits from the pyramid above in mind.</p>
   <p>Every token you keep in context stores a Key and a Value <b>in every layer, for every KV head</b>. Multiply
     it out and the cache dwarfs the model itself at long context. Pick a model and a context length — the
     calculator plugs your choices into the formula live.</p>
@@ -257,7 +266,7 @@
     <p class="small" style="margin:0">Even with FlashAttention, the cache still has to <i>fit</i>. Store each
       request's cache as one contiguous block and you waste <b>60–80%</b> of it to fragmentation and
       over-reservation. <b>PagedAttention</b> — the idea behind <b>vLLM</b> — borrows virtual memory from
-      operating systems: chop the cache into small fixed pages and hand them out on demand. That's Step 9.</p>
+      operating systems: chop the cache into small fixed pages and hand them out on demand. That's Step 9 — we need its "request" and block-table vocabulary first, so here is just the headline.</p>
   </div>
 </section>
 
@@ -278,7 +287,7 @@
     <div class="opt-row"><span class="opt-tag">Speculative</span><div class="txt"><b>Speculative decoding.</b>
       A small "draft" model proposes several tokens at once; the big model verifies them in a single pass.
       More tokens per expensive memory read — attacking the bandwidth bound from another angle.</div></div>
-    <div class="opt-row"><span class="opt-tag">Prefix cache</span><div class="txt"><b>Prefix / prompt caching.</b>
+    <div class="opt-row"><span class="opt-tag">Prefix cache</span><div class="txt"><b>Prefix / prompt caching</b> (Step 9 shows how it works with blocks).
       Many requests share a long system prompt. Compute its KV once and reuse it across requests instead of
       re-prefilling every time.</div></div>
   </div>
@@ -298,7 +307,7 @@
 </div>
 
 <footer style="margin-top:44px;padding-top:16px;border-top:1px solid var(--line);font-size:12px;line-height:1.55;color:var(--faint);font-style:italic">
-  ✦ This 9-part series was co-written with Claude (Anthropic). It favours intuition over rigour and may contain bugs or simplifications — corrections and feedback are very welcome.
+  ✦ This 11-part series was co-written with Claude (Anthropic). It favours intuition over rigour and may contain bugs or simplifications — corrections and feedback are very welcome.
 </footer>
 
 </div>
@@ -429,12 +438,24 @@ function renderFA(mode){
       </div>
       <div class="fa-narr"><b>The fix:</b> never build the full matrix. Walk over K/V in small blocks that fit in
         SRAM, keep a running softmax as you go, and accumulate the output tile by tile. The N×N matrix
-        <b>never touches HBM</b> — memory traffic drops from <b>O(N²) to O(N)</b>, and the result is
-        <i>bit-for-bit the same</i> as naive attention.</div>`;
+        <b>never touches HBM</b> — the extra memory drops from <b>O(N²) to O(N)</b>, and far less data moves between HBM and the chip. The result is <i>exact</i>, the same maths as naive attention (only computed in tiles, so the last decimal places can differ).</div>`;
   }
 }
 document.querySelectorAll('#fa-toggle button').forEach(b=>b.addEventListener('click',()=>renderFA(b.dataset.fa)));
 renderFA('naive');
+
+/* ---- from the running sentence to a loaded GPU ---- */
+(function(){
+  const kib=128, freeGB=60, free=freeGB*1e9/2**30; // 80 GB GPU minus ~16 GB weights minus ~4 GB overhead (as in Step 9) = 60 decimal GB = ~55.9 GiB
+  const rows=[['“The king sat on the” (our sentence)',5],['a short chat',1000],['a long document',8192],['a book-length context',131072]];
+  const fmt=b=>b>=2**30?(b/2**30).toFixed(1)+' GiB':b>=2**20?(b/2**20).toFixed(0)+' MiB':(b/2**10).toFixed(0)+' KiB';
+  const th=s=>`<th style="padding:6px 10px;text-align:left;font-size:11px;font-weight:600;color:var(--faint);border-bottom:1px solid var(--line)">${s}</th>`;
+  const td=s=>`<td style="padding:6px 10px;border-bottom:1px solid var(--line);font-family:var(--mono)">${s}</td>`;
+  let h=`<thead><tr>${th('one request')}${th('tokens')}${th('KV cache')}${th('how many fit in ~'+free.toFixed(0)+' GiB (60 GB)')}</tr></thead><tbody>`;
+  rows.forEach(([n,tk])=>{ const b=tk*kib*1024, fit=Math.floor(free*2**30/b); h+=`<tr>${td(n)}${td(tk.toLocaleString())}${td('<b>'+fmt(b)+'</b>')}${td(fit.toLocaleString())}</tr>`; });
+  document.getElementById('ladder').innerHTML=h+'</tbody>';
+  document.getElementById('ladder-read').innerHTML=`Five tokens cost almost nothing, which is why a toy example hides the problem. But memory scales with <b>tokens × requests</b>: only a few book-length contexts (or a few dozen long documents) fill the GPU, and every generated token has to read that whole cache again (the bandwidth problem). The weights are fixed in size; the cache is the part that grows with traffic. The rest of this step names the two tools that fight it.`;
+})();
 </script>
 </body>
 </html>

@@ -115,6 +115,10 @@
     background:var(--tok-soft);border:1px solid var(--tok-line);border-radius:8px;
     padding:5px 9px 4px;font-size:13px;color:#0a5b63;line-height:1.1}
   .chip .id{font-size:9.5px;color:var(--tok);opacity:.8}
+  .chip.unk{border-color:#C2255C;color:#C2255C}
+  .chip.cont{margin-left:-6px;border-left-style:dashed;border-top-left-radius:3px;border-bottom-left-radius:3px}
+  [data-theme="dark"] .chip{color:var(--ink)}
+  [data-theme="dark"] .chip.unk{border-color:#ff8fb1;color:#ff8fb1}
   .chip .sp{color:var(--tok-line)}
   .count{font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:12px}
   .count b{color:var(--tok);font-weight:600}
@@ -172,6 +176,7 @@
     border-radius:0 10px 10px 0;padding:12px 16px;margin-top:16px;font-size:14px;color:#37306b}
   .note.tok{border-left-color:var(--tok-line);background:var(--tok-soft);color:#0a5158}
   .note b{font-weight:600}
+  [data-theme="dark"] .note,[data-theme="dark"] .note.tok{color:var(--ink)}
   details{margin-top:12px}
   summary{cursor:pointer;font-family:var(--mono);font-size:12px;color:var(--vec);font-weight:600}
   summary::marker{color:var(--vec-line)}
@@ -189,13 +194,13 @@
     .chip,.dot-c{transition:all .15s ease}
   }
 
-  /* ---- injected series navigator (consistent across all 9 steps) ---- */
+  /* ---- injected series navigator (consistent across all 11 steps) ---- */
   .series-nav{display:flex;flex-direction:column;align-items:center;gap:7px;padding:10px 0 14px;margin-bottom:4px}
   .sn-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center}
   .sn-chips{display:flex;gap:5px}
   .sn-chip{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:13px;font-weight:600;text-decoration:none;color:var(--muted);background:var(--bg);border:1px solid var(--line-strong);transition:all .12s}
   .sn-chip:hover{border-color:var(--ink);color:var(--ink)}
-  .sn-chip.current{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .sn-chip.current{background:var(--ink);color:var(--bg);border-color:var(--ink)}
   .sn-navbtn{font-family:var(--mono);font-size:12px;color:var(--muted);text-decoration:none;padding:6px 11px;border:1px solid var(--line-strong);border-radius:8px;white-space:nowrap;transition:all .12s}
   .sn-navbtn:hover{border-color:var(--ink);color:var(--ink)}
   .sn-navbtn.disabled{opacity:.28;pointer-events:none}
@@ -235,21 +240,22 @@
 
   
 <nav class="series-nav" aria-label="Series navigation">
-  <div class="sn-bar"><span class="sn-navbtn disabled">‹ prev</span><div class="sn-chips"><span class="sn-chip current" title="Tokens & Embeddings">1</span><a class="sn-chip" href="llm-step2-position-and-prediction.html" title="Step 2: Position & Prediction">2</a><a class="sn-chip" href="llm-step3-self-attention.html" title="Step 3: Self-Attention">3</a><a class="sn-chip" href="llm-step4-transformer-block.html" title="Step 4: Transformer Block">4</a><a class="sn-chip" href="llm-step5-training.html" title="Step 5: Training">5</a><a class="sn-chip" href="llm-step6-generation.html" title="Step 6: Generation">6</a><a class="sn-chip" href="llm-step7-kv-cache.html" title="Step 7: KV Cache">7</a><a class="sn-chip" href="llm-step8-memory-wall.html" title="Step 8: The Memory Wall">8</a><a class="sn-chip" href="llm-step9-pagedattention-vllm.html" title="Step 9: PagedAttention & vLLM">9</a></div><a class="sn-navbtn" href="llm-step2-position-and-prediction.html">next ›</a></div>
-  <div class="sn-caption">Step <b>1</b> of 9 &middot; <b>Tokens & Embeddings</b> &middot; LLM from scratch</div>
+  <div class="sn-bar"><span class="sn-navbtn disabled">‹ prev</span><div class="sn-chips"><span class="sn-chip current" title="Tokens & Embeddings">1</span><a class="sn-chip" href="llm-step2-position-and-prediction.html" title="Step 2: Position & Prediction">2</a><a class="sn-chip" href="llm-step3-self-attention.html" title="Step 3: Self-Attention">3</a><a class="sn-chip" href="llm-step4-transformer-block.html" title="Step 4: Transformer Block">4</a><a class="sn-chip" href="llm-step5-training.html" title="Step 5: Training">5</a><a class="sn-chip" href="llm-step6-generation.html" title="Step 6: Generation">6</a><a class="sn-chip" href="llm-step7-kv-cache.html" title="Step 7: KV Cache">7</a><a class="sn-chip" href="llm-step8-memory-wall.html" title="Step 8: The Memory Wall">8</a><a class="sn-chip" href="llm-step9-pagedattention-vllm.html" title="Step 9: PagedAttention & vLLM">9</a><a class="sn-chip" href="llm-step10-llm-d-cluster-serving.html" title="Step 10: llm-d: Many vLLMs as a Team">10</a><a class="sn-chip" href="llm-step11-alternatives-whole-picture.html" title="Step 11: SGLang, Ray Serve & the Whole Picture">11</a></div><a class="sn-navbtn" href="llm-step2-position-and-prediction.html">next ›</a></div>
+  <div class="sn-caption">Step <b>1</b> of 11 &middot; <b>Tokens & Embeddings</b> &middot; LLM from scratch</div>
 </nav>
 
 <header>
-    <div class="kicker">Intuition-first LLMs · Step 1 of 9</div>
+    <div class="kicker">Intuition-first LLMs · Step 1 of 11</div>
     <h1>How text becomes numbers</h1>
     <p class="lede">Before a language model can predict anything, it has to turn your words
       into vectors of numbers. This page is the first link in that chain — tokenization and
-      embeddings — and everything is live: type, toggle, and watch the pipeline react.</p>
+      embeddings. Throughout this series we follow one sentence, <b>"The king sat on the ___"</b>
+      (the model's job: guess <i>throne</i>), and everything is live: type, toggle, and watch the pipeline react.</p>
     <div class="pipe" aria-hidden="true">
-      <div class="step tok"><div class="n">raw</div><div class="t">Text</div><div class="d">"the king"</div><div class="a">↓ tokenize</div></div>
-      <div class="step tok"><div class="n">01</div><div class="t">Tokens</div><div class="d">the · king</div><div class="a">↓ look up</div></div>
-      <div class="step tok"><div class="n">02</div><div class="t">IDs</div><div class="d">4 · 11</div><div class="a">↓ embed</div></div>
-      <div class="step vec"><div class="n">03</div><div class="t">Vectors</div><div class="d" style="font-size:10px;line-height:1.5">the·[0.0, 0.0,…]<br>king·[0.9, 0.9,…]</div><div class="a">→ the model</div></div>
+      <div class="step tok"><div class="n">raw</div><div class="t">Text</div><div class="d">"The king"</div><div class="a">↓ tokenize</div></div>
+      <div class="step tok"><div class="n">01</div><div class="t">Tokens</div><div class="d">The · king</div><div class="a">↓ look up</div></div>
+      <div class="step tok"><div class="n">02</div><div class="t">IDs</div><div class="d">0 · 1</div><div class="a">↓ embed</div></div>
+      <div class="step vec"><div class="n">03</div><div class="t">Vectors</div><div class="d" style="font-size:10px;line-height:1.5">The·[0.0, 0.0,…]<br>king·[0.9, 0.9,…]</div><div class="a">→ the model</div></div>
     </div>
   </header>
 
@@ -263,7 +269,7 @@
 
     <div class="card">
       <label class="fld" for="txt">Your text</label>
-      <textarea id="txt" spellcheck="false">The king and the queen walked.</textarea>
+      <textarea id="txt" spellcheck="false">The king sat on the</textarea>
 
       <div class="row" style="margin-top:14px">
         <div style="flex:0 0 auto;min-width:auto">
@@ -275,28 +281,43 @@
           </div>
         </div>
         <div id="bpeCtl">
-          <label class="fld" for="merges">BPE merges learned: <span id="mval" style="color:var(--tok)">30</span></label>
-          <input id="merges" type="range" min="0" max="80" value="30" style="width:100%">
+          <label class="fld" for="merges">BPE merges learned: <span id="mval" style="color:var(--tok)">48</span></label>
+          <input id="merges" type="range" min="0" max="48" value="48" style="width:100%" aria-label="Number of BPE merges applied">
         </div>
       </div>
 
       <div class="chips" id="chips" aria-live="polite"></div>
       <div class="count" id="count"></div>
+      <p class="small" id="tokNote" style="margin:8px 0 0" aria-live="polite"></p>
+      <p class="small" style="margin:8px 0 0">Try a sentence:
+        <button type="button" class="pill" data-try="The king sat on the" style="cursor:pointer">our prompt</button>
+        <button type="button" class="pill" data-try="The kingdoms sat on the thrones." style="cursor:pointer">kingdoms, thrones</button></p>
 
       <details id="bpeDet">
-        <summary>Show the merge rules being learned ▾</summary>
-        <p class="small" style="margin:.4em 0">BPE starts with single characters, then repeatedly fuses the
-          most frequent adjacent pair into a new token. Each line below is one learned merge, in order. These
-          exact rules are then applied to your text above. <code>·</code> marks a word boundary.</p>
+        <summary>Show the merge rules (learned from the built-in corpus) ▾</summary>
+        <p class="small" style="margin:.4em 0">BPE starts with single letters, then repeatedly fuses the
+          most frequent adjacent pair in its training text into a new token. Each line below is one learned merge, in order. The
+          first N of these rules (the slider) are applied to your text above. This toy works on letters and keeps upper and lower case,
+          so <code>▁The</code> and <code>▁the</code> are different tokens. A real tokenizer works on bytes and trains on terabytes of text; with a corpus this
+          small a few merges look odd (for example <code>▁que+e</code>).</p>
         <div class="merges" id="merges-list"></div>
       </details>
     </div>
 
     <div class="note tok"><b>Why subword wins.</b> Characters give a tiny vocabulary but very long sequences.
       Words give short sequences but a huge, brittle vocabulary that breaks on anything unseen
-      (<code>Kingdoms</code> → unknown). BPE is the compromise real models use: common chunks like
-      <code>king</code> become single tokens, while rare words fall back to smaller pieces — so nothing is ever
-      truly out-of-vocabulary.</div>
+      (<code>Kingdoms</code> → <code>&lt;unk&gt;</code>). Subword tokenization is the compromise every modern model uses: common words like
+      <code>▁king</code> stay whole, and a rarer word is built from pieces that already exist, such as <code>▁kingdom</code> + <code>s</code>.
+      Real BPE works on bytes, so no text is ever out-of-vocabulary; this toy handles only the letters A–Z.</div>
+
+    <div class="card" id="realtok">
+      <h3>What a real tokenizer does (GPT-4's, <code>cl100k_base</code>)</h3>
+      <p class="small" style="margin-top:0">The same idea at full scale: a vocabulary of about 100,000 pieces learned from huge amounts of text. These are real outputs from OpenAI's
+        <code>tiktoken</code> library. <b>␣</b> marks a space that is <i>part of the token</i>, so <code>The</code> (no space) and <code>␣the</code> (with a space) are different tokens, which is why Step 3
+        gives our two "the"s separate rows. Common words are one token; rarer ones split into chunks:</p>
+      <div style="overflow-x:auto"><table id="realtok-table" style="border-collapse:collapse;width:100%;font-size:13px"></table></div>
+      <p class="small" style="margin:10px 0 0">Our running prompt needs no splitting at all: every word is common enough to be a single token, and so is the answer, <code>␣throne</code>. Subwords matter for everything else, which is most of the text a model sees.</p>
+    </div>
   </section>
 
   <!-- ============ SECTION 2 — IDS ============ -->
@@ -305,7 +326,7 @@
     <h2>Every token gets a number</h2>
     <p>Neural networks only do math on numbers, so each unique token is assigned an integer <b>ID</b> —
       just its row number in the vocabulary. There's no meaning in the number itself yet; <code>king</code>
-      being ID 11 instead of 9 changes nothing. It's a name tag. Here's the vocabulary built from your tokens above:</p>
+      being ID 1 instead of 9 changes nothing. It's a name tag. Here's the vocabulary built from your tokens above. (A real model fixes its vocabulary in advance, so every ID is permanent. We build it from your text to keep the table short. <code>&lt;unk&gt;</code> is the one entry that every unseen word shares.)</p>
 
     <!-- array transition visual -->
     <div class="card">
@@ -356,6 +377,15 @@
       During training these vectors arrange themselves so that words used in similar ways end up close together.
       Below, instead of random training, I've <b>hand-labelled 7 dimensions</b> so you can read them directly —
       a real model has hundreds of dimensions and nobody hand-labels them, but the principle is identical.</p>
+
+    <div class="card">
+      <h3>Why not just feed the model the ID?</h3>
+      <p class="small" style="margin-top:0">Fair question — an ID is already a number. But an ID is only a row number, so
+        "close" IDs mean nothing. Compare, for some word pairs from the vocabulary below, how far apart their <b>IDs</b> are
+        with how similar their <b>embeddings</b> are (cosine similarity: 1 = same direction, 0 = unrelated, negative = opposite):</p>
+      <div style="overflow-x:auto"><table id="idvs" style="border-collapse:collapse;font-size:13px;width:100%"></table></div>
+      <p class="small" id="idvs-read" style="margin-top:10px;margin-bottom:0"></p>
+    </div>
 
     <div class="card">
       <h3>What is a vector? What is a dimension?</h3>
@@ -493,7 +523,7 @@
   </div>
 
 <footer style="margin-top:44px;padding-top:16px;border-top:1px solid var(--line);font-size:12px;line-height:1.55;color:var(--faint);font-style:italic">
-  ✦ This 9-part series was co-written with Claude (Anthropic). It favours intuition over rigour and may contain bugs or simplifications — corrections and feedback are very welcome.
+  ✦ This 11-part series was co-written with Claude (Anthropic). It favours intuition over rigour and may contain bugs or simplifications — corrections and feedback are very welcome.
 </footer>
 
 </div>
@@ -523,25 +553,24 @@ function tokenizeWords(text){
 }
 
 /* --- Byte Pair Encoding (BPE) ---------------------------------
-   This is the real algorithm (simplified to characters, not bytes):
-   1. Split the corpus into words; each word is a list of chars + an
-      end-of-word marker so the model can tell "in" (inside) from "in" (word).
+   The real algorithm, simplified to letters instead of bytes:
+   1. Split the training text into words. Each word is a list of letters, and its FIRST letter carries a
+      "▁" (a space came before this word), the convention used by Llama and SentencePiece. GPT writes it
+      as a leading space ("␣king"). Pieces with no ▁ continue the previous piece.
    2. Count every adjacent symbol PAIR across all words.
    3. Merge the most frequent pair into one new symbol. Record the rule.
-   4. Repeat for N merges. The ordered list of merges *is* the tokenizer.
+   4. Repeat. The ordered list of merges IS the tokenizer.
 --------------------------------------------------------------- */
-const EOW = '</w>';                       // end-of-word marker
+const SP = '▁';                           // "a space came before this word"
+const startSyms = w => [...w].map((c,i)=> i===0 ? SP+c : c);
 
 function bpeTrain(corpus, numMerges){
-  // word -> frequency
+  // word -> frequency (case is kept, so "The" and "the" are different words)
   const freq = {};
-  (corpus.toLowerCase().match(/[a-z]+/g) || []).forEach(w=>{
+  (corpus.match(/[A-Za-z]+/g) || []).forEach(w=>{
     freq[w] = (freq[w]||0)+1;
   });
-  // represent each word as an array of symbols (chars + EOW)
-  let words = Object.entries(freq).map(([w,f]) => ({
-    syms: [...w, EOW], f
-  }));
+  let words = Object.entries(freq).map(([w,f]) => ({ syms: startSyms(w), f }));
 
   const merges = [];
   for(let i=0;i<numMerges;i++){
@@ -575,7 +604,7 @@ function bpeTrain(corpus, numMerges){
 
 // apply learned merges to one word
 function bpeApply(word, merges){
-  let syms = [...word.toLowerCase(), EOW];
+  let syms = startSyms(word);
   for(const [a,b] of merges){
     const out=[];
     for(let j=0;j<syms.length;j++){
@@ -584,19 +613,30 @@ function bpeApply(word, merges){
     }
     syms = out;
   }
-  // strip the EOW marker for display, mark word end with ·
-  return syms.map(s => s.endsWith(EOW) ? s.slice(0,-EOW.length)+'·' : s)
-             .filter(s => s!=='·' || syms.length===1);
+  return syms;
 }
+
+/* A real tokenizer is trained ONCE on a huge corpus, then frozen. We do the same with a tiny built-in corpus
+   (about 125 words), so the merge rules do not depend on what you type. */
+const BPE_CORPUS=`the king sat on the throne . the queen sat on the chair . the king and the queen sat in the castle .
+the king ruled the kingdom . the queen ruled the kingdom . kings and queens rule the kingdom and the castles .
+the king sat on the throne in the castle . the throne is in the castle . the queen sat on the throne .
+a king sat on a throne . a queen sat on a chair . the dog sat on the mat . the cat sat on the mat .
+the king saw the queen . the queen saw the king . the dog saw the cat . the cat sat on the chair .
+the king is kind . the queen is kind . the kingdom is large . the castle is large . the throne is old .`;
+// sentence starts are capitalised, so the corpus contains both "The" and "the" (separate words, as in real tokenizers)
+const WORD_CORPUS=BPE_CORPUS.replace(/(^|\.\s+)([a-z])/g,(m,a,b)=>a+b.toUpperCase());
+const BPE_MERGES_ALL=bpeTrain(WORD_CORPUS,500);
+// a word-level tokenizer has a FIXED, case-sensitive vocabulary: the words of the built-in corpus. Anything else is <unk>.
+const WORD_COUNT=new Set(WORD_CORPUS.match(/[A-Za-z]+/g)).size;
+const WORD_VOCAB=new Set([...(WORD_CORPUS.match(/[A-Za-z]+|\./g)||[]),',','!','?']);
 
 function tokenizeBPE(text, merges){
   const out=[];
-  // split into words / punctuation / whitespace, keep order
-  const parts = text.match(/[A-Za-z]+|[^A-Za-z\s]|\s+/g) || [];
-  for(const p of parts){
+  // words get merged; punctuation is passed through; whitespace is dropped (the ▁ marker already records it)
+  for(const p of (text.match(/[A-Za-z]+|[^A-Za-z\s]/g) || [])){
     if(/^[A-Za-z]+$/.test(p)) out.push(...bpeApply(p, merges));
-    else if(/^\s+$/.test(p)) { /* drop pure whitespace; · already marks ends */ }
-    else out.push(p);                      // punctuation as-is
+    else out.push(p);
   }
   return out;
 }
@@ -615,9 +655,9 @@ const els = {
 function currentTokens(){
   const t = els.txt.value;
   if(mode==='char') return tokenizeChars(t);
-  if(mode==='word') return tokenizeWords(t).filter(x=>!/^\s+$/.test(x)); // hide whitespace tokens
-  // bpe — train on the user's text itself (a real tokenizer trains on a big corpus once)
-  const merges = bpeTrain(t, +els.merges.value);
+  if(mode==='word') return tokenizeWords(t).filter(x=>!/^\s+$/.test(x)).map(x=>WORD_VOCAB.has(x)?x:'<unk>'); // hide whitespace; anything outside the fixed vocabulary -> <unk>
+  // bpe — apply the first N rules learned from the built-in corpus (not from the user's text)
+  const merges = BPE_MERGES_ALL.slice(0, +els.merges.value);
   renderMerges(merges);
   return tokenizeBPE(t, merges);
 }
@@ -625,7 +665,7 @@ function currentTokens(){
 function renderMerges(merges){
   if(!merges.length){ els.mergesList.innerHTML='<span class="small">No merges yet — every token is a single character. Drag the slider up.</span>'; return; }
   els.mergesList.innerHTML = merges.map(([a,b],i)=>{
-    const show = s => esc(s.replace(EOW,'·'));
+    const show = s => esc(s);
     return `<div class="m">${String(i+1).padStart(2,'0')}. <b>${show(a)}</b> + <b>${show(b)}</b> <span class="ar">→</span> <b>${show(a+b)}</b></div>`;
   }).join('');
 }
@@ -635,21 +675,24 @@ function render(){
 
   // chips with their (position-based vocab) id
   const vocab = buildVocab(toks);
-  els.chips.innerHTML = toks.map(t=>{
+  els.chips.innerHTML = toks.map((t,i)=>{
     const id = vocab.index.get(t);
-    return `<span class="chip">${vis(esc(t))||'·'}<span class="id">#${id}</span></span>`;
+    return `<span class="chip${t==='<unk>'?' unk':''}${(mode==='bpe'&&i>0&&/^[A-Za-z]/.test(t))?' cont':''}"${t==='<unk>'?' title="unknown word: not in the vocabulary"':''}>${vis(esc(t))||'·'}<span class="id">#${id}</span></span>`;
   }).join('') || '<span class="small">type something…</span>';
 
   els.count.innerHTML = `<b>${toks.length}</b> tokens · <b>${vocab.list.length}</b> unique`;
 
   // bpe controls visibility
   els.bpeCtl.style.display = mode==='bpe' ? '' : 'none';
+  $('#tokNote').innerHTML = mode==='char' ? 'Characters: a tiny vocabulary, but every sentence becomes a long sequence.'
+    : mode==='word' ? 'Words: short sequences, but a fixed, case-sensitive vocabulary (here the '+WORD_COUNT+' words of a small built-in corpus, plus . , ! ?). Any word or symbol outside it becomes <code>&lt;unk&gt;</code> and its meaning is lost. Try "kingdoms, thrones".'
+    : 'Subword (BPE): <b>▁</b> means "a space came before this piece", so a piece without ▁ continues the one before it (dashed edge). The merge rules were learned once from a small built-in corpus, not from your text. Common words end up as one token; a word it never saw is built from smaller pieces. Drag the slider to the left to see the tokenizer before it had learned much.';
   els.bpeDet.style.display = mode==='bpe' ? '' : 'none';
 
   // vocab table
   els.vocabSize.textContent = `· ${vocab.list.length} entries`;
   els.vocabBody.innerHTML = vocab.list.map((t,i)=>
-    `<tr><td class="id">${i}</td><td>${vis(esc(t))||'·'}</td><td>${vocab.counts.get(t)}×</td></tr>`
+    `<tr><td class="id">${i}</td><td>${vis(esc(t))||'·'}${t==='<unk>'?' <span class="small" style="color:var(--faint)">(every unseen word)</span>':''}</td><td>${vocab.counts.get(t)}×</td></tr>`
   ).join('');
 
   // id sequence
@@ -704,7 +747,13 @@ function render(){
     // one data row per token
     const vecLines = display.map(t => {
       const raw = t.replace(/[·]/g,'').replace(/[^a-zA-Z]/g,'').toLowerCase();
-      const v = EMB[raw] || Array(7).fill(0.0);
+      const v = EMB[raw];
+      if(!v){
+        return `<div class="arr-vec-row"><span class="arr-bracket" style="vertical-align:middle">[</span>`
+          + `<span style="color:var(--faint);font-size:11px;font-style:italic;display:inline-block;width:${COL_W*7}px;text-align:center;vertical-align:middle">${t==='<unk>'?'one shared vector for every unseen word':'no vector in this hand-made table'}</span>`
+          + `<span class="arr-bracket" style="vertical-align:middle">]</span>`
+          + `<span style="color:var(--faint);font-size:11px;margin-left:8px;vertical-align:middle">← "${esc(t)}"</span></div>`;
+      }
       const cells = v.map((x, i) => {
         const col = x > 0.5 ? '#4F46E5' : x < -0.5 ? '#C2255C' : '#8B94A3';
         const fw = Math.abs(x) > 0.5 ? '600' : '400';
@@ -750,6 +799,8 @@ $('#seg').addEventListener('click', e=>{
   render();
 });
 els.txt.addEventListener('input', render);
+els.merges.max=BPE_MERGES_ALL.length; els.merges.value=BPE_MERGES_ALL.length; els.mval.textContent=els.merges.value;
+document.querySelectorAll('[data-try]').forEach(b=>b.addEventListener('click',()=>{ els.txt.value=b.dataset.try; render(); }));
 els.merges.addEventListener('input', ()=>{ els.mval.textContent=els.merges.value; render(); });
 
 /* ============================================================
@@ -758,6 +809,10 @@ els.merges.addEventListener('input', ()=>{ els.mval.textContent=els.merges.value
 const DIMS = ['living','human','gender','royalty','size','action','abstract'];
 // values in [-1, 1]. gender: +male / -female. living: +alive / -object.
 const EMB = {
+  the:     [  0,  0,   0,  0,  0,  0, .6],
+  sat:     [  0,  0,   0,  0,  0, .5, .2],
+  on:      [  0,  0,   0,  0,  0,  0, .3],
+  throne:  [-.3,  0,   0, .9, .5,  0,  0],
   king:    [ .9, .9,  .9, .9, .6,  0, .1],
   queen:   [ .9, .9, -.9, .9, .5,  0, .1],
   man:     [ .9, .9,  .9,  0, .5,  0, .1],
@@ -899,6 +954,33 @@ $('#ay').addEventListener('change',renderMap);
 /* ---------- first paint ---------- */
 render();
 renderBars(); renderSim(); renderMap(); renderAnalogy();
+
+/* ---- IDs vs embeddings on the running sentence's words ---- */
+(function(){
+  const sorted=[...WORDS].sort(), id=w=>sorted.indexOf(w);
+  const pairs=[['king','queen'],['king','throne'],['sat','on'],['king','kitten'],['king','rock']];
+  const th=s=>`<th style="padding:6px 10px;text-align:left;font-size:11px;font-weight:600;color:var(--faint);border-bottom:1px solid var(--line)">${s}</th>`;
+  const td=s=>`<td style="padding:6px 10px;border-bottom:1px solid var(--line)">${s}</td>`;
+  let h=`<thead><tr>${th('pair')}${th('IDs')}${th('|ID difference|')}${th('embedding similarity')}</tr></thead><tbody>`;
+  pairs.forEach(([a,b])=>{ h+=`<tr>${td(`<b>${a}</b> – <b>${b}</b>`)}${td(`<span style="font-family:var(--mono)">${id(a)} · ${id(b)}</span>`)}${td(`<span style="font-family:var(--mono)">${Math.abs(id(a)-id(b))}</span>`)}${td(`<span style="font-family:var(--mono)">${cosine(EMB[a],EMB[b]).toFixed(2)}</span>`)}</tr>`; });
+  document.getElementById('idvs').innerHTML=h+'</tbody>';
+  document.getElementById('idvs-read').innerHTML=`(IDs here are alphabetical positions in this page's word list.) The ID difference follows the alphabet, not the meaning: <b>king</b> and <b>kitten</b> sit ${Math.abs(id('king')-id('kitten'))} apart in ID yet have similarity ${cosine(EMB.king,EMB.kitten).toFixed(2)}, while <b>king</b> and <b>queen</b> are ${Math.abs(id('king')-id('queen'))} apart in ID yet have similarity ${cosine(EMB.king,EMB.queen).toFixed(2)}, and a network that did arithmetic on IDs would wrongly believe words with nearby IDs are related. The embedding similarity does capture it. That is the whole job of the embedding table: replace an arbitrary label with a vector whose <i>geometry</i> carries meaning. Next step adds <i>position</i>.`;
+})();
+
+/* ---- real GPT-4 tokenizer output (cl100k_base via tiktoken; generated offline, so it is static) ---- */
+(function(){
+  const REAL=[{"text": "The king sat on the", "ids": [791, 11734, 7731, 389, 279], "toks": ["The", " king", " sat", " on", " the"]}, {"text": "The king sat on the throne.", "ids": [791, 11734, 7731, 389, 279, 44721, 13], "toks": ["The", " king", " sat", " on", " the", " throne", "."]}, {"text": "The king sat on the thrones.", "ids": [791, 11734, 7731, 389, 279, 270, 32921, 13], "toks": ["The", " king", " sat", " on", " the", " th", "rones", "."]}, {"text": "Tokenization of unbelievably rare words", "ids": [3404, 2065, 315, 40037, 89234, 9024, 4339], "toks": ["Token", "ization", " of", " unbelie", "vably", " rare", " words"]}];
+  const chip=(t,cont)=>`<span style="display:inline-block;margin:1px ${cont?0:3}px 1px ${cont?-1:0}px;padding:1px 6px;border:1px ${cont?'dashed':'solid'} var(--tok-line);border-radius:${cont?'2px 6px 6px 2px':'6px'};font-family:var(--mono);font-size:12px;background:var(--tok-soft);color:var(--ink)">${esc(t.replace(/^ /,'␣'))}</span>`;
+  const th=x=>`<th style="padding:6px 10px;text-align:left;font-size:11px;font-weight:600;color:var(--faint);border-bottom:1px solid var(--line)">${x}</th>`;
+  const td=x=>`<td style="padding:6px 10px;border-bottom:1px solid var(--line);vertical-align:top">${x}</td>`;
+  // a piece with no leading space (and that is a letter) continues the previous piece: keep each word's pieces together
+  const groups=toks=>{ const g=[]; toks.forEach((t,i)=>{ if(i>0&&!t.startsWith(' ')&&/^[A-Za-z]/.test(t)) g[g.length-1].push(t); else g.push([t]); }); return g; };
+  const rows=REAL.map(r=>{
+    return `<tr>${td('<i>'+esc(r.text)+'</i>')}${td('<b>'+r.toks.length+'</b>')}${td(groups(r.toks).map(g=>`<span style="white-space:nowrap">${g.map((t,i)=>chip(t,i>0)).join('')}</span>`).join(' '))}${td('<span style="font-family:var(--mono);font-size:11px;color:var(--faint)">['+r.ids.join(', ')+']</span>')}</tr>`;
+  }).join('');
+  const el=document.getElementById('realtok-table');
+  if(el) el.innerHTML=`<thead><tr>${th('text')}${th('tokens')}${th('pieces')}${th('token IDs')}</tr></thead><tbody>${rows}</tbody>`;
+})();
 </script>
 </body>
 </html>
