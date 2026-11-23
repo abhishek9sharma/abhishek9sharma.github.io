@@ -240,10 +240,10 @@
 <!-- SGLANG -->
 <section>
   <div class="eyebrow"><span class="idx">01</span><span class="lbl">Another Engine</span></div>
-  <h2>SGLang: the same goal, a different prefix index</h2>
-  <p>SGLang is another open-source LLM engine, a direct alternative to vLLM: it also does continuous batching and prefix caching. The main difference is <b>how it remembers prefixes</b>.
-    vLLM (Step 9) gives every full 16-token block a hash and matches block by block. SGLang keeps a <b>radix tree of token sequences</b> (RadixAttention), with the cached K and V attached to the tree nodes.
-    A new prompt walks down the tree as far as it matches and reuses everything up to that point. Try it on a tree that already holds three earlier prompts:</p>
+  <h2>SGLang: a different engine, a different prefix index</h2>
+  <p>SGLang is another open-source LLM inference engine at the same layer as vLLM: both do batching, KV-cache management and serving. They differ in many ways (scheduling, kernels, model support, structured generation). One notable difference for prefix reuse is <b>how each remembers prefixes</b>.
+    vLLM (Step 9) gives every full block (16 tokens by default) a hash and matches block by block. SGLang keeps a <b>radix tree of token sequences</b> (RadixAttention), with the cached K and V attached to the tree nodes.
+    A new prompt walks down the tree as far as it matches and can reuse the cached entries up to that point (the exact granularity depends on the SGLang version and configuration). Try it on a tree that already holds three earlier prompts:</p>
   <div class="card">
     <div id="tree" style="font-family:var(--mono);font-size:12.5px;line-height:1.9"></div>
     <div style="margin-top:12px;max-width:420px"><label class="fld" for="tr-p" style="display:block;font-size:12px;color:var(--muted)">New prompt</label>
@@ -265,14 +265,13 @@
 <section>
   <div class="eyebrow"><span class="idx">02</span><span class="lbl">Another Way To Run Engines</span></div>
   <h2>Ray Serve: the same job as llm-d, by a different route</h2>
-  <p>Ray is a general framework for distributed Python: a <b>head node</b> schedules and <b>worker nodes</b> do the work. <b>Ray Serve</b> is its serving layer: a model becomes a <i>deployment</i> with <i>replicas</i> that can be autoscaled,
-    and a replica can run vLLM. <b>Ray Serve LLM</b> adds LLM-specific features, including prefill/decode disaggregation and a prefix-aware router. Both cover what Step 10 covered; the route differs:</p>
+  <p>Ray is a general framework for distributed Python: a <b>head node</b> schedules and <b>worker nodes</b> do the work. <b>Ray Serve</b> is its general model-serving layer: a model becomes a <i>deployment</i> with <i>replicas</i> that can be autoscaled. <b>Ray Serve LLM</b> is built on it and adds LLM-specific features: an OpenAI-compatible API, engine backends such as vLLM and SGLang, prefill/decode disaggregation and custom routing, including a prefix-aware router. They overlap with llm-d but sit on different platforms, so they are not interchangeable engines. Checked against the Ray 2.60 docs (November 2026):</p>
   <div class="card">
     <div style="overflow-x:auto"><table style="border-collapse:collapse;font-size:13px;width:100%">
       <thead><tr><th style="padding:6px 10px;text-align:left;font-size:11px;color:var(--faint);border-bottom:1px solid var(--line)"></th><th style="padding:6px 10px;text-align:left;font-size:11px;color:var(--sky);border-bottom:1px solid var(--line)">llm-d</th><th style="padding:6px 10px;text-align:left;font-size:11px;color:var(--amber);border-bottom:1px solid var(--line)">Ray Serve LLM</th></tr></thead>
       <tbody id="cmp"></tbody></table></div>
     <p class="small" style="margin-bottom:0;margin-top:10px"><b>Rule of thumb:</b> a team that already lives on Kubernetes and wants LLM-specific behaviour fits llm-d naturally; a team already using Ray for other workloads, or wanting one framework for many kinds of models, fits Ray Serve.
-      Neither is a drop-in answer, and speed claims on both sides come from their own benchmarks — test on your own traffic. NVIDIA Dynamo is a third project in the same space; this series does not cover it and I have not checked how it compares.</p>
+      Neither is a drop-in answer, and speed claims on both sides come from their own benchmarks — test on your own traffic. Both are serving layers around an engine; the engines (vLLM, SGLang) are a separate choice. NVIDIA Dynamo is a broader inference-serving stack with its own disaggregation design; this series does not cover it and I have not compared it.</p>
   </div>
 </section>
 
@@ -287,7 +286,7 @@
     <div id="mixups" style="display:flex;flex-direction:column;gap:10px;font-size:14px"></div>
   </div>
   <div class="note"><b>Real models differ in size, not in kind.</b> Everything here was built from a 5-token toy. Llama-3.1-8B has 32 layers and 128 KiB of KV cache per token, and a real vocabulary has about 128,000 tokens.
-    Every engine caches K and V; vLLM changed how that memory is organised; llm-d and Ray Serve spread engines over a cluster.</div>
+    Standard attention engines cache K and V (some newer attention designs cache a compressed form); vLLM changed how that memory is organised; llm-d and Ray Serve spread engines over a cluster.</div>
 </section>
 
 <section>
@@ -365,7 +364,7 @@ function renderBT(){
   const th=s=>`<th style="padding:6px 10px;text-align:left;font-size:11px;font-weight:600;color:var(--faint);border-bottom:1px solid var(--line)">${s}</th>`;
   const td=s=>`<td style="padding:6px 10px;border-bottom:1px solid var(--line);font-family:var(--mono)">${s}</td>`;
   $('#bt-table').innerHTML=`<thead><tr>${th('engine')}${th('how it matches')}${th('shared-prefix tokens reused')}${th('shared-prefix tokens still prefilled')}</tr></thead><tbody>`+
-    `<tr>${td('<b style="color:var(--kv)">vLLM</b>')}${td('<span style="font-family:var(--body)">whole 16-token blocks, by hash</span>')}${td(vllm)}${td(n-vllm)}</tr>`+
+    `<tr>${td('<b style="color:var(--kv)">vLLM</b>')}${td('<span style="font-family:var(--body)">whole blocks (16 tokens here), by hash</span>')}${td(vllm)}${td(n-vllm)}</tr>`+
     `<tr>${td('<b style="color:var(--sky)">SGLang</b>')}${td('<span style="font-family:var(--body)">longest matching token path in the tree</span>')}${td(sg)}${td(0)}</tr></tbody>`;
   $('#bt-read').innerHTML=n<16
     ?`With fewer than 16 shared tokens, vLLM's block hashing reuses <b>nothing</b> (a partial block is never shared — Step 9). A token tree can still reuse these ${n} tokens. (Both engines still prefill everything after the shared prefix.)`
@@ -376,8 +375,8 @@ $('#bt-n').addEventListener('input',renderBT); renderBT();
 /* ---------- 2. comparison ---------- */
 const CMP=[
   ['Runs on','Kubernetes directly: pods, services, an endpoint picker','A Ray cluster (head node + workers); can run on Kubernetes through KubeRay'],
-  ['Prefix-aware routing','Index built from real block events reported by each pod','Router keeps its own text prefix tree and estimates what replicas hold'],
-  ['Prefill/decode split','Separate pod pools, KV pulled with NIXL over RDMA','Supported in Ray Serve LLM'],
+  ['Prefix-aware routing','Endpoint Picker scoring; the precise mode uses cache events reported by the pods','A router (PrefixCacheAffinityRouter) keeps a prefix tree and estimates what replicas hold; the API is marked alpha and may change'],
+  ['Prefill/decode split','Separate prefill and decode pools; KV moved with a connector, NIXL by default','Prefill-decode disaggregation supported in Ray Serve LLM'],
   ['Beyond LLMs','LLM-specific','Yes — any Python workload, other models in the same cluster'],
 ];
 $('#cmp').innerHTML=CMP.map(r=>`<tr><td style="padding:6px 10px;border-bottom:1px solid var(--line);font-weight:600">${r[0]}</td><td style="padding:6px 10px;border-bottom:1px solid var(--line)">${r[1]}</td><td style="padding:6px 10px;border-bottom:1px solid var(--line)">${r[2]}</td></tr>`).join('');
@@ -405,8 +404,8 @@ const MIX=[
   ['Why can K and V be cached?','The causal mask means later tokens can never change earlier rows, so earlier K and V are final once computed.'],
   ['Why does every layer output a full matrix?','The next layer needs all rows. Only the last row of the final layer goes to the output layer.'],
   ['Where is the learned knowledge?','Attention moves information between tokens; the feed-forward weights, widely believed to hold much of what was learned, transform each token alone.'],
-  ['Who shares blocks?','Only identical full blocks of a shared prefix are read by several requests — at least 16 identical leading tokens, matched in order.'],
-  ['Did vLLM change what is cached?','No. Every engine caches K and V. vLLM changed how that memory is organised.'],
+  ['Who shares blocks?','Only identical full blocks of a shared prefix are read by several requests — at least one full block of identical leading tokens (16 by default), matched in order.'],
+  ['Did vLLM change what is cached?','No. Standard attention engines cache K and V; vLLM changed how that memory is organised.'],
 ];
 $('#mixups').innerHTML=MIX.map(([q,a])=>`<div><b>${q}</b> ${a}</div>`).join('');
 </script>

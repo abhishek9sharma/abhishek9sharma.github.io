@@ -306,9 +306,9 @@
 
     <div class="note tok"><b>Why subword wins.</b> Characters give a tiny vocabulary but very long sequences.
       Words give short sequences but a huge, brittle vocabulary that breaks on anything unseen
-      (<code>Kingdoms</code> → <code>&lt;unk&gt;</code>). Subword tokenization is the compromise every modern model uses: common words like
+      (<code>Kingdoms</code> → <code>&lt;unk&gt;</code>). Most current LLMs use a subword-style tokenizer (the details vary by model): common words like
       <code>▁king</code> stay whole, and a rarer word is built from pieces that already exist, such as <code>▁kingdom</code> + <code>s</code>.
-      Real BPE works on bytes, so no text is ever out-of-vocabulary; this toy handles only the letters A–Z.</div>
+      Byte-level BPE tokenizers can represent any input, so no text is ever out-of-vocabulary; this toy handles only the letters A–Z.</div>
 
     <div class="card" id="realtok">
       <h3>What a real tokenizer does (GPT-4's, <code>cl100k_base</code>)</h3>

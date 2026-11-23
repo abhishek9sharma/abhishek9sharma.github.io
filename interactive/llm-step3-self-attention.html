@@ -222,7 +222,7 @@
 
   <div class="card">
     <h3>Same word, two different jobs: the first "The" vs. the last "the"</h3>
-    <p style="margin-top:0">Our sentence contains "the" twice. In this toy both get the <b>same embedding</b> (a real tokenizer would give "The" and " the" different IDs), so only their positions differ. That alone is enough to give them different Queries, and they behave very differently. The mask (a token may only look at earlier tokens) is switched on here, as in a real generating model:</p>
+    <p style="margin-top:0">Our sentence contains "the" twice. In this toy both get the <b>same embedding</b> (a real tokenizer would give "The" and " the" different IDs), so only their positions differ. That alone is enough to give them different Queries, and they behave very differently. The mask (a token may only look at itself and earlier tokens) is switched on here, as in a real generating model:</p>
     <div style="overflow-x:auto"><table id="two-the" style="border-collapse:collapse;font-size:13px;width:100%"></table></div>
     <p class="small" style="margin-top:12px;margin-bottom:0" id="two-the-read"></p>
   </div>
@@ -257,7 +257,7 @@
 <section>
   <div class="eyebrow"><span class="idx">01</span><span class="lbl">The Three Roles</span></div>
   <h2>Q asks, K offers, V delivers</h2>
-  <p>You have just seen the idea at work: a <b style="color:var(--q)">correlation</b> between what one token needs and what
+  <p>You have just seen the idea at work: a <b style="color:var(--q)">compatibility score</b> (a bit like a correlation) between what one token needs and what
     another advertises (Q·K) decides <i>where to look</i>, and the content of what it finds (V) is <i>blended in</i> to make the
     embedding better. The three vectors, in one place:</p>
 
@@ -333,10 +333,10 @@
     the whole trick of attention.</p>
 
   <div class="card">
-    <h3>1 · Q · K — a relevance (correlation) score between two words</h3>
+    <h3>1 · Q · K — a relevance (compatibility) score between two words</h3>
     <p style="margin-top:0">The dot product of one word's <b style="color:var(--q)">Query</b> with another word's
       <b style="color:var(--k)">Key</b> measures how well they <i>match</i>: large when the two vectors point the
-      same way, near zero when unrelated, negative when opposed. Think of it as a correlation between
+      same way, near zero when unrelated, negative when opposed. Think of it as a compatibility score, a bit like a correlation (but not normalised to −1…1), between
       "what I'm looking for" and "what you advertise". Do this for every pair and you get the attention
       matrix above. <b>No word content moves yet</b> — this step only produces <i>scores</i> (then softmax turns
       them into weights that sum to 1).</p>
@@ -388,8 +388,8 @@
     <p style="margin-top:0">All three multiply the <i>same</i> X, so what makes them different is the feedback each one gets in training (Step 5).</p>
     <ul style="margin:6px 0 10px 20px;line-height:1.75;font-size:14px">
       <li><b style="color:var(--q)">W<sub>q</sub> learns what each kind of word should look for.</b> If the last "the" put its attention on "on" when "king" would have predicted "throne" better, the loss goes up and W<sub>q</sub> is nudged so that Query points more towards royal nouns.</li>
-      <li><b style="color:var(--k)">W<sub>k</sub> learns what each kind of word should advertise.</b> It is trained <i>together</i> with W<sub>q</sub>: only the dot product Q·K ever reaches the loss, so the two matrices must agree on a shared "language" of features. Neither means anything alone.</li>
-      <li><b style="color:var(--v)">W<sub>v</sub> learns which parts of a word are worth copying, and how much of each.</b> A weight near 0 leaves that part of the word behind, a large weight carries it strongly, and a negative weight flips it. It usually also <i>narrows</i> the vector (here 7 numbers → 3; in Llama-3 8B 4096 → 128 per head), so it has to choose what to keep.</li>
+      <li><b style="color:var(--k)">W<sub>k</sub> learns what each kind of word should advertise.</b> It is trained <i>together</i> with W<sub>q</sub>: only the dot product Q·K ever reaches the loss, so the two matrices are optimised jointly to give useful scores. Neither means much alone.</li>
+      <li><b style="color:var(--v)">W<sub>v</sub> learns which parts of a word are worth copying, and how much of each.</b> A weight near 0 leaves that part of the word behind, a large weight carries it strongly, and a negative weight flips it. It usually also <i>narrows</i> the vector (here 7 numbers → 3; in Llama-3 8B each head turns the 4096-number hidden vector into 128 numbers, and there are many heads), so it has to choose what to keep.</li>
     </ul>
     <p class="small" style="margin-top:0"><b>Why the feedback differs.</b> Q and K only decide the attention <i>weights</i>, so they learn from "did I look at the right words?". V is the content that actually gets copied, so it learns from "did the copied content help predict the next word?". If a copied feature made "throne" more likely, its weight grows. If it was noise, its weight shrinks.</p>
 
@@ -499,6 +499,7 @@
       <code>softmax</code> = soften into weights ·
       <code>× <span style="color:var(--v)">V</span></code> = blend values
     </div>
+    <div class="small" style="max-width:60ch;margin:10px auto 0;text-align:left;color:var(--faint)">In a causal decoder a mask <i>M</i> (−∞ for future positions) is added before the softmax, so the full form is softmax(QK<sup>T</sup>/√d<sub>k</sub> + M)V, with the softmax taken across the keys for each query row. Real implementations use batched tensors such as [batch, sequence, heads, head_dim]; the 2D matrices here are the toy version.</div>
   </div>
   <div class="note att" style="margin-top:16px"><b>The formula stops at <span style="color:var(--v)">V</span>.</b> That's the four stages above — but remember the fifth, write-back (<code>W<sub>O</sub></code>), runs just after and merges the result into the token's residual stream. The whole mechanic in one line:
     <div style="font-family:var(--mono);font-size:13px;margin:10px 0 2px;text-align:center;color:var(--ink)"><b>Q</b> asks · <b>K</b> offers · <b>V</b> delivers · <b>O</b> writes back</div>

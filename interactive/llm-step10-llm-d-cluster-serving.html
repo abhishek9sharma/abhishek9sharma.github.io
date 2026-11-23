@@ -236,7 +236,7 @@
     questions appear: <b>which copy should get this request?</b> and <b>should every copy do both phases of the job?</b>
     <b>llm-d</b> is an open-source project, led by Red Hat with partners, that answers them <i>on top of</i> vLLM. We keep following
     <b>"The king sat on the ___"</b>.</p>
-  <div class="recap">Builds on <b>Step 7 (prefill vs. decode)</b> and <b>Step 9 (blocks, prefix sharing)</b>. Some details of llm-d change quickly; where I could not verify a point it is marked as such.</div>
+  <div class="recap">Builds on <b>Step 7 (prefill vs. decode)</b> and <b>Step 9 (blocks, prefix sharing)</b>. Checked against the llm-d v1.0 documentation (November 2026). llm-d changes quickly, so check the <a href="https://llm-d.ai/docs/dev/architecture" target="_blank" rel="noopener">current architecture docs</a>; where a point could not be verified it is marked as such.</div>
 </header>
 
 <!-- THE PROBLEM -->
@@ -257,11 +257,11 @@
   <div class="card">
     <div style="display:grid;grid-template-columns:auto 1fr;gap:8px 16px;font-size:13px;align-items:start">
       <b style="color:var(--amber)">Kubernetes / OpenShift</b><span>runs the pods</span>
-      <b style="color:var(--sky)">llm-d</b><span>routes requests, can split prefill from decode, keeps track of which pod holds which blocks</span>
+      <b style="color:var(--sky)">llm-d</b><span>its <b>Router</b> (a Gateway-API proxy plus an <b>Endpoint Picker</b>, EPP) chooses a pod for each request from live load and cache signals; it can also split prefill from decode</span>
       <b style="color:var(--kv)">vLLM (in each pod)</b><span>blocks, PagedAttention, continuous batching, prefix caching</span>
       <b style="color:var(--good)">GPU</b><span>holds the model weights and the KV blocks</span>
     </div>
-    <p class="small" style="margin-bottom:0;margin-top:10px;color:var(--faint)">A pod may also hold helper containers; I did not verify llm-d's exact pod layout. llm-d is reported to run both vLLM and SGLang as model servers.</p>
+    <p class="small" style="margin-bottom:0;margin-top:10px;color:var(--faint)">In the docs, the pods behind the router are grouped in a Kubernetes <b>InferencePool</b>. vLLM is the default model server; SGLang and TensorRT-LLM are also supported. A pod may hold helper containers; the exact layout varies by deployment.</p>
   </div>
 </section>
 
@@ -269,18 +269,18 @@
 <section>
   <div class="eyebrow"><span class="idx">02</span><span class="lbl">Smart Routing</span></div>
   <h2>Send it where the blocks already are</h2>
-  <p>Each pod reports to the router when it stores or drops a block, so the router keeps a global index of who holds what. For a new request it scores every pod by
-    <b>how many leading blocks the pod already has</b> (cache) combined with <b>how busy it is</b> (load). Remember from Step 9: blocks are matched from the start and only
-    <i>full</i> 16-token blocks count. Try it — the request is a 32-token system prompt (2 full blocks) plus our 5-token question (a partial block that cannot be matched yet):</p>
+  <p>llm-d's Endpoint Picker picks a pod with a <b>filter, score, pick</b> pipeline of configurable scorers. One option is precise prefix-cache-aware routing, where pods report to the router when they store or drop blocks, so it can know who holds what. Below is a <b>toy version</b> of that idea: score each pod by
+    <b>how many leading blocks it already has</b> (cache) combined with <b>how busy it is</b> (load). Remember from Step 9: blocks are matched from the start and only
+    <i>full</i> blocks count (16 tokens each here). Try it — the request is a 32-token system prompt (2 full blocks) plus our 5-token question (a partial block that cannot be matched yet):</p>
   <div class="card">
     <div style="max-width:380px;margin-bottom:10px">
-      <label class="fld" for="rt-w" style="display:block;font-size:12px;color:var(--muted)">Router weighs: <b id="rt-wv">cache 50% · load 50%</b></label>
+      <label class="fld" for="rt-w" style="display:block;font-size:12px;color:var(--muted)">Toy score, weights: <b id="rt-wv">cache 50% · load 50%</b></label>
       <input type="range" id="rt-w" min="0" max="100" step="5" value="50" style="width:100%">
     </div>
     <div style="overflow-x:auto"><table id="rt-table" style="border-collapse:collapse;font-size:13px;width:100%"></table></div>
     <p class="small" id="rt-read" style="margin-top:10px;margin-bottom:0"></p>
   </div>
-  <div class="note"><b>Score(pod) = matching leading blocks (cache) + free capacity (load).</b> Routing only on cache would pile everything onto one pod, so load is blended in.
+  <div class="note"><b>Toy score(pod) = matching leading blocks (cache) + free capacity (load).</b> The weights and formula are chosen for this demo; the real EPP uses configurable scorers and live metrics, not one fixed 50/50 formula. Routing only on cache would pile everything onto one pod, so load is blended in.
     Events from pods can arrive a moment late, so now and then the router's picture is slightly out of date. Prefix-aware routing is <i>not</i> a vLLM feature (vLLM only caches inside one pod): choosing the pod is the
     router's job, which turns prefix caching from a per-machine trick into a cluster-wide one.</div>
 </section>
@@ -289,7 +289,7 @@
 <section>
   <div class="eyebrow"><span class="idx">03</span><span class="lbl">Splitting The Phases</span></div>
   <h2>Prefill pods and decode pods</h2>
-  <p>llm-d can run some pods <b>only for prefill</b> and others <b>only for decode</b>, and move the KV blocks from one to the other. Step through our request:</p>
+  <p>llm-d can run some pods <b>only for prefill</b> and others <b>only for decode</b>, and move the KV blocks from one to the other. This is a <b>separate feature</b> from cache-aware routing: a deployment can use either, both or neither. In the docs' prefill/decode setup the router schedules every request twice, once onto a prefill pod and once onto a decode pod. Step through our request:</p>
   <div class="card">
     <div id="pd-flow" style="display:flex;gap:10px;flex-wrap:wrap;align-items:stretch"></div>
     <div id="pd-explain" class="small" style="margin-top:12px;min-height:44px"></div>
@@ -301,8 +301,8 @@
   </div>
   <div class="card">
     <h3>What does moving the cache cost?</h3>
-    <p class="small" style="margin-top:0">The KV blocks of the prompt must be <b>copied</b> from the prefill pod to the decode pod (GPU memory to GPU memory over a fast network, using RDMA; llm-d uses NVIDIA's NIXL library for the transfer by default, as far as I could read).
-      Illustrative numbers — the prefill speed is an assumption, not a benchmark:</p>
+    <p class="small" style="margin-top:0">The KV blocks of the prompt must be <b>copied</b> from the prefill pod to the decode pod (GPU memory to GPU memory over a fast network; the llm-d docs describe NVIDIA's NIXL library as the default transfer connector, with RDMA for high-speed transfer).
+      Illustrative numbers: the prefill speed is an assumption, not a benchmark, and the network speeds are nominal line rates (real throughput is lower):</p>
     <div class="row" style="display:flex;gap:18px;flex-wrap:wrap">
       <div style="min-width:220px;flex:1"><label class="fld" for="cp-len" style="display:block;font-size:12px;color:var(--muted)">Prompt length: <b id="cp-lenv">8,000 tokens</b></label>
         <input type="range" id="cp-len" min="100" max="64000" step="100" value="8000" style="width:100%"></div>
@@ -313,7 +313,7 @@
     <p class="small" id="cp-read" style="margin-top:10px;margin-bottom:0"></p>
   </div>
   <div class="note"><b>Gain:</b> decode pods never stall behind a long prefill, and the pools are sized separately (more prefill pods for long prompts, more decode pods for long answers).
-    <b>Cost:</b> the KV must be copied, so this needs a fast network. In the simple model above the copy and the prefill both grow in step with prompt length, so the <i>share</i> depends on the network and the model, not on the length (real prefill grows a little faster than linearly, which favours long prompts). What long prompts change is the stall: a long prefill sitting on a decode pod blocks every other request there, so splitting pays off with long prompts and heavy traffic, not short prompts on a small setup. Once decoding has started the request
+    <b>Cost:</b> the KV must be copied, so this needs a fast network. In the simple model above the copy and the prefill both grow in step with prompt length, so the <i>share</i> depends on the network and the model, not on the length (real prefill grows a little faster than linearly, which favours long prompts). What long prompts change is the stall: a long prefill sitting on a decode pod blocks every other request there, so splitting pays off with long prompts and heavy traffic, not short prompts on a small setup. In the flow shown here, once decoding has started the request
     stays on its decode pod, and every later K and V lands in that pod's own blocks. The prefill pod may keep its blocks as prefix cache until it needs the space, then evicts the least recently used.</div>
 </section>
 
@@ -326,7 +326,7 @@
       <div><b>Smart routing</b> — requests go where their prefix blocks already are.</div>
       <div><b>Prefill/decode disaggregation</b> — separate pods for the two phases, KV blocks moved between them.</div>
       <div><b>Cache beyond the GPU</b> — warm blocks in GPU memory, cooler ones in CPU memory or on disk (reported by the project).</div>
-      <div><b>Runs on Kubernetes or OpenShift</b> — with vLLM and SGLang as supported model servers (reported by the project).</div>
+      <div><b>Runs on Kubernetes or OpenShift</b> — with vLLM (the default), SGLang and TensorRT-LLM as supported model servers, per the docs.</div>
     </div>
     <p class="small" style="margin-bottom:0;margin-top:12px;color:var(--faint)">Claims about speedups come from each project's own benchmarks; test on your own traffic.</p>
   </div>
@@ -388,7 +388,7 @@ $('#rt-w').addEventListener('input',renderRoute); renderRoute();
 
 /* ---------- 3. prefill / decode hand-off ---------- */
 const PD=[
-  {a:['router'], t:'The router receives the request ("… The king sat on the") and picks a prefill pod, <b>P1</b>.'},
+  {a:['router'], t:'The router (its Endpoint Picker) receives the request ("… The king sat on the") and picks a prefill pod, <b>P1</b>.'},
   {a:['P1'], t:'<b>P1 prefills</b>: one pass over all the prompt tokens, writing their K and V into its block (say physical block 7), in every layer — exactly the prefill of Step 7.'},
   {a:['router','P1','meta'], t:'P1 returns a small piece of <b>metadata</b> saying where those blocks live. The router hands it to a decode pod, <b>D1</b>.'},
   {a:['P1','D1','copy'], t:'<b>D1 pulls the blocks</b> straight from P1\'s GPU memory over a fast network (RDMA) into free blocks of its own — here block 5. The number differs because each pod has its own pool.'},

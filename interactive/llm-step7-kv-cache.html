@@ -236,10 +236,10 @@
 
 <header>
   <div class="kicker">Intuition-first LLMs · Step 7 of 11 — Serving</div>
-  <h1>The KV cache: why generation isn't quadratically slow</h1>
+  <h1>The KV cache: stop recomputing the past</h1>
   <p class="lede">In Step 6 you watched "The king sat on the ___" being generated one token at a time. Done naively,
-    every step recomputes attention over the entire history from scratch. The <b>KV cache</b> is the
-    one trick that makes serving LLMs practical: store each token's Keys and Values once, reuse them forever.</p>
+    every step recomputes the Keys and Values of the entire history from scratch. The <b>KV cache</b> is the
+    one trick that makes serving LLMs practical: store each token's Keys and Values once and reuse them while the prefix stays the same.</p>
   <div class="recap">Builds directly on <b>Step 3 (attention: Q·K, then ×V)</b> and <b>Step 6 (the generation loop)</b>. Self-contained — a quick recap is included.</div>
 </header>
 
@@ -304,7 +304,7 @@
       </div>
       <div class="insight">
         <b>3. Therefore all Ks and Vs must be kept — but computed only once.</b>
-        The single new Q attends over every past K and V. They never change after being computed.
+        The single new Q attends over every past K and V. For the same model and an unchanged prefix, they never change after being computed.
         Store them once, reuse them every step. That is the KV cache.
       </div>
       <div class="insight">
@@ -411,8 +411,8 @@
     </div>
     <p class="small" style="margin-top:12px">The cache now holds <code>K/V</code> for <b>The · king · sat</b>.
       Pass 2 fed in <b>one</b> token instead of three, yet attention still saw the full history — because the
-      earlier Keys and Values were waiting in the cache. That is the entire trick: <b>each decode step does
-      O(1) new K/V work regardless of how long the context already is.</b></p>
+      earlier Keys and Values were waiting in the cache. That is the entire trick: <b>each decode step computes new K and V for only one token, a fixed amount of work regardless of how long the context already is.</b>
+      The new query still has to read and attend over the whole cache, so the attention work per step (and the bytes read from memory) still grows with the context length.</p>
   </div>
 </section>
 
@@ -513,9 +513,9 @@
 <!-- COMPUTE COMPARISON -->
 <section>
   <div class="eyebrow"><span class="idx">04</span><span class="lbl">The Payoff</span></div>
-  <h2>Quadratic work becomes linear</h2>
-  <p>Per generated token, the cached version does a fixed amount of new K/V work; the naive version does
-    work proportional to the whole history. Across a full sequence the difference is dramatic:</p>
+  <h2>Quadratic recomputation becomes linear</h2>
+  <p>Per generated token, the cached version does a fixed amount of new K/V work; the naive version recomputes
+    K and V for the whole history. Counting only that K/V computation, across a full sequence the difference is dramatic:</p>
   <div class="card">
     <div style="max-width:260px;margin-bottom:6px">
       <label class="fld" for="seq-sl">Sequence length: <span id="seq-v" style="color:var(--kv)">512</span> tokens</label>
@@ -524,6 +524,7 @@
     <svg id="compute-chart" viewBox="0 0 600 260" role="img" aria-label="Compute comparison"></svg>
     <p class="small" id="compute-read" style="margin-top:8px"></p>
   </div>
+  <div class="note"><b>What the cache does not remove.</b> Each new token's query still attends over all cached keys, which costs O(n) per step and O(n²) in total across a long sequence. The cache removes the <i>redundant recomputation</i>, not the attention itself, and reading a growing cache from memory is exactly the cost Step 8 is about.</div>
   <div class="note"><b>The cache trades compute for memory.</b> You stop recomputing — but now you must
     <i>store</i> all those Keys and Values. For long contexts and many concurrent users, that storage
     becomes the dominant cost, and the central problem of LLM serving. Let's size it.</div>
@@ -580,7 +581,7 @@
 <div class="next">
   <h3>Where this is heading</h3>
   <p>So the KV cache is essential <i>and</i> huge — and its size per request <b>grows and shrinks
-    unpredictably</b> as each user's generation runs. Allocating that memory naively wastes 60–80% of it
+    unpredictably</b> as each user's generation runs. Allocating that memory naively can waste a large share of it (the PagedAttention paper measured 60–80% in the systems it compared)
     to fragmentation. The fix borrows a 1960s operating-systems idea — paging — and is what makes vLLM
     fast. But first, Step 8 shows exactly why memory — not math — is the wall.</p>
   <a class="pill" style="opacity:.65" href="llm-step6-generation.html">◂ Back · Step 6</a>

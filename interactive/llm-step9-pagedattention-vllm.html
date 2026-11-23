@@ -234,8 +234,8 @@
   <div class="kicker">Intuition-first LLMs · Step 9 of 11 — Serving</div>
   <h1>PagedAttention &amp; vLLM: managing the cache</h1>
   <p class="lede">Step 7 introduced the KV cache; Step 8 showed it's <b>enormous</b> and hits a memory wall.
-    Worse, its size per request grows and shrinks unpredictably — store it naively and you waste
-    <b>60–80%</b> of GPU memory. PagedAttention fixes this by borrowing the oldest trick in operating
+    Worse, its size per request grows and shrinks unpredictably — store it naively and, in the
+    PagedAttention paper's measurements, you can waste <b>60–80%</b> of the cache memory. PagedAttention attacks this by borrowing the oldest trick in operating
     systems: <b>paging</b>. It's the core idea behind vLLM.</p>
   <div class="recap">Builds on <b>Step 7 (the KV cache)</b> and <b>Step 8 (its memory cost)</b>. Self-contained — the key facts are recapped as we go.</div>
 </header>
@@ -288,7 +288,7 @@
   <div class="note"><b>Two fragmentation types.</b> <i>Internal</i>: each request reserves its max length but
     uses far less — the reserved-but-empty tail is dead memory for the request's whole lifetime.
     <i>External</i>: when a request finishes and frees its block, the gap may be too small or oddly-shaped
-    for the next request's contiguous need. Real systems lose <b>60–80%</b> of KV memory this way.</div>
+    for the next request's contiguous need. The PagedAttention paper measured the existing systems it compared losing <b>60–80%</b> of KV memory this way; the exact share depends on the workload and the allocator.</div>
 </section>
 
 <!-- THE SOLUTION -->
@@ -296,7 +296,7 @@
   <div class="eyebrow"><span class="idx">02</span><span class="lbl">The Idea</span></div>
   <h2>Paging: store the cache in small blocks, anywhere</h2>
   <p>Operating systems solved this for RAM decades ago. Don't demand one big contiguous chunk — split
-    memory into fixed-size <b>blocks</b> (vLLM uses 16 tokens each) and let a sequence's blocks live
+    memory into fixed-size <b>blocks</b> (this demo uses 16 tokens each; 16 is a common vLLM default, and the size is configurable) and let a sequence's blocks live
     <b>anywhere</b>, in any order. A <b>block table</b> remembers where each one is. Here are the <b>same three
     requests</b> under both schemes at once — click a <b>generate</b> button and watch them react:</p>
 
@@ -334,11 +334,11 @@
     (R1/R2) versus the <b>last</b> one (R3).</div>
 
   <div class="note"><b>Waste is now bounded, not proportional.</b> The only unused space is the
-    partially-filled <i>last</i> block of each sequence — at most <b>15 tokens</b>, no matter how long the
-    sequence is. For this toy example (a handful of short requests), that bound is a real chunk of the total:
+    partially-filled <i>last</i> block of each sequence — at most <b>15 tokens</b> of tail slack (block size − 1) per sequence, no matter how long the
+    sequence is. (This counts only that slack, not block-table metadata or other engine overhead.) For this toy example (a handful of short requests), that bound is a real chunk of the total:
     <b id="paged-wastenote">–</b>. But the bound stays <i>fixed</i> while real sequences run to hundreds or
     thousands of tokens — so in production the same 15-token cap shrinks to a couple of percent, versus the
-    60–80% naive contiguous allocation loses regardless of sequence length.</div>
+    large share that naive contiguous allocation can lose regardless of sequence length.</div>
 </section>
 
 <!-- BLOCK ANATOMY + VRAM BUDGET -->
@@ -383,7 +383,7 @@
     <p class="tflow" id="alloc-tflow"></p>
     <p class="small" style="margin-top:10px;color:var(--faint)">Tokens are shown roughly one-per-word for
       readability — real tokenizers split finer (Step 1), and long words become several tokens (e.g.
-      <code>Sum·mar·ize</code>). The 16-per-block rule is exactly what vLLM uses.</p>
+      <code>Sum·mar·ize</code>). 16 tokens per block is a common vLLM default; the block size is configurable.</p>
   </div>
 
   <!-- MOVE 3 — the block table links scattered blocks -->
@@ -445,8 +445,8 @@
   <h2>Continuous batching keeps the GPU full</h2>
   <p>Flexible block memory unlocks one more win. <b>Static batching</b> groups N requests, runs them
     together, and waits for the <i>slowest</i> to finish before starting the next batch — so finished
-    sequences leave the GPU idle. <b>Continuous batching</b> slots a new request into a free spot the
-    instant one finishes. Compare:</p>
+    sequences leave the GPU idle. <b>Continuous batching</b> slots a new request into a free spot as
+    soon as one finishes (subject to the scheduler's token budget and memory limits). Compare:</p>
   <p class="small">Under the hood the scheduler runs a small loop <b>at every token step</b>: finished requests
     (end-of-sequence or max-tokens) leave and free their blocks → waiting requests join the batch → if memory
     runs short, one request is paused (<i>preemption</i>) and resumed later. This bookkeeping happens on the
@@ -512,8 +512,8 @@
   <div class="note"><b>Copy-on-write, exactly like an OS.</b> As long as everyone only <i>reads</i> a shared
     block (a fixed system prompt, a RAG document, few-shot examples), it stays shared forever — pure savings.
     The moment one sequence needs to <i>write</i> a token into a shared block, vLLM copies just that one block
-    first (refcount drops, a fresh block is allocated), so the others are unaffected. Prompts are read-only,
-    so their blocks are typically never copied at all.</div>
+    first (refcount drops, a fresh block is allocated), so the others are unaffected. Full prompt blocks are read-only,
+    so they are shared and never need copying; a copy happens only when a sequence must write into a shared, partly filled block.</div>
   <div class="note"><b>How vLLM finds shared blocks — and the fine print.</b> Every <i>full</i> block gets a
     fingerprint: <code>hash(previous block's hash, this block's 16 token ids)</code>. A new request is matched
     from its first block onward and reuses blocks until the first mismatch. Hence: (1) only <b>full</b>
@@ -538,14 +538,11 @@
     layer's cache.</div>
   <div class="card">
     <div class="stats">
-      <div class="statcard"><div class="v">&lt;4%</div><div class="l">KV memory wasted<br>(was 60–80%)</div></div>
-      <div class="statcard"><div class="v">2–4×</div><div class="l">throughput vs.<br>contiguous baselines</div></div>
-      <div class="statcard"><div class="v">16</div><div class="l">tokens per block<br>(typical)</div></div>
+      <div class="statcard"><div class="v">&lt;4%</div><div class="l">KV memory wasted<br>(paper; was 60–80%)</div></div>
+      <div class="statcard"><div class="v">2–4×</div><div class="l">throughput vs.<br>baselines (paper)</div></div>
+      <div class="statcard"><div class="v">16</div><div class="l">tokens per block<br>(common default)</div></div>
     </div>
-    <p class="small" style="margin-top:14px">PagedAttention turns KV-cache memory from the bottleneck that
-      caps batch size into a non-issue, so a single GPU can serve far more concurrent users. It's why vLLM
-      became the default open-source serving engine, and the technique now appears in nearly every
-      production inference stack.</p>
+    <p class="small" style="margin-top:14px">PagedAttention makes KV-cache memory far less of a bottleneck on batch size, so a single GPU can often serve many more concurrent users. It does not compress the K/V data or remove all waste: the last block can be partly empty, and there is still metadata and bandwidth cost. PagedAttention is the technique; vLLM is the engine that implements it together with continuous batching and scheduling. The idea is now widely adopted.</p>
     <div class="src">Source: Kwon et al., "Efficient Memory Management for Large Language Model Serving with PagedAttention," SOSP 2023 (arXiv:2309.06180), and the vLLM project.</div>
   </div>
   <details>

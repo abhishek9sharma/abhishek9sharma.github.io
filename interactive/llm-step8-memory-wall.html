@@ -143,7 +143,7 @@
 
 <header>
   <div class="kicker">Intuition-first LLMs · Step 8 of 11 — Serving</div>
-  <h1>The Memory Wall: why inference is memory-bound</h1>
+  <h1>The Memory Wall: why decoding is memory-bound</h1>
   <p class="lede">Step 7 showed the KV cache is essential. This step is the reality check: <b>how big</b> does it
     actually get, and <b>where</b> does it live? GPU memory is a strict hierarchy, and the KV cache eats it
     alive. This — not raw math — is what makes serving hard, and what the next tricks are built to fight.</p>
@@ -155,12 +155,10 @@
   <div class="eyebrow"><span class="idx">01</span><span class="lbl">The Intuition</span></div>
   <h2>Not short on math — short on memory</h2>
   <p>It's tempting to think a big model is slow because it does <i>so much arithmetic</i>. During generation,
-    the opposite is usually true. Producing one token touches every weight <b>exactly once</b> and does very
+    the opposite is often true. At small batch sizes, producing one token streams all the model's weights through the GPU and does very
     little compute per byte read. The GPU's math units sit half-idle, <b>waiting for data to arrive from
-    memory</b>. That's what "memory-bound" means: the bottleneck is moving bytes, not multiplying them.</p>
-  <p style="margin-top:10px">Two things dominate that memory traffic: the <b>model weights</b> (read once per
-    token) and the <b>KV cache</b> (read in full, every token, for every request in flight). To see why the
-    KV cache is the villain, we need to look at where memory physically lives — and how much of it the cache
+    memory</b>. That's what "memory-bound" means: the bottleneck is moving bytes, not multiplying them. (Not every phase works this way: prefill, which processes the whole prompt at once, is usually compute-heavy, and large batches shift decode toward compute too.)</p>
+  <p style="margin-top:10px">Two things dominate that memory traffic: the <b>model weights</b> (streamed through for every step, shared by all requests in a batch) and the <b>KV cache</b> (read in full, every token, for every request in flight). Which one dominates depends on batch size, context length and the model. At short contexts the weights usually do; as contexts and concurrency grow, the KV cache becomes a major source of memory pressure. To see why, we need to look at where memory physically lives — and how much of it the cache
     demands.</p>
   <div class="card">
     <h3>From our five-token sentence to a real server</h3>
@@ -239,7 +237,7 @@
 
   <div class="note"><b>Spot the optimization already baked in:</b> Llama-3-70B has 64 query heads but only
     <b>8 KV heads</b> — that's <b>Grouped-Query Attention (GQA)</b>, and it's why its cache is 8× smaller than
-    if every head kept its own K/V. Switch to GPT-3 175B (which has none) to feel the difference.</div>
+    if every head kept its own K/V (in standard GQA the saving is the ratio of query heads to KV heads). Switch to GPT-3 175B (which has none) to feel the difference.</div>
 </section>
 
 <!-- 04 TWO FIXES -->
@@ -262,11 +260,11 @@
   </div>
 
   <div class="card">
-    <h3>PagedAttention — the capacity fix (next step)</h3>
+    <h3>PagedAttention — how the cache is stored (next step)</h3>
     <p class="small" style="margin:0">Even with FlashAttention, the cache still has to <i>fit</i>. Store each
-      request's cache as one contiguous block and you waste <b>60–80%</b> of it to fragmentation and
-      over-reservation. <b>PagedAttention</b> — the idea behind <b>vLLM</b> — borrows virtual memory from
-      operating systems: chop the cache into small fixed pages and hand them out on demand. That's Step 9 — we need its "request" and block-table vocabulary first, so here is just the headline.</p>
+      request's cache as one contiguous block, reserved for the longest it might grow, and you can waste a large share of it to fragmentation and
+      over-reservation (the PagedAttention paper measured 60–80% in the systems it compared; it depends on the workload). <b>PagedAttention</b> — the idea behind <b>vLLM</b> — borrows virtual memory from
+      operating systems: chop the cache into small fixed pages and hand them out on demand. It does not shrink the K/V data; it wastes less of the space and makes sharing possible. That's Step 9 — we need its "request" and block-table vocabulary first, so here is just the headline.</p>
   </div>
 </section>
 
@@ -282,10 +280,10 @@
       Share one set of K/V across many query heads. Fewer KV heads → a directly smaller cache. You just saw
       this: Llama-3's 8 KV heads instead of 64.</div></div>
     <div class="opt-row"><span class="opt-tag">Quantization</span><div class="txt"><b>Store fewer bits.</b>
-      Weights and the KV cache don't need 16-bit floats — <b>FP8</b> or <b>INT8</b> halve the memory (and the
-      bandwidth) for a small quality cost. That 320 KB/token becomes 160 KB.</div></div>
+      Weights and the KV cache don't need 16-bit floats — <b>FP8</b> or <b>INT8</b> roughly halve the memory (and the
+      bandwidth) for the stored tensors, at some quality cost that depends on the method (scales and metadata add a little back). That 320 KB/token becomes roughly 160 KB.</div></div>
     <div class="opt-row"><span class="opt-tag">Speculative</span><div class="txt"><b>Speculative decoding.</b>
-      A small "draft" model proposes several tokens at once; the big model verifies them in a single pass.
+      A small "draft" model proposes several tokens at once; the big model checks them together in one forward pass and keeps the ones it agrees with.
       More tokens per expensive memory read — attacking the bandwidth bound from another angle.</div></div>
     <div class="opt-row"><span class="opt-tag">Prefix cache</span><div class="txt"><b>Prefix / prompt caching</b> (Step 9 shows how it works with blocks).
       Many requests share a long system prompt. Compute its KV once and reuse it across requests instead of

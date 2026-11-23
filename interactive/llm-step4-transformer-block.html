@@ -196,8 +196,8 @@
   </div>
 
   <div class="note"><b>Why this helps.</b> Head 1 can find the subject while Head 2 tracks word order,
-    Head 3 keeps a sentence-level summary and Head 4 hunts for the action — all at once, in a single layer. GPT-2 small uses 12 heads per
-    layer; GPT-3 uses 96. More heads = more relationship types captured simultaneously.</div>
+    Head 3 keeps a sentence-level summary and Head 4 hunts for the action — all at once, in a single layer. These four patterns are hand-designed illustrations: real heads show recurring behaviours, but their jobs overlap, vary with context and rarely fit one label. GPT-2 small uses 12 heads per
+    layer; GPT-3 175B uses 96. More heads give more parallel attention patterns, though not automatically better quality.</div>
 </section>
 
 <!-- THE BLOCK -->
@@ -405,7 +405,7 @@ $('#head-out-read').innerHTML=`Head 1 (Step 3's head) brings in <b>king</b>'s fe
 /* ---- block diagram step-through ---- */
 const STEPS=[
   {boxes:['in'], explain:'<b>Input.</b> A sequence of token vectors enters the block — say the positioned embeddings from Steps 1–2 (or the output of the previous block).'},
-  {boxes:['in','norm1'], explain:'<b>LayerNorm.</b> First, normalize each vector to zero mean and unit variance. This keeps the numbers in a stable range so the layers below behave predictably.'},
+  {boxes:['in','norm1'], explain:'<b>LayerNorm.</b> First, normalize each vector to zero mean and unit variance (this is the common pre-norm arrangement; Llama-style models use the related RMSNorm, and the original Transformer put the norm after each sublayer). This keeps the numbers in a stable range so the layers below behave predictably.'},
   {boxes:['in','norm1','qkv'], explain:'<b>Project to Q, K, V.</b> Every head multiplies the normalised input by its own three matrices: <code>Q = X·W_q</code>, <code>K = X·W_k</code>, <code>V = X·W_v</code> (Step 3). <b>Every block does this again from its own input</b> — the next block builds fresh Q, K, V from this block\'s output. These K and V are exactly what the KV cache will store (Step 7).'},
   {boxes:['in','norm1','qkv','att'], explain:'<b>Attention.</b> In each head, <code>Q·Kᵀ</code> says who to look at, the weights blend the <code>V</code>s, and <code>W_O</code> mixes the heads. Tokens exchange information <i>between</i> positions.'},
   {boxes:['in','norm1','qkv','att','add1'], explain:'<b>Residual add.</b> Add the original input back: <code>x + attention(norm(x))</code>. The shortcut lets gradients flow freely and preserves the original signal.'},

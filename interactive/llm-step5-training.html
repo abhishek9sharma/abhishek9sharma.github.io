@@ -156,6 +156,7 @@
     (Step 3's lens), <code>W<sub>v</sub></code> carries the right content, and the output layer maps the enriched vector to
     "throne". We cannot set them by hand for billions of words, so we let the model <b>measure its own mistake and fix itself</b>
     — the rest of this step.</p>
+  <div class="note vec"><b>Our one sentence is a microscope, not the whole job.</b> In real pretraining a sequence gives a prediction target at <i>every</i> position (The → king, The king → sat, The king sat → on, …) and many sequences are processed in a batch. The model is always shown the true previous tokens when predicting the next one (<i>teacher forcing</i>); it does not feed its own guesses back during training. The loss is averaged over all those targets and the shared weights are updated, usually with an optimizer such as AdamW rather than a plain nudge.</div>
 </section>
 
 <!-- CROSS ENTROPY -->

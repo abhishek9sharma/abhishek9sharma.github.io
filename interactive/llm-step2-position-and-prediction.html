@@ -231,8 +231,8 @@
 <header>
   <div class="kicker">Intuition-first LLMs · Step 2 of 11</div>
   <h1>Order matters: position &amp; next-token prediction</h1>
-  <p class="lede">The model has vectors now — but those vectors have no idea they're in a sequence.
-    "Dog bites man" and "Man bites dog" would look identical to it. This step adds <b>position</b>,
+  <p class="lede">The model has vectors now — but those vectors say nothing about <i>where</i> a token sits.
+    "Dog bites man" and "Man bites dog" would use exactly the same set of vectors. This step adds <b>position</b>,
     then closes the loop: how do we turn the last vector back into a word prediction?
     From here on we follow one sentence, <b>"The king sat on the ___"</b> — in the stamping demo below, pick it
     and notice the word <b>"the"</b> appears twice with the <i>same</i> embedding but lands on a <i>different</i> point of the position wave,
@@ -250,9 +250,9 @@
 <!-- ============ SECTION 1 — WHY POSITION ============ -->
 <section id="pos-why">
   <div class="eyebrow pos"><span class="idx">01</span><span class="lbl">The Problem</span></div>
-  <h2>Vectors are orderless bags — by default</h2>
-  <p>A set of embedding vectors carries no notion of order. Without extra information,
-    <b>the model sees the same thing</b> for "dog bites man" and "man bites dog."
+  <h2>Embeddings alone don't say where a token is</h2>
+  <p>An embedding lookup gives a token the same vector wherever it appears, so the embeddings carry no explicit position. Without extra information, the two sentences
+    <b>use the same set of vectors</b>: "dog bites man" and "man bites dog." (A causal decoder's mask does give some left-to-right structure, because each token can only see itself and earlier tokens, but that is an indirect signal: it does not say exactly where a token is or how far apart two tokens are.)
     Click any token below to highlight it, and notice: the raw embedding values are
     identical regardless of position.</p>
 
@@ -335,9 +335,8 @@
     </div>
 
     <div class="no-pos-note" style="margin-top:14px">
-      ⚠ The model's input (the ID sequence + embedding vectors) is <b>identical</b> for both arrangements
-      — just the order of tokens differs, and without position encoding that order is invisible.
-      "Dog bites man" and "man bites dog" are the same thing to it.
+      ⚠ The input vectors are the <b>same set</b> for both arrangements, only their order differs. With no explicit position signal, the
+      embeddings alone don't tell the model which token comes where (a causal mask gives only an indirect, left-to-right hint).
     </div>
   </div>
 </section>
@@ -346,8 +345,8 @@
 <section id="pos-enc">
   <div class="eyebrow pos"><span class="idx">02</span><span class="lbl">Positional Encoding</span></div>
   <h2>The fix: stamp each token with its position</h2>
-  <p>Above we saw that <b>dog bites man</b> and <b>man bites dog</b> look identical to the model
-    because the embeddings carry no order. The fix is to add a small extra vector to each embedding
+  <p>Above we saw that <b>dog bites man</b> and <b>man bites dog</b> use the same set of vectors
+    because the embeddings carry no explicit position. The fix is to add a small extra vector to each embedding
     that encodes <em>where</em> that token sits. The original Transformer uses sine and cosine waves
     at different frequencies so every position gets a unique, continuous fingerprint.</p>
 
@@ -417,10 +416,10 @@
   </div>
 
   <div class="note">
-    <b>RoPE and learned positions.</b> Modern models like LLaMA and GPT-4 use <b>Rotary Position
-    Embeddings (RoPE)</b> or learned position tables instead of fixed sinusoids, but the idea is
+    <b>RoPE and learned positions.</b> LLaMA-family models use <b>Rotary Position
+    Embeddings (RoPE)</b>; other models use learned position tables or other relative-position methods instead of fixed sinusoids (the choice in GPT-4 has not been published). The idea is
     the same: inject a position signal so "dog bites man" and "man bites dog" are no longer
-    identical to the model.
+    the same to the model.
   </div>
 </section>
 
@@ -430,7 +429,7 @@
   <h2>From a vector back to a word</h2>
   <p>After the model's layers run (attention, feed-forward — that's Step 3), the output is
     still a vector. The <b>prediction head</b> multiplies it by the <em>unembedding matrix</em>
-    (the transpose of the embedding table) to get one <b>logit score per vocabulary word</b>.
+    (some models tie it to the embedding table by using its transpose; others learn a separate matrix) to get one <b>logit score per vocabulary word</b>.
     Softmax turns those scores into a probability distribution — it makes every score positive
     (by exponentiating) and rescales them to sum to 1, so they read as percentages.</p>
 
@@ -473,7 +472,7 @@
       <div class="logit-table" id="temp-table"></div>
     </div>
     <p class="small" style="margin-top:8px">Try T=0.2 (almost always "throne") vs T=3.0 (spread across
-      many words). Real GPT-4 default is around 0.7–1.0.</p>
+      many words). Chat apps and APIs often use values around 0.7–1.0, but the default varies by product and changes over time.</p>
   </div>
 
   <div class="card" style="margin-top:14px">
@@ -654,7 +653,7 @@ function renderModelView(sentA, sentB){
 
   if(sameWords){
     $('#verdict').className='verdict bad';
-    $('#verdict').innerHTML=`&#x26A0; <b>Same tokens, same IDs &mdash; just reordered.</b> Without position encoding, the model's input vectors are an unordered bag: it cannot distinguish A from B.`;
+    $('#verdict').innerHTML=`&#x26A0; <b>Same tokens, same IDs &mdash; just reordered.</b> Without an explicit position signal, the input vectors are the same set: the embeddings alone cannot tell A from B.`;
   } else {
     $('#verdict').className='verdict same';
     $('#verdict').innerHTML=`These sentences have different words &mdash; the ID sequences differ.`;
